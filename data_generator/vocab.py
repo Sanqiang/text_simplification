@@ -7,10 +7,10 @@ class Vocab:
         self.voc_config = (DefaultConfig()
                            if voc_config is None else voc_config)
         self.vocab_path = vocab_path
-        self.PopulateVocab()
+        self.populate_vocab()
 
 
-    def PopulateVocab(self, mincount=-1):
+    def populate_vocab(self, mincount=-1):
         mincount = max(mincount, self.voc_config.min_count)
         self.w2i = {}
         self.i2w = []
@@ -41,23 +41,23 @@ class Vocab:
               % (len(self.i2w), constant.REVERED_VOCAB_SIZE, self.vocab_path))
 
 
-    def Encode(self, w):
+    def encode(self, w):
         if w in self.w2i:
             return self.w2i[w]
         else:
             return self.w2i[constant.SYMBOL_UNK]
 
-    def Contain(self, w):
+    def contain(self, w):
         return w in self.w2i
 
-    def Describe(self, i):
+    def describe(self, i):
         if i < len(self.i2w):
             return self.i2w[i]
         else:
             return constant.SYMBOL_UNK
 
     @staticmethod
-    def ProcessWord(word, voc_config=None):
+    def process_word(word, voc_config=None):
         voc_config = (DefaultConfig()
                       if voc_config is None else voc_config)
 

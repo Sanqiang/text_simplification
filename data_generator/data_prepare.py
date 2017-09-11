@@ -9,7 +9,7 @@ class DataPrepareBase:
         self.data_complex = data_complex
         self.output = output
 
-    def Count(self, add_assert=False):
+    def count(self, add_assert=False):
         count = 0
         for _ in open(self.data_simple):
             count += 1
@@ -19,14 +19,14 @@ class DataPrepareBase:
             assert count == 0
         return count
 
-    def _ByteFeature(self, value):
+    def _byte_feature(self, value):
         return tf.train.Feature(bytes_list=tf.train.BytesList(value=[value]))
 
-    def Convert(self, num_examples=-1):
+    def convert(self, num_examples=-1):
         f_simple = open(self.data_simple)
         f_complex = open(self.data_complex)
         if num_examples == -1:
-            num_examples = self.Count()
+            num_examples = self.count()
 
         writer = tf.python_io.TFRecordWriter(self.output)
         for index in range(num_examples):
@@ -38,16 +38,16 @@ class DataPrepareBase:
 
             example = tf.train.Example(features=tf.train.Features(feature={
                 constant.SIMPLE_SENTENCE_LABEL:
-                    self._ByteFeature(line_simple.strip().encode()),
+                    self._byte_feature(line_simple.strip().encode()),
                 constant.COMPLEX_SENTENCE_LABEL:
-                    self._ByteFeature(line_complex.strip().encode())}))
+                    self._byte_feature(line_complex.strip().encode())}))
             writer.write(example.SerializeToString())
         writer.close()
 
 if __name__ == '__main__':
     data = DataPrepareBase('../data/dummy_simple_dataset', '../data/dummy_complex_dataset',
                            '../data/dummy_dataset')
-    data.Convert()
+    data.convert()
 
 
 

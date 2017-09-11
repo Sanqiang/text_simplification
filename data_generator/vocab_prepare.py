@@ -12,11 +12,11 @@ class VocabPrepare:
         self.voc_config = (DefaultConfig()
                            if voc_config is None else voc_config)
 
-    def PrepareVocab(self):
+    def prepare_vocab(self):
         c = Counter()
         for line in open(self.data_file):
             words = word_tokenize(line)
-            words = [Vocab.ProcessWord(word)
+            words = [Vocab.process_word(word)
                      for word in words]
             c.update(words)
 
@@ -35,4 +35,4 @@ if __name__ == '__main__':
     # voc = VocabPrepare('../data/dummy_complex_dataset', '../data/dummy_complex_vocab')
     # voc.PrepareVocab()
     voc = VocabPrepare('../data/dummy_simple_dataset', '../data/dummy_simple_vocab')
-    voc.PrepareVocab()
+    voc.prepare_vocab()
