@@ -25,24 +25,24 @@ def get_graph_data(data,
         if len(sentence_simple) < model_config.max_simple_sentence:
             num_pad = model_config.max_simple_sentence - len(sentence_simple)
             sentence_simple.append(num_pad * voc.encode(constant.SYMBOL_PAD))
-        sentence_simple.insert(voc.encode(constant.SYMBOL_START), 0)
-        sentence_simple.append(voc.encode(constant.SYMBOL_END))
+        # sentence_simple.insert(voc.encode(constant.SYMBOL_START), 0)
+        # sentence_simple.append(voc.encode(constant.SYMBOL_END))
         if len(sentence_complex) < model_config.max_complex_sentence:
             num_pad = model_config.max_complex_sentence - len(sentence_complex)
             sentence_complex.append(num_pad * voc.encode(constant.SYMBOL_PAD))
-        sentence_complex.insert(voc.encode(constant.SYMBOL_START), 0)
-        sentence_complex.insert(voc.encode(constant.SYMBOL_GO), 0)
-        sentence_complex.append(voc.encode(constant.SYMBOL_END))
+        # sentence_complex.insert(voc.encode(constant.SYMBOL_START), 0)
+        # sentence_complex.insert(voc.encode(constant.SYMBOL_GO), 0)
+        # sentence_complex.append(voc.encode(constant.SYMBOL_END))
 
         tmp_sentence_simple.append(sentence_simple)
         tmp_sentence_complex.append(sentence_complex)
 
     for step in range(model_config.max_simple_sentence):
         input_feed[sentence_simple_input[step].name] = [tmp_sentence_simple[batch_idx][step]
-                                                     for batch_idx in model_config.batch_size]
+                                                        for batch_idx in range(model_config.batch_size)]
     for step in range(model_config.max_complex_sentence):
         input_feed[sentence_complex_input[step].name] = [tmp_sentence_complex[batch_idx][step]
-                                                     for batch_idx in model_config.batch_size]
+                                                         for batch_idx in range(model_config.batch_size)]
 
     return input_feed
 
@@ -56,22 +56,22 @@ class Graph():
 
     def create_model(self):
         with tf.variable_scope("variables"):
-            self.sentence_simple_input = []
+            self.sentence_simple_input_placeholder = []
             for step in range(self.model_config.max_simple_sentence):
-                self.sentence_simple_input.append(tf.zeros(self.model_config.batch_size,
+                self.sentence_simple_input_placeholder.append(tf.zeros(self.model_config.batch_size,
                                                            tf.int32, name='simple_input'))
 
-            self.sentence_complex_input = []
+            self.sentence_complex_input_placeholder = []
             for step in range(self.model_config.max_complex_sentence):
-                self.sentence_complex_input.append(tf.zeros(self.model_config.batch_size,
+                self.sentence_complex_input_placeholder.append(tf.zeros(self.model_config.batch_size,
                                                             tf.int32, name='simple_input'))
 
             self.emb_simple = Embedding(self.data.vocab_simple, self.model_config).get_embedding()
             self.emb_complex = Embedding(self.data.vocab_complex, self.model_config).get_embedding()
 
         with tf.variable_scope("inputs"):
-            self.sentence_simple_input = tf.stack(self.sentence_simple_input, axis=1)
-            self.sentence_complex_input = tf.stack(self.sentence_complex_input, axis=1)
+            self.sentence_simple_input = tf.stack(self.sentence_simple_input_placeholder, axis=1)
+            self.sentence_complex_input = tf.stack(self.sentence_complex_input_placeholder, axis=1)
 
             simple_input = tf.nn.embedding_lookup(self.emb_simple, self.sentence_simple_input)
             complex_input = tf.nn.embedding_lookup(self.emb_complex, self.sentence_complex_input)
@@ -101,8 +101,9 @@ class Graph():
             self.global_step = tf.get_variable('global_step',
                                           initializer=tf.constant(0, dtype=tf.int64), trainable=False)
             self.loss = sequence_loss(output, self.sentence_simple_input)
-            self.op = self.create_train_op()
+            self.train_op = self.create_train_op()
             self.increment_global_step = tf.assign_add(self.global_step, 1)
+            self.saver = tf.train.Saver(write_version=tf.train.SaverDef.V2)
 
     def create_train_op(self):
         if self.model_config.optimizer == 'adagrad':
