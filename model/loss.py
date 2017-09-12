@@ -57,11 +57,11 @@ def sequence_loss(logits,
   if len(targets.get_shape()) != 2:
     raise ValueError("Targets must be a [batch_size x sequence_length] "
                      "tensor")
+  if weights is None:
+      weights = tf.ones(tf.shape(targets))
   if len(weights.get_shape()) != 2:
     raise ValueError("Weights must be a [batch_size x sequence_length] "
                      "tensor")
-  if weights is None:
-      weights = tf.ones(tf.shape(targets))
 
   with ops.name_scope(name, "sequence_loss", [logits, targets, weights]):
     num_classes = array_ops.shape(logits)[2]

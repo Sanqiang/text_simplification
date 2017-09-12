@@ -1,5 +1,6 @@
 from model.model_config import DefaultConfig
 from model.embedding import Embedding
+from model.loss import sequence_loss
 from data_generator.vocab import Vocab
 from util import constant
 
@@ -95,7 +96,31 @@ class Graph():
                                 shape=[1,len(self.voc.i2w)], initializer=initializer)
             output = tf.nn.conv1d(decoder, w, 1, 'SAME')
             output = tf.add(output, b)
-        return output
+
+        with tf.variable_scope('optimization'):
+            self.global_step = tf.get_variable('global_step',
+                                          initializer=tf.constant(0, dtype=tf.int64), trainable=False)
+            self.loss = sequence_loss(output, self.sentence_simple_input)
+            self.op = self.create_train_op()
+            self.increment_global_step = tf.assign_add(self.global_step, 1)
+
+    def create_train_op(self):
+        if self.model_config.optimizer == 'adagrad':
+            opt = tf.train.AdagradOptimizer(self.model_config.learning_rate)
+        # Adam need lower learning rate
+        elif self.model_config.optimizer == 'adam':
+            opt = tf.train.AdamOptimizer(self.model_config.learning_rate)
+        else:
+            raise Exception('Not Implemented Optimizer!')
+
+        if self.model_config.max_grad_staleness > 0:
+            opt = tf.contrib.opt.DropStaleGradientOptimizer(opt, self.model_config.max_grad_staleness)
+
+        grads_and_vars = opt.compute_gradients(self.loss, var_list=tf.trainable_variables())
+        grads = [g for (g,v) in grads_and_vars]
+        clipped_grads, _ = tf.clip_by_global_norm(grads, self.model_config.max_grad_norm)
+
+        return opt.apply_gradients(zip(clipped_grads, tf.trainable_variables()), global_step=self.global_step)
 
 
 if __name__ == '__main__':
