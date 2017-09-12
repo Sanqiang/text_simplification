@@ -3,6 +3,7 @@ from model.graph import Graph, get_graph_data
 from model.model_config import DefaultConfig
 
 import tensorflow as tf
+import math
 
 def train(model_config=None):
     model_config = (DefaultConfig()
@@ -24,7 +25,8 @@ def train(model_config=None):
 
         fetches = [graph.train_op, graph.loss, graph.global_step]
         _, loss, step = sess.run(fetches, input_feed)
-        print('Loss:\t%f at step \t%d .' % (loss, step))
+        perplexity = math.exp(loss)
+        print('Perplexity:\t%f at step %d.' % (perplexity, step))
 
         step += 1
         if step % 100 == 0:
