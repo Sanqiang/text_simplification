@@ -7,8 +7,8 @@ import tensorflow as tf
 def train(model_config=None):
     model_config = (DefaultConfig()
                     if model_config is None else model_config)
-    data = Data('../data/dummy_simple_dataset', '../data/dummy_complex_dataset',
-                '../data/dummy_simple_vocab', '../data/dummy_complex_vocab')
+    data = Data(model_config.dataset_simple, model_config.dataset_complex,
+                model_config.vocab_simple, model_config.vocab_complex)
     graph = Graph(data, model_config)
     graph.create_model()
 
@@ -24,7 +24,7 @@ def train(model_config=None):
 
         fetches = [graph.train_op, graph.loss, graph.global_step]
         _, loss, step = sess.run(fetches, input_feed)
-        print('Loss:\t\f at step \t\d .' % (loss, step))
+        print('Loss:\t%f at step \t%d .' % (loss, step))
 
         step += 1
         if step % 100 == 0:

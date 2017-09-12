@@ -24,12 +24,16 @@ def get_graph_data(data,
         # PAD <s>, </s>, <pad>, <go>
         if len(sentence_simple) < model_config.max_simple_sentence:
             num_pad = model_config.max_simple_sentence - len(sentence_simple)
-            sentence_simple.append(num_pad * voc.encode(constant.SYMBOL_PAD))
+            sentence_simple.extend(num_pad * [voc.encode(constant.SYMBOL_PAD)])
+        else:
+            sentence_simple = sentence_simple[:model_config.max_simple_sentence]
         # sentence_simple.insert(voc.encode(constant.SYMBOL_START), 0)
         # sentence_simple.append(voc.encode(constant.SYMBOL_END))
         if len(sentence_complex) < model_config.max_complex_sentence:
             num_pad = model_config.max_complex_sentence - len(sentence_complex)
-            sentence_complex.append(num_pad * voc.encode(constant.SYMBOL_PAD))
+            sentence_complex.extend(num_pad * [voc.encode(constant.SYMBOL_PAD)])
+        else:
+            sentence_complex = sentence_complex[:model_config.max_complex_sentence]
         # sentence_complex.insert(voc.encode(constant.SYMBOL_START), 0)
         # sentence_complex.insert(voc.encode(constant.SYMBOL_GO), 0)
         # sentence_complex.append(voc.encode(constant.SYMBOL_END))
@@ -51,7 +55,6 @@ class Graph():
         self.model_config = (DefaultConfig()
                              if model_config is None else model_config)
         self.data = data
-        self.voc = Vocab()
         self.hparams = transformer.transformer_base()
 
     def create_model(self):
@@ -77,9 +80,9 @@ class Graph():
             complex_input = tf.nn.embedding_lookup(self.emb_complex, self.sentence_complex_input)
 
             simple_input_bias = common_attention.attention_bias_ignore_padding(
-                tf.to_float(tf.equal(self.sentence_simple_input, self.voc.encode(constant.SYMBOL_PAD))))
+                tf.to_float(tf.equal(self.sentence_simple_input, self.data.vocab_simple.encode(constant.SYMBOL_PAD))))
             complex_input_bias = common_attention.attention_bias_ignore_padding(
-                tf.to_float(tf.equal(self.sentence_complex_input, self.voc.encode(constant.SYMBOL_PAD))))
+                tf.to_float(tf.equal(self.sentence_complex_input, self.data.vocab_complex.encode(constant.SYMBOL_PAD))))
 
         with tf.variable_scope("transformer"):
             encoder = transformer.transformer_encoder(complex_input, complex_input_bias,
@@ -91,9 +94,9 @@ class Graph():
         with tf.variable_scope("output"):
             initializer = tf.random_uniform_initializer(minval=-0.08, maxval=0.08)
             w = tf.get_variable('output_w',
-                                shape=[1, self.model_config.dimension, len(self.voc.i2w)], initializer=initializer)
+                                shape=[1, self.model_config.dimension, len(self.data.vocab_simple.i2w)], initializer=initializer)
             b = tf.get_variable('output_b',
-                                shape=[1,len(self.voc.i2w)], initializer=initializer)
+                                shape=[1,len(self.data.vocab_simple.i2w)], initializer=initializer)
             output = tf.nn.conv1d(decoder, w, 1, 'SAME')
             output = tf.add(output, b)
 
