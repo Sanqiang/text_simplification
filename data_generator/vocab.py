@@ -3,15 +3,15 @@ from util import constant
 
 
 class Vocab:
-    def __init__(self, vocab_path, voc_config=None):
+    def __init__(self, vocab_path=None, voc_config=None):
         self.voc_config = (DefaultConfig()
                            if voc_config is None else voc_config)
         self.vocab_path = vocab_path
-        self.populate_vocab()
+        self.init_vocab()
+        if vocab_path is not None:
+            self.populate_vocab()
 
-
-    def populate_vocab(self, mincount=-1):
-        mincount = max(mincount, self.voc_config.min_count)
+    def init_vocab(self):
         self.w2i = {}
         self.i2w = []
         self.w2i[constant.SYMBOL_UNK] = 0
@@ -24,6 +24,9 @@ class Vocab:
         self.i2w.append(constant.SYMBOL_END)
         self.w2i[constant.SYMBOL_GO] = 4
         self.i2w.append(constant.SYMBOL_GO)
+
+    def populate_vocab(self, mincount=-1):
+        mincount = max(mincount, self.voc_config.min_count)
         for i in range(len(self.i2w), constant.REVERED_VOCAB_SIZE):
             reserved_vocab = 'REVERED_%i' % i
             self.w2i[reserved_vocab] = i
