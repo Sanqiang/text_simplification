@@ -86,7 +86,16 @@ class Graph():
             decoder = transformer.transformer_decoder(simple_input, encoder,
                                             simple_input_bias, complex_input_bias,
                                             self.hparams)
-        return decoder
+
+        with tf.variable_scope("output"):
+            initializer = tf.random_uniform_initializer(minval=-0.08, maxval=0.08)
+            w = tf.get_variable('output_w',
+                                shape=[1, self.model_config.dimension, len(self.voc.i2w)], initializer=initializer)
+            b = tf.get_variable('output_b',
+                                shape=[1,len(self.voc.i2w)], initializer=initializer)
+            output = tf.nn.conv1d(decoder, w, 1, 'SAME')
+            output = tf.add(output, b)
+        return output
 
 
 if __name__ == '__main__':
