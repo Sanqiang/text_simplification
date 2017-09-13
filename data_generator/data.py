@@ -1,7 +1,9 @@
 import random as rd
+import copy as cp
 
 from data_generator.vocab import Vocab
 from nltk import word_tokenize
+from util import constant
 
 class Data:
     def __init__(self, data_simple_path, data_complex_path, vocab_simple_path, vocab_complex_path):
@@ -19,10 +21,13 @@ class Data:
             words = [Vocab.process_word(word)
                      for word in words]
             words = [vocab.encode(word) for word in words]
+            words = ([self.vocab_simple.encode(constant.SYMBOL_START)] + words +
+                     [self.vocab_simple.encode(constant.SYMBOL_END)])
+
             data.append(words)
         return data
 
     def get_data_sample(self):
         i = rd.sample(range(self.size), 1)[0]
-        return self.data_simple[i], self.data_complex[i]
+        return cp.deepcopy(self.data_simple[i]), cp.deepcopy(self.data_complex[i])
 

@@ -32,7 +32,7 @@ class VocabPrepare:
 
 
 if __name__ == '__main__':
-    # voc = VocabPrepare('../data/dummy_complex_dataset', '../data/dummy_complex_vocab')
-    # voc.PrepareVocab()
+    voc = VocabPrepare('../data/dummy_complex_dataset', '../data/dummy_complex_vocab')
+    voc.prepare_vocab()
     voc = VocabPrepare('../data/dummy_simple_dataset', '../data/dummy_simple_vocab')
     voc.prepare_vocab()

@@ -14,10 +14,10 @@ class Vocab:
     def init_vocab(self):
         self.w2i = {}
         self.i2w = []
-        self.w2i[constant.SYMBOL_UNK] = 0
-        self.i2w.append(constant.SYMBOL_UNK)
-        self.w2i[constant.SYMBOL_PAD] = 1
+        self.w2i[constant.SYMBOL_PAD] = 0
         self.i2w.append(constant.SYMBOL_PAD)
+        self.w2i[constant.SYMBOL_UNK] = 1
+        self.i2w.append(constant.SYMBOL_UNK)
         self.w2i[constant.SYMBOL_START] = 2
         self.i2w.append(constant.SYMBOL_START)
         self.w2i[constant.SYMBOL_END] = 3

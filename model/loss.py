@@ -8,6 +8,7 @@ from tensorflow.python.ops import nn_ops
 
 import tensorflow as tf
 
+
 def sequence_loss(logits,
                   targets,
                   weights=None,

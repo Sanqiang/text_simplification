@@ -1,17 +1,17 @@
 from data_generator.data import Data
 from model.graph import Graph, get_graph_data
 from model.model_config import DefaultConfig
+from util import constant
 
 import tensorflow as tf
 import math
 
-
-def train(model_config=None):
+def eval(model_config=None):
     model_config = (DefaultConfig()
                     if model_config is None else model_config)
     data = Data(model_config.dataset_simple, model_config.dataset_complex,
                 model_config.vocab_simple, model_config.vocab_complex)
-    graph = Graph(data, True, model_config)
+    graph = Graph(data, False, model_config)
     graph.create_model()
 
     sv = tf.train.Supervisor(logdir=model_config.logdir,
@@ -24,15 +24,29 @@ def train(model_config=None):
                                     graph.sentence_complex_input_placeholder,
                                     model_config)
 
-        fetches = [graph.train_op, graph.loss, graph.global_step]
-        _, loss, step = sess.run(fetches, input_feed)
+        fetches = [graph.target, graph.loss, graph.global_step]
+        target, loss, step = sess.run(fetches, input_feed)
         perplexity = math.exp(loss)
         print('Perplexity:\t%f at step %d.' % (perplexity, step))
 
-        step += 1
-        if step % 10 == 0:
-            graph.saver.save(sess, model_config.outdir + '/model.ckpt-%d' % step)
+        #Decode
+        decode_results = decode(target, data.vocab_simple)
+        for decode_result in decode_results:
+            print(' '.join(decode_result))
+        print('====================================')
+
+def decode(target, voc):
+    target = list(target)
+    batch_size = len(target)
+    decode_results = []
+    for i in range(batch_size):
+        decode_result = list(map(voc.describe, target[i]))
+        if constant.SYMBOL_PAD in decode_result:
+            eos = decode_result.index(constant.SYMBOL_PAD)
+            decode_result = decode_result[:eos]
+        decode_results.append(decode_result)
+    return decode_results
 
 
 if __name__ == '__main__':
-    train()
+    eval()
