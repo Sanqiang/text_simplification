@@ -1,5 +1,5 @@
 class DefaultConfig():
-    batch_size = 2
+    batch_size = 5
     dimension = 512
     max_complex_sentence = 50
     max_simple_sentence = 50
@@ -8,7 +8,7 @@ class DefaultConfig():
     learning_rate = 0.001
     max_grad_staleness = 0.0
     max_grad_norm = 4.0
-    beam_search_size = 0
+    beam_search_size = 3
 
     dataset_simple = '../data/dummy_simple_dataset'
     dataset_complex = '../data/dummy_complex_dataset'

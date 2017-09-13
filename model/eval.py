@@ -24,8 +24,8 @@ def eval(model_config=None):
                                     graph.sentence_complex_input_placeholder,
                                     model_config)
 
-        fetches = [graph.target, graph.loss, graph.global_step]
-        target, loss, step = sess.run(fetches, input_feed)
+        fetches = [graph.target, graph.loss, graph.global_step, graph.test_var]
+        target, loss, step, test_var = sess.run(fetches, input_feed)
         perplexity = math.exp(loss)
         print('Perplexity:\t%f at step %d.' % (perplexity, step))
 

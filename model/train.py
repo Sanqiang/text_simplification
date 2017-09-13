@@ -30,7 +30,7 @@ def train(model_config=None):
         print('Perplexity:\t%f at step %d.' % (perplexity, step))
 
         step += 1
-        if step % 10 == 0:
+        if step % 50 == 0:
             graph.saver.save(sess, model_config.outdir + '/model.ckpt-%d' % step)
 
 
