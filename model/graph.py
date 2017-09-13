@@ -55,27 +55,114 @@ class Graph():
         self.is_train = is_train
         self.hparams = transformer.transformer_base()
 
-    def encoder(self, complex_input, complex_input_bias):
-        return transformer.transformer_encoder(complex_input,
-                                               complex_input_bias,
-                                               self.hparams)
+    def transformer_fn(self):
+        def decode_step(decode_input_list):
+            batch_go = [tf.zeros([self.model_config.batch_size, self.model_config.dimension])]
+            target_length = len(decode_input_list) + 1
+            decoder_emb_inputs = tf.stack(batch_go + decode_input_list, axis=1)
+            decoder_output = self.decode_inputs_to_outputs(decoder_emb_inputs, encoder_outputs, encoder_attn_bias)
+            decoder_output_list = [
+                tf.squeeze(d, 1)
+                for d in tf.split(decoder_output, target_length, axis=1)]
+            return decoder_output_list
 
-    def decoder(self, simple_input, encoder_output, simple_input_bias, complex_input_bias):
-        return transformer.transformer_decoder(simple_input,
-                                               encoder_output,
-                                               simple_input_bias,
-                                               complex_input_bias,
-                                               self.hparams)
+        encoder_embed_inputs = tf.stack(
+            self.embedding_fn(self.sentence_complex_input_placeholder, self.emb_complex), axis=1)
+        encoder_attn_bias = common_attention.attention_bias_ignore_padding(
+            tf.to_float(tf.equal(tf.stack(self.sentence_complex_input_placeholder, axis=1),
+                                 self.data.vocab_complex.encode(constant.SYMBOL_PAD))))
+        encoder_embed_inputs = common_attention.add_timing_signal_1d(encoder_embed_inputs)
 
-    def output(self, decoder, w, b):
-        with tf.variable_scope("output"):
+        with tf.variable_scope('transformer_encoder'):
+            encoder_embed_inputs = tf.nn.dropout(encoder_embed_inputs,
+                                                 1.0 - self.hparams.layer_prepostprocess_dropout)
+            encoder_outputs = transformer.transformer_encoder(encoder_embed_inputs, encoder_attn_bias, self.hparams)
 
-            output = tf.nn.conv1d(decoder, w, 1, 'SAME')
-            output = tf.add(output, b)
-        return output
+        with tf.variable_scope('transformer_decoder'):
+            decoder_embed_inputs = []
+            decoder_output_list = []
+            decoder_target_list = []
+            decoder_logit_list = []
+            if self.is_train and not self.model_config.train_with_hyp:
+                # General train
+                decoder_embed_inputs = self.embedding_fn(self.sentence_simple_input_placeholder[:-1], self.emb_simple)
+                decoder_output_list = decode_step(decoder_embed_inputs)
+                decoder_target_list = self.sentence_simple_input_placeholder
+                decoder_logit_list = [self.output_to_logit(o) for o in decoder_output_list]
+            elif self.is_train or self.model_config.beam_search_size <= 1:
+                # Greedy search
+                for step in range(self.model_config.max_simple_sentence):
+                    decoder_output_list = decode_step(decoder_embed_inputs)
+                    last_logits = self.output_to_logit(decoder_output_list[-1])
+
+                    last_outid = tf.cast(tf.argmax(last_logits, 1), tf.int32)
+                    decoder_target_list.append(last_outid)
+                    decoder_logit_list.append(last_logits)
+                    decoder_embed_inputs += self.embedding_fn([last_outid], self.emb_simple)
+            else:
+                # Beam Search
+                return self.transformer_beam_search(encoder_outputs, encoder_attn_bias)
+
+        return decoder_output_list,decoder_logit_list, decoder_target_list
+
+    def transformer_beam_search(self, encoder_outputs, encoder_attn_bias):
+        # Use Beam Search in evaluation stage
+        # Update [a, b, c] to [a, a, a, b, b, b, c, c, c] if beam_search_size == 3
+        encoder_outputs = tf.concat(
+            [tf.tile(tf.expand_dims(encoder_outputs[o, :, :], axis=0),
+                     [self.model_config.beam_search_size, 1, 1])
+             for o in range(self.model_config.batch_size)], axis=0)
+
+        encoder_attn_bias = tf.concat(
+            [tf.tile(tf.expand_dims(encoder_attn_bias[o, :, :, :], axis=0),
+                     [self.model_config.beam_search_size, 1, 1, 1])
+             for o in range(self.model_config.batch_size)], axis=0)
+
+        def symbol_to_logits_fn(ids):
+            embs = tf.nn.embedding_lookup(self.emb_simple, ids[:, 1:])
+            embs = tf.pad(embs, [[0, 0], [1, 0], [0, 0]])
+            decoder_outputs = self.decode_inputs_to_outputs(embs, encoder_outputs, encoder_attn_bias)
+            return self.output_to_logit(decoder_outputs[:, -1, :])
+
+        beam_ids, beam_score = beam_search.beam_search(symbol_to_logits_fn,
+                                                       tf.zeros([self.model_config.batch_size], tf.int32),
+                                                       self.model_config.beam_search_size,
+                                                       self.model_config.max_simple_sentence,
+                                                       len(self.data.vocab_simple.i2w),
+                                                       0.6,
+                                                       self.data.vocab_simple.encode(constant.SYMBOL_END))
+        top_beam_ids = beam_ids[:, 0, 1:]
+        top_beam_ids = tf.pad(top_beam_ids,
+                              [[0, 0],
+                               [0, self.model_config.max_simple_sentence - tf.shape(top_beam_ids)[1]]])
+        decoder_target_list = [tf.squeeze(d, 1)
+                       for d in tf.split(top_beam_ids, self.model_config.max_simple_sentence, axis=1)]
+        decoder_logit_list = -beam_score[:, 0] / tf.to_float(tf.shape(top_beam_ids)[1])
+        return None, decoder_logit_list, decoder_target_list
+
+    def embedding_fn(self, inputs, embedding):
+        if not inputs:
+            return []
+        else:
+            return [tf.nn.embedding_lookup(embedding, input) for input in inputs]
+
+    def output_to_logit(self, prev_out):
+        prev_logit = tf.add(tf.matmul(prev_out, self.w), self.b)
+        return prev_logit
+
+    def decode_inputs_to_outputs(self, decoder_embed_inputs, encoder_outputs, encoder_attn_bias):
+        decoder_embed_inputs = common_attention.add_timing_signal_1d(decoder_embed_inputs)
+        decoder_attn_bias = common_attention.attention_bias_lower_triangle(tf.shape(decoder_embed_inputs)[1])
+        decoder_embed_inputs = tf.nn.dropout(decoder_embed_inputs,
+                                      1.0 - self.hparams.layer_prepostprocess_dropout)
+        return transformer.transformer_decoder(decoder_embed_inputs,
+                                        encoder_outputs,
+                                        decoder_attn_bias,
+                                        encoder_attn_bias,
+                                        self.hparams)
 
     def create_model(self):
-        with tf.variable_scope("variables"):
+        with tf.variable_scope('variables'):
             self.sentence_simple_input_placeholder = []
             for step in range(self.model_config.max_simple_sentence):
                 self.sentence_simple_input_placeholder.append(tf.zeros(self.model_config.batch_size,
@@ -90,89 +177,26 @@ class Graph():
             self.emb_complex = Embedding(self.data.vocab_complex, self.model_config).get_embedding()
 
             initializer = tf.random_uniform_initializer(minval=-0.08, maxval=0.08)
-            w = tf.get_variable('output_w',
-                                shape=[1, self.model_config.dimension, len(self.data.vocab_simple.i2w)], initializer=initializer)
-            b = tf.get_variable('output_b',
-                                shape=[1,len(self.data.vocab_simple.i2w)], initializer=initializer)
-        with tf.variable_scope("inputs"):
-            # add <go> in the beginning of decoder
-            self.sentence_simple_input = tf.stack(self.sentence_simple_input_placeholder, axis=1)
-            simple_go = tf.reshape(tf.stack([self.data.vocab_simple.encode(constant.SYMBOL_GO)
-                                             for _ in range(self.model_config.batch_size)], axis=0),
-                                   [self.model_config.batch_size, -1])
-            self.sentence_simple_input = tf.concat([simple_go, self.sentence_simple_input], axis=1)
+            self.w = tf.get_variable('output_w',
+                                shape=[self.model_config.dimension, len(self.data.vocab_simple.i2w)], initializer=initializer)
+            self.b = tf.get_variable('output_b',
+                                shape=[len(self.data.vocab_simple.i2w)], initializer=initializer)
 
-            self.sentence_complex_input = tf.stack(self.sentence_complex_input_placeholder, axis=1)
 
-            simple_input = tf.nn.embedding_lookup(self.emb_simple, self.sentence_simple_input)
-            complex_input = tf.nn.embedding_lookup(self.emb_complex, self.sentence_complex_input)
-            simple_input = common_attention.add_timing_signal_1d(simple_input)
-            complex_input = common_attention.add_timing_signal_1d(complex_input)
+        with tf.variable_scope('transformer'):
+            decoder_output_list, decoder_logit_list, decoder_target_list = self.transformer_fn()
+            if not self.is_train and self.model_config.beam_search_size > 1:
+                # in beam search, decoder_logit_list is beam score
+                self.loss = tf.reduce_mean(decoder_logit_list)
+            else:
+                self.loss = sequence_loss(tf.stack(decoder_logit_list, axis=1),
+                                          tf.stack(decoder_target_list, axis=1))
 
-            simple_input_bias = common_attention.attention_bias_lower_triangle(tf.shape(simple_input)[1])
-            # simple_input_bias = common_attention.attention_bias_ignore_padding(
-            #     tf.to_float(tf.equal(self.sentence_simple_input, self.data.vocab_simple.encode(constant.SYMBOL_PAD))))
-            complex_input_bias = common_attention.attention_bias_ignore_padding(
-                tf.to_float(tf.equal(self.sentence_complex_input, self.data.vocab_complex.encode(constant.SYMBOL_PAD))))
-
-        with tf.variable_scope("transformer"):
+        with tf.variable_scope('optimization'):
             self.global_step = tf.get_variable('global_step',
                                                initializer=tf.constant(0, dtype=tf.int64), trainable=False)
-
-            encoder = self.encoder(complex_input, complex_input_bias)
-
-            if self.is_train:
-                decoder = self.decoder(simple_input, encoder, simple_input_bias, complex_input_bias)
-                output = self.output(decoder, w, b)
-                with tf.variable_scope('optimization'):
-                    self.increment_global_step = tf.assign_add(self.global_step, 1)
-                    self.loss = sequence_loss(output, self.sentence_simple_input)
-                    self.train_op = self.create_train_op()
-
-            else:
-                if self.model_config.beam_search_size <= 0:
-                    decoder = self.decoder(simple_input, encoder, simple_input_bias, complex_input_bias)
-                    output = self.output(decoder, w, b)
-                    self.target = tf.argmax(output, axis=-1)
-                    self.loss = sequence_loss(output, self.sentence_simple_input)
-                else:
-                    # Use Beam Search in evaluation stage
-                    # Update [a, b, c] to [a, a, a, b, b, b, c, c, c] if beam_search_size == 3
-                    complex_input = tf.concat(
-                        [tf.tile(tf.expand_dims(complex_input[o, :, :], axis=0),
-                                 [self.model_config.beam_search_size, 1, 1])
-                         for o in range(self.model_config.batch_size)], axis=0)
-
-                    complex_input_bias = tf.concat(
-                        [tf.tile(tf.expand_dims(complex_input_bias[o, :, :, :], axis=0),
-                                 [self.model_config.beam_search_size, 1, 1, 1])
-                         for o in range(self.model_config.batch_size)], axis=0)
-
-                    def beam_search_fn(ids):
-                        embs = tf.nn.embedding_lookup(self.emb_simple, ids[:, 1:])
-                        embs = tf.pad(embs, [[0, 0], [1, 0], [0, 0]])
-                        embs_bias = common_attention.attention_bias_lower_triangle(tf.shape(embs)[1])
-                        decoder = self.decoder(embs, complex_input, embs_bias, complex_input_bias)
-                        output = self.output(decoder, w, b)
-                        return output[:, -1, :]
-
-                    beam_ids, beam_score = beam_search.beam_search(beam_search_fn,
-                                                                   tf.zeros([self.model_config.batch_size], tf.int32),
-                                                                   self.model_config.beam_search_size,
-                                                                   self.model_config.max_simple_sentence,
-                                                                   len(self.data.vocab_simple.i2w),
-                                                                   0.6,
-                                                                   self.data.vocab_simple.encode(constant.SYMBOL_END))
-                    top_beam_ids = beam_ids[:, 0, 1:]
-                    self.test_var = beam_ids
-                    top_beam_ids = tf.pad(top_beam_ids,
-                                          [[0, 0],
-                                           [0, self.model_config.max_simple_sentence - tf.shape(top_beam_ids)[1]]])
-                    self.target = [tf.squeeze(d, 1)
-                                   for d in tf.split(top_beam_ids, self.model_config.max_simple_sentence, axis=1)]
-                    # TODO(sanqiang) fix beam search loss
-                    self.loss = tf.ones([1]) # -beam_score[:, 0] / tf.to_float(tf.shape(top_beam_ids)[1])
-
+            self.increment_global_step = tf.assign_add(self.global_step, 1)
+            self.train_op = self.create_train_op()
             self.saver = tf.train.Saver(write_version=tf.train.SaverDef.V2)
 
     def create_train_op(self):

@@ -9,6 +9,7 @@ class DefaultConfig():
     max_grad_staleness = 0.0
     max_grad_norm = 4.0
     beam_search_size = 3
+    train_with_hyp = 0
 
     dataset_simple = '../data/dummy_simple_dataset'
     dataset_complex = '../data/dummy_complex_dataset'
