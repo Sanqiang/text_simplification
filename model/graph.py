@@ -8,16 +8,15 @@ from tensor2tensor.layers import common_attention
 from tensor2tensor.models import transformer
 from tensor2tensor.utils import beam_search
 
+
 def get_graph_data(data,
                    sentence_simple_input,
                    sentence_complex_input,
-                   model_config=None):
+                   model_config):
     input_feed = {}
-    model_config = (DefaultConfig()
-                    if model_config is None else model_config)
     voc = Vocab()
 
-    tmp_sentence_simple, tmp_sentence_complex = [],[]
+    tmp_sentence_simple, tmp_sentence_complex = [], []
     for i in range(model_config.batch_size):
         sentence_simple, sentence_complex = data.get_data_sample()
 
@@ -46,7 +45,8 @@ def get_graph_data(data,
 
     return input_feed
 
-class Graph():
+
+class Graph:
     def __init__(self, data, is_train, model_config):
         self.model_config = model_config
         self.data = data
@@ -85,27 +85,30 @@ class Graph():
             decoder_logit_list = []
             if self.is_train and not self.model_config.train_with_hyp:
                 # General train
+                print('Use Generally Train.')
                 decoder_embed_inputs = self.embedding_fn(self.sentence_simple_input_placeholder[:-1], self.emb_simple)
                 decoder_output_list = decode_step(decoder_embed_inputs)
                 decoder_target_list = self.sentence_simple_input_placeholder
                 decoder_logit_list = [self.output_to_logit(o) for o in decoder_output_list]
-            elif self.is_train or self.model_config.beam_search_size <= 1:
-                # Greedy search Need Fix?
+            elif (self.is_train and self.model_config.train_with_hyp) or self.model_config.beam_search_size <= 1:
+                # Greedy search
+                print('Use Greedy Search.')
                 for step in range(self.model_config.max_simple_sentence):
                     if step > 0:
                         tf.get_variable_scope().reuse_variables()
+
                     decoder_output_list = decode_step(decoder_embed_inputs)
                     last_logits = self.output_to_logit(decoder_output_list[-1])
-
                     last_outid = tf.cast(tf.argmax(last_logits, 1), tf.int32)
-                    decoder_target_list.append(last_outid)
+                    decoder_target_list.append(self.sentence_simple_input_placeholder[step])
                     decoder_logit_list.append(last_logits)
                     decoder_embed_inputs += self.embedding_fn([last_outid], self.emb_simple)
             else:
                 # Beam Search
+                print('Use Beam Search with Beam Search Size %d.' % self.model_config.beam_search_size)
                 return self.transformer_beam_search(encoder_outputs, encoder_attn_bias)
 
-        return decoder_output_list,decoder_logit_list, decoder_target_list
+        return decoder_output_list, decoder_logit_list, decoder_target_list
 
     def transformer_beam_search(self, encoder_outputs, encoder_attn_bias):
         # Use Beam Search in evaluation stage
@@ -138,9 +141,8 @@ class Graph():
                               [[0, 0],
                                [0, self.model_config.max_simple_sentence - tf.shape(top_beam_ids)[1]]])
         decoder_target_list = [tf.squeeze(d, 1)
-                       for d in tf.split(top_beam_ids, self.model_config.max_simple_sentence, axis=1)]
+                               for d in tf.split(top_beam_ids, self.model_config.max_simple_sentence, axis=1)]
         decoder_logit_list = -beam_score[:, 0] / tf.to_float(tf.shape(top_beam_ids)[1])
-        print('Use Beam Search with Beam Search Size %d.' % self.model_config.beam_search_size)
         return None, decoder_logit_list, decoder_target_list
 
     def embedding_fn(self, inputs, embedding):
@@ -188,9 +190,9 @@ class Graph():
 
             initializer = tf.random_uniform_initializer(minval=-0.08, maxval=0.08)
             self.w = tf.get_variable('output_w',
-                                shape=[self.model_config.dimension, len(self.data.vocab_simple.i2w)], initializer=initializer)
+                                     shape=[self.model_config.dimension, len(self.data.vocab_simple.i2w)], initializer=initializer)
             self.b = tf.get_variable('output_b',
-                                shape=[len(self.data.vocab_simple.i2w)], initializer=initializer)
+                                     shape=[len(self.data.vocab_simple.i2w)], initializer=initializer)
 
 
         with tf.variable_scope('transformer'):

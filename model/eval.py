@@ -17,7 +17,7 @@ def eval(model_config=None):
     sv = tf.train.Supervisor(logdir=model_config.logdir,
                              global_step=graph.global_step,
                              saver=graph.saver)
-    sess = sv.PrepareSession(master='')
+    sess = sv.PrepareSession()
     while True:
         input_feed = get_graph_data(data,
                                     graph.sentence_simple_input_placeholder,
@@ -29,11 +29,16 @@ def eval(model_config=None):
         perplexity = math.exp(loss)
         print('Perplexity:\t%f at step %d.' % (perplexity, step))
 
-        #Decode
-        decode_results = decode(target, data.vocab_simple)
-        for decode_result in decode_results:
-            print(' '.join(decode_result))
-        print('====================================')
+        # Decode
+        print_decode(target, data)
+
+
+def print_decode(target, data):
+    decode_results = decode(target, data.vocab_simple)
+    for decode_result in decode_results:
+        print(' '.join(decode_result))
+    print('====================================')
+
 
 def decode(target, voc):
     target = list(target)

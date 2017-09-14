@@ -21,9 +21,9 @@ class DefaultConfig():
     outdir = '../../tmp'
 
 class DefaultTrainConfig(DefaultConfig):
-    beam_search_size = -1
-    train_with_hyp = False
+    beam_search_size = 1
+    train_with_hyp = True
 
 class DefaultTestConfig(DefaultConfig):
-    beam_search_size = 5
+    beam_search_size = 1
 

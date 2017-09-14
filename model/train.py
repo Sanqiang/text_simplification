@@ -17,7 +17,7 @@ def train(model_config=None):
     sv = tf.train.Supervisor(logdir=model_config.logdir,
                              global_step=graph.global_step,
                              saver=graph.saver)
-    sess = sv.PrepareSession(master='')
+    sess = sv.PrepareSession()
     while True:
         input_feed = get_graph_data(data,
                                     graph.sentence_simple_input_placeholder,
