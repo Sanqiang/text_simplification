@@ -4,9 +4,8 @@ import tensorflow as tf
 import math
 
 class Embedding:
-    def __init__(self, voc, model_config=None):
-        self.model_config = (DefaultConfig()
-                             if model_config is None else model_config)
+    def __init__(self, voc, model_config):
+        self.model_config = model_config
         self.voc = voc
 
     def get_embedding(self):

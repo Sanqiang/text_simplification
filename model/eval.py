@@ -1,6 +1,6 @@
 from data_generator.data import Data
 from model.graph import Graph, get_graph_data
-from model.model_config import DefaultConfig
+from model.model_config import DefaultConfig, DefaultTestConfig
 from util import constant
 
 import tensorflow as tf
@@ -24,8 +24,8 @@ def eval(model_config=None):
                                     graph.sentence_complex_input_placeholder,
                                     model_config)
 
-        fetches = [graph.target, graph.loss, graph.global_step, graph.test_var]
-        target, loss, step, test_var = sess.run(fetches, input_feed)
+        fetches = [graph.decoder_target_list, graph.loss, graph.global_step]
+        target, loss, step = sess.run(fetches, input_feed)
         perplexity = math.exp(loss)
         print('Perplexity:\t%f at step %d.' % (perplexity, step))
 
@@ -49,4 +49,4 @@ def decode(target, voc):
 
 
 if __name__ == '__main__':
-    eval()
+    eval(DefaultTestConfig())

@@ -1,6 +1,6 @@
 from data_generator.data import Data
 from model.graph import Graph, get_graph_data
-from model.model_config import DefaultConfig
+from model.model_config import DefaultConfig, DefaultTrainConfig
 
 import tensorflow as tf
 import math
@@ -30,9 +30,9 @@ def train(model_config=None):
         print('Perplexity:\t%f at step %d.' % (perplexity, step))
 
         step += 1
-        if step % 50 == 0:
+        if step % model_config.model_save_freq == 0:
             graph.saver.save(sess, model_config.outdir + '/model.ckpt-%d' % step)
 
 
 if __name__ == '__main__':
-    train()
+    train(DefaultTrainConfig())

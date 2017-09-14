@@ -1,4 +1,3 @@
-from model.model_config import DefaultConfig
 from model.embedding import Embedding
 from model.loss import sequence_loss
 from data_generator.vocab import Vocab
@@ -48,12 +47,13 @@ def get_graph_data(data,
     return input_feed
 
 class Graph():
-    def __init__(self, data, is_train, model_config=None):
-        self.model_config = (DefaultConfig()
-                             if model_config is None else model_config)
+    def __init__(self, data, is_train, model_config):
+        self.model_config = model_config
         self.data = data
         self.is_train = is_train
         self.hparams = transformer.transformer_base()
+        self.setup_hparams()
+
 
     def transformer_fn(self):
         def decode_step(decode_input_list):
@@ -90,8 +90,10 @@ class Graph():
                 decoder_target_list = self.sentence_simple_input_placeholder
                 decoder_logit_list = [self.output_to_logit(o) for o in decoder_output_list]
             elif self.is_train or self.model_config.beam_search_size <= 1:
-                # Greedy search
+                # Greedy search Need Fix?
                 for step in range(self.model_config.max_simple_sentence):
+                    if step > 0:
+                        tf.get_variable_scope().reuse_variables()
                     decoder_output_list = decode_step(decoder_embed_inputs)
                     last_logits = self.output_to_logit(decoder_output_list[-1])
 
@@ -138,6 +140,7 @@ class Graph():
         decoder_target_list = [tf.squeeze(d, 1)
                        for d in tf.split(top_beam_ids, self.model_config.max_simple_sentence, axis=1)]
         decoder_logit_list = -beam_score[:, 0] / tf.to_float(tf.shape(top_beam_ids)[1])
+        print('Use Beam Search with Beam Search Size %d.' % self.model_config.beam_search_size)
         return None, decoder_logit_list, decoder_target_list
 
     def embedding_fn(self, inputs, embedding):
@@ -160,6 +163,13 @@ class Graph():
                                         decoder_attn_bias,
                                         encoder_attn_bias,
                                         self.hparams)
+
+    def setup_hparams(self):
+        self.hparams.hidden_size = self.model_config.dimension
+        if self.is_train:
+            self.hparams.add_hparam('mode', tf.estimator.ModeKeys.TRAIN)
+        else:
+            self.hparams.add_hparam('mode', tf.estimator.ModeKeys.EVAL)
 
     def create_model(self):
         with tf.variable_scope('variables'):
@@ -185,6 +195,7 @@ class Graph():
 
         with tf.variable_scope('transformer'):
             decoder_output_list, decoder_logit_list, decoder_target_list = self.transformer_fn()
+            self.decoder_target_list = tf.stack(decoder_target_list, axis=-1)
             if not self.is_train and self.model_config.beam_search_size > 1:
                 # in beam search, decoder_logit_list is beam score
                 self.loss = tf.reduce_mean(decoder_logit_list)
@@ -195,8 +206,11 @@ class Graph():
         with tf.variable_scope('optimization'):
             self.global_step = tf.get_variable('global_step',
                                                initializer=tf.constant(0, dtype=tf.int64), trainable=False)
-            self.increment_global_step = tf.assign_add(self.global_step, 1)
-            self.train_op = self.create_train_op()
+
+            if self.is_train:
+                self.increment_global_step = tf.assign_add(self.global_step, 1)
+                self.train_op = self.create_train_op()
+
             self.saver = tf.train.Saver(write_version=tf.train.SaverDef.V2)
 
     def create_train_op(self):
