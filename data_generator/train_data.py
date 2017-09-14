@@ -5,7 +5,8 @@ from data_generator.vocab import Vocab
 from nltk import word_tokenize
 from util import constant
 
-class Data:
+
+class TrainData:
     def __init__(self, data_simple_path, data_complex_path, vocab_simple_path, vocab_complex_path):
         self.vocab_simple = Vocab(vocab_simple_path)
         self.vocab_complex = Vocab(vocab_complex_path)
@@ -30,4 +31,11 @@ class Data:
     def get_data_sample(self):
         i = rd.sample(range(self.size), 1)[0]
         return cp.deepcopy(self.data_simple[i]), cp.deepcopy(self.data_complex[i])
+
+    def get_data_iter(self):
+        i = 0
+        while True:
+            yield cp.deepcopy(self.data_simple[i]), cp.deepcopy(self.data_complex[i])
+            if i == len(self.data):
+                return None
 

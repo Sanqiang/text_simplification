@@ -1,49 +1,11 @@
 from model.embedding import Embedding
 from model.loss import sequence_loss
-from data_generator.vocab import Vocab
 from util import constant
 
 import tensorflow as tf
 from tensor2tensor.layers import common_attention
 from tensor2tensor.models import transformer
 from tensor2tensor.utils import beam_search
-
-
-def get_graph_data(data,
-                   sentence_simple_input,
-                   sentence_complex_input,
-                   model_config):
-    input_feed = {}
-    voc = Vocab()
-
-    tmp_sentence_simple, tmp_sentence_complex = [], []
-    for i in range(model_config.batch_size):
-        sentence_simple, sentence_complex = data.get_data_sample()
-
-        # PAD <s>, </s>, <pad>, <go>
-        if len(sentence_simple) < model_config.max_simple_sentence:
-            num_pad = model_config.max_simple_sentence - len(sentence_simple)
-            sentence_simple.extend(num_pad * [voc.encode(constant.SYMBOL_PAD)])
-        else:
-            sentence_simple = sentence_simple[:model_config.max_simple_sentence]
-
-        if len(sentence_complex) < model_config.max_complex_sentence:
-            num_pad = model_config.max_complex_sentence - len(sentence_complex)
-            sentence_complex.extend(num_pad * [voc.encode(constant.SYMBOL_PAD)])
-        else:
-            sentence_complex = sentence_complex[:model_config.max_complex_sentence]
-
-        tmp_sentence_simple.append(sentence_simple)
-        tmp_sentence_complex.append(sentence_complex)
-
-    for step in range(model_config.max_simple_sentence):
-        input_feed[sentence_simple_input[step].name] = [tmp_sentence_simple[batch_idx][step]
-                                                        for batch_idx in range(model_config.batch_size)]
-    for step in range(model_config.max_complex_sentence):
-        input_feed[sentence_complex_input[step].name] = [tmp_sentence_complex[batch_idx][step]
-                                                         for batch_idx in range(model_config.batch_size)]
-
-    return input_feed
 
 
 class Graph:
@@ -53,7 +15,6 @@ class Graph:
         self.is_train = is_train
         self.hparams = transformer.transformer_base()
         self.setup_hparams()
-
 
     def transformer_fn(self):
         def decode_step(decode_input_list):
@@ -149,7 +110,7 @@ class Graph:
         if not inputs:
             return []
         else:
-            return [tf.nn.embedding_lookup(embedding, input) for input in inputs]
+            return [tf.nn.embedding_lookup(embedding, inp) for inp in inputs]
 
     def output_to_logit(self, prev_out):
         prev_logit = tf.add(tf.matmul(prev_out, self.w), self.b)
@@ -159,12 +120,12 @@ class Graph:
         decoder_embed_inputs = common_attention.add_timing_signal_1d(decoder_embed_inputs)
         decoder_attn_bias = common_attention.attention_bias_lower_triangle(tf.shape(decoder_embed_inputs)[1])
         decoder_embed_inputs = tf.nn.dropout(decoder_embed_inputs,
-                                      1.0 - self.hparams.layer_prepostprocess_dropout)
+                                             1.0 - self.hparams.layer_prepostprocess_dropout)
         return transformer.transformer_decoder(decoder_embed_inputs,
-                                        encoder_outputs,
-                                        decoder_attn_bias,
-                                        encoder_attn_bias,
-                                        self.hparams)
+                                               encoder_outputs,
+                                               decoder_attn_bias,
+                                               encoder_attn_bias,
+                                               self.hparams)
 
     def setup_hparams(self):
         self.hparams.hidden_size = self.model_config.dimension
@@ -178,12 +139,12 @@ class Graph:
             self.sentence_simple_input_placeholder = []
             for step in range(self.model_config.max_simple_sentence):
                 self.sentence_simple_input_placeholder.append(tf.zeros(self.model_config.batch_size,
-                                                           tf.int32, name='simple_input'))
+                                                                       tf.int32, name='simple_input'))
 
             self.sentence_complex_input_placeholder = []
             for step in range(self.model_config.max_complex_sentence):
                 self.sentence_complex_input_placeholder.append(tf.zeros(self.model_config.batch_size,
-                                                            tf.int32, name='simple_input'))
+                                                                        tf.int32, name='simple_input'))
 
             self.emb_simple = Embedding(self.data.vocab_simple, self.model_config).get_embedding()
             self.emb_complex = Embedding(self.data.vocab_complex, self.model_config).get_embedding()
@@ -193,7 +154,6 @@ class Graph:
                                      shape=[self.model_config.dimension, len(self.data.vocab_simple.i2w)], initializer=initializer)
             self.b = tf.get_variable('output_b',
                                      shape=[len(self.data.vocab_simple.i2w)], initializer=initializer)
-
 
         with tf.variable_scope('transformer'):
             decoder_output_list, decoder_logit_list, decoder_target_list = self.transformer_fn()
@@ -214,6 +174,7 @@ class Graph:
                 self.train_op = self.create_train_op()
 
             self.saver = tf.train.Saver(write_version=tf.train.SaverDef.V2)
+        print('Graph Built.')
 
     def create_train_op(self):
         if self.model_config.optimizer == 'adagrad':
@@ -232,12 +193,3 @@ class Graph:
         clipped_grads, _ = tf.clip_by_global_norm(grads, self.model_config.max_grad_norm)
 
         return opt.apply_gradients(zip(clipped_grads, tf.trainable_variables()), global_step=self.global_step)
-
-
-if __name__ == '__main__':
-    from data_generator.data import Data
-    data = Data('../data/dummy_simple_dataset', '../data/dummy_complex_dataset',
-                '../data/dummy_simple_vocab', '../data/dummy_complex_vocab')
-    # get_graph_data(data, None, None)
-    graph = Graph(data)
-    graph.create_model()

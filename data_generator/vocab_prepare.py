@@ -1,3 +1,5 @@
+"""Prepare the vocabulary list file for model training and validation.
+   Note the file is independet with model."""
 from collections import Counter
 
 from data_generator.vocab import Vocab
