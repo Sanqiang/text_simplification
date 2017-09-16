@@ -21,7 +21,8 @@ class Graph:
             batch_go = [tf.zeros([self.model_config.batch_size, self.model_config.dimension])]
             target_length = len(decode_input_list) + 1
             decoder_emb_inputs = tf.stack(batch_go + decode_input_list, axis=1)
-            decoder_output = self.decode_inputs_to_outputs(decoder_emb_inputs, encoder_outputs, encoder_attn_bias)
+            decoder_output = self.decode_inputs_to_outputs(
+                decoder_emb_inputs, encoder_outputs, encoder_attn_bias)
             decoder_output_list = [
                 tf.squeeze(d, 1)
                 for d in tf.split(decoder_output, target_length, axis=1)]
@@ -37,21 +38,23 @@ class Graph:
         with tf.variable_scope('transformer_encoder'):
             encoder_embed_inputs = tf.nn.dropout(encoder_embed_inputs,
                                                  1.0 - self.hparams.layer_prepostprocess_dropout)
-            encoder_outputs = transformer.transformer_encoder(encoder_embed_inputs, encoder_attn_bias, self.hparams)
+            encoder_outputs = transformer.transformer_encoder(
+                encoder_embed_inputs, encoder_attn_bias, self.hparams)
 
         with tf.variable_scope('transformer_decoder'):
             decoder_embed_inputs = []
             decoder_output_list = []
             decoder_target_list = []
             decoder_logit_list = []
-            if self.is_train and not self.model_config.train_with_hyp:
+            if not self.model_config.train_with_hyp and self.model_config.beam_search_size < 1:
                 # General train
                 print('Use Generally Train.')
-                decoder_embed_inputs = self.embedding_fn(self.sentence_simple_input_placeholder[:-1], self.emb_simple)
+                decoder_embed_inputs = self.embedding_fn(
+                    self.sentence_simple_input_placeholder[:-1], self.emb_simple)
                 decoder_output_list = decode_step(decoder_embed_inputs)
                 decoder_target_list = self.sentence_simple_input_placeholder
                 decoder_logit_list = [self.output_to_logit(o) for o in decoder_output_list]
-            elif (self.is_train and self.model_config.train_with_hyp) or self.model_config.beam_search_size <= 1:
+            elif self.model_config.train_with_hyp or self.model_config.beam_search_size <= 1:
                 # Greedy search
                 print('Use Greedy Search.')
                 for step in range(self.model_config.max_simple_sentence):

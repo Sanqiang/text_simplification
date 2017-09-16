@@ -1,11 +1,13 @@
 from data_generator.train_data import TrainData
 from model.graph import Graph
-from model.model_config import DefaultConfig, DefaultTrainConfig
+from model.model_config import DefaultConfig, DefaultTrainConfig, WikiDressLargeTrainConfig
 from data_generator.vocab import Vocab
+from util import session
 from util import constant
 
 import tensorflow as tf
 import math
+from model.eval import decode_to_output
 
 
 def get_graph_train_data(data,
@@ -13,7 +15,7 @@ def get_graph_train_data(data,
                    sentence_complex_input,
                    model_config):
     input_feed = {}
-    voc = Vocab()
+    voc = Vocab(model_config)
 
     tmp_sentence_simple, tmp_sentence_complex = [], []
     for i in range(model_config.batch_size):
@@ -48,7 +50,7 @@ def get_graph_train_data(data,
 def train(model_config=None):
     model_config = (DefaultConfig()
                     if model_config is None else model_config)
-    data = TrainData(model_config.train_dataset_simple, model_config.train_dataset_complex,
+    data = TrainData(model_config, model_config.train_dataset_simple, model_config.train_dataset_complex,
                      model_config.vocab_simple, model_config.vocab_complex)
     graph = Graph(data, True, model_config)
     graph.create_model()
@@ -56,22 +58,24 @@ def train(model_config=None):
     sv = tf.train.Supervisor(logdir=model_config.logdir,
                              global_step=graph.global_step,
                              saver=graph.saver)
-    sess = sv.PrepareSession()
+    sess = sv.PrepareSession(config=session.get_session_config(model_config))
     while True:
         input_feed = get_graph_train_data(data,
                                     graph.sentence_simple_input_placeholder,
                                     graph.sentence_complex_input_placeholder,
                                     model_config)
 
-        fetches = [graph.train_op, graph.loss, graph.global_step]
-        _, loss, step = sess.run(fetches, input_feed)
+        fetches = [graph.train_op, graph.loss, graph.global_step, graph.decoder_target_list]
+        _, loss, step, result = sess.run(fetches, input_feed)
         perplexity = math.exp(loss)
         print('Perplexity:\t%f at step %d.' % (perplexity, step))
 
-        step += 1
         if step % model_config.model_save_freq == 0:
             graph.saver.save(sess, model_config.outdir + '/model.ckpt-%d' % step)
+            # f = open(model_config.outdir + '/output_model.ckpt-%d' % step, 'w')
+            # f.write(decode_output(result, data))
+            # f.flush()
 
 
 if __name__ == '__main__':
-    train(DefaultTrainConfig())
+    train(WikiDressLargeTrainConfig())

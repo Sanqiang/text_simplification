@@ -3,22 +3,26 @@
 from collections import Counter
 
 from data_generator.vocab import Vocab
-from data_generator.vocab_config import DefaultConfig
+from model.model_config import WikiDressLargeDefault
 
 from nltk import word_tokenize
 
 class VocabPrepare:
-    def __init__(self, data_file, output, voc_config=None):
+    def __init__(self, data_file, output, model_config):
         self.data_file = data_file
         self.output = output
-        self.voc_config = (DefaultConfig()
-                           if voc_config is None else voc_config)
+        self.model_config = model_config
 
     def prepare_vocab(self):
         c = Counter()
-        for line in open(self.data_file):
-            words = word_tokenize(line)
-            words = [Vocab.process_word(word)
+        for line in open(self.data_file, encoding='utf-8'):
+            if self.model_config.tokenizer == 'split':
+                words = line.split()
+            elif self.model_config.tokenizer == 'nltk':
+                words = word_tokenize(line)
+            else:
+                raise Exception('Unknown tokenizer.')
+            words = [Vocab.process_word(word, self.model_config)
                      for word in words]
             c.update(words)
 
@@ -31,10 +35,15 @@ class VocabPrepare:
             writer.write(str(cnt))
             writer.write('\n')
         writer.close()
+        print('Processed vocab with size %d' % len(c))
 
 
 if __name__ == '__main__':
-    voc = VocabPrepare('../data/dummy_complex_dataset', '../data/dummy_complex_vocab')
+    voc = VocabPrepare('../../text_simplification_data/train/dress/wikilarge/wiki.full.aner.train.src',
+                       '../../text_simplification_data/train/dress/wikilarge/wiki.full.aner.train.src.vocab',
+                       WikiDressLargeDefault())
     voc.prepare_vocab()
-    voc = VocabPrepare('../data/dummy_simple_dataset', '../data/dummy_simple_vocab')
+    voc = VocabPrepare('../../text_simplification_data/train/dress/wikilarge/wiki.full.aner.train.dst',
+                       '../../text_simplification_data/train/dress/wikilarge/wiki.full.aner.train.dst.vocab',
+                       WikiDressLargeDefault())
     voc.prepare_vocab()

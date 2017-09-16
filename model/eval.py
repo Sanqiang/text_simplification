@@ -1,33 +1,35 @@
 from data_generator.val_data import ValData
 from model.graph import Graph
-from model.model_config import DefaultConfig, DefaultTestConfig
+from model.model_config import DefaultConfig, DefaultTestConfig, WikiDressLargeTestConfig
 from data_generator.vocab import Vocab
 from util import constant
+from util import session
 from util.checkpoint import copy_ckpt_to_modeldir
 
 from nltk.translate.bleu_score import sentence_bleu
 import tensorflow as tf
 import math
 import numpy as np
+import time
 
 
-def get_graph_val_data(data,
-                       sentence_simple_input,
+def get_graph_val_data(sentence_simple_input,
                        sentence_complex_input,
-                       model_config):
+                       model_config, it):
     input_feed = {}
-    voc = Vocab()
+    voc = Vocab(model_config)
 
     tmp_sentence_simple, tmp_sentence_complex = [], []
     tmp_ref = [[] for _ in range(model_config.num_refs)]
     for i in range(model_config.batch_size):
-        sentence_simple, sentence_complex, ref = next(data.get_data_iter())
+        sentence_simple, sentence_complex, ref = next(it)
         if sentence_simple is None:
             # End of data set
-            return None
+            return None, None, None
+        sentence_simple = [voc.encode(constant.SYMBOL_GO)]
 
         for i_ref in range(model_config.num_refs):
-            tmp_ref[i_ref].append(ref[i])
+            tmp_ref[i_ref].append(ref[i_ref])
 
         # PAD zeros
         if len(sentence_simple) < model_config.max_simple_sentence:
@@ -58,60 +60,81 @@ def get_graph_val_data(data,
 def eval(model_config=None):
     model_config = (DefaultConfig()
                     if model_config is None else model_config)
-    val_data = ValData(model_config.vocab_simple, model_config.vocab_complex, model_config)
+    val_data = ValData(model_config, model_config.vocab_simple, model_config.vocab_complex)
     graph = Graph(val_data, False, model_config)
     graph.create_model()
 
     while True:
-        ibleu = []
-        perplexity = []
+        ibleus= []
+        perplexitys = []
+        decode_outputs = []
+        it = val_data.get_data_iter()
 
-        def init_supervisor(sess):
-            ckpt = copy_ckpt_to_modeldir(model_config)
-            graph.saver.restore(sess, ckpt)
+        def init_fn(session):
+            while True:
+                try:
+                    ckpt = copy_ckpt_to_modeldir(model_config)
+                    graph.saver.restore(session, ckpt)
+                    break
+                except FileNotFoundError as exp:
+                    print(str(exp) + '\nWait for 1 minutes.')
+                    time.sleep(60)
             print('Restore ckpt:%s.' % ckpt)
 
-        sv = tf.train.Supervisor(logdir=model_config.logdir,
-                                 init_op=init_supervisor)
-        sess = sv.PrepareSession()
+        sv = tf.train.Supervisor(init_fn=init_fn)
+        sess = sv.PrepareSession(config=session.get_session_config(model_config))
         while True:
-            input_feed, sentence_simple, ref = get_graph_val_data(val_data,
-                                                                  graph.sentence_simple_input_placeholder,
-                                                                  graph.sentence_complex_input_placeholder,
-                                                                  model_config)
+            input_feed, sentence_simple, ref = get_graph_val_data(
+                graph.sentence_simple_input_placeholder,
+                graph.sentence_complex_input_placeholder,
+                model_config, it)
+
             if input_feed is None:
                 break
 
             fetches = [graph.decoder_target_list, graph.loss, graph.global_step]
             target, loss, step = sess.run(fetches, input_feed)
             batch_perplexity = math.exp(loss)
-            perplexity.append(batch_perplexity)
+            perplexitys.append(batch_perplexity)
 
+            target_output = decode_to_output(target, val_data)
             target = decode(target, val_data.vocab_simple)
             sentence_simple = decode(sentence_simple, val_data.vocab_simple)
             for ref_i in range(model_config.num_refs):
                 ref[ref_i] = decode(ref[ref_i], val_data.vocab_simple)
 
-            # Print decode result
-            # print(decode_output(target, data))
-
             for batch_i in range(model_config.batch_size):
                 # Compute iBLEU
+                batch_bleu_i = sentence_bleu(target[batch_i], sentence_simple[batch_i])
                 batch_bleu_rs = []
                 for ref_i in range(model_config.num_refs):
                     batch_bleu_rs.append(
                         sentence_bleu(target[batch_i], ref[ref_i][batch_i]))
-                batch_bleu_r = np.mean(batch_bleu_rs)
-                batch_bleu_i = sentence_bleu(target[batch_i], sentence_simple[batch_i])
-                batch_ibleu = batch_bleu_r * 0.9 + batch_bleu_i * 0.1
-                ibleu.append(batch_ibleu)
+                if len(batch_bleu_rs) > 0:
+                    batch_bleu_r = np.mean(batch_bleu_rs)
+                    batch_ibleu = batch_bleu_r * 0.9 + batch_bleu_i * 0.1
+                else:
+                    batch_ibleu = batch_bleu_i
+                ibleus.append(batch_ibleu)
+                # print('Batch iBLEU: \t%f.' % batch_ibleu)
+                decode_outputs.append(target_output)
 
-        print('Current iBLEU: \t%f' % np.mean(ibleu))
-        print('Current perplexity: \t%f' % np.mean(perplexity))
+        ibleu = np.mean(ibleus)
+        perplexity = np.mean(perplexitys)
+        print('Current iBLEU: \t%f' % ibleu)
+        print('Current perplexity: \t%f' % perplexity)
         print('Current eval done!')
+        f = open(model_config.modeldir + '/ibleu' + str(ibleu), 'w')
+        f.write(str(ibleu))
+        f.write('\t')
+        f.write(str(perplexity))
+        f.flush()
+        f = open(model_config.modeldir + '/ibleu' + str(ibleu) + '.result', 'w')
+        f.write('\n'.join(decode_outputs))
+        f.flush()
 
 
-def decode_output(target, data):
+def decode_to_output(target, data):
     output = ''
     decode_results = decode(target, data.vocab_simple)
     for decode_result in decode_results:
@@ -128,9 +151,13 @@ def decode(target, voc):
         if constant.SYMBOL_PAD in decode_result:
             eos = decode_result.index(constant.SYMBOL_PAD)
             decode_result = decode_result[:eos]
+        if decode_result[0] == constant.SYMBOL_START:
+            decode_result = decode_result[1:]
+        if decode_result[-1] == constant.SYMBOL_END:
+            decode_result = decode_result[:-1]
         decode_results.append(decode_result)
     return decode_results
 
 
 if __name__ == '__main__':
-    eval(DefaultTestConfig())
+    eval(WikiDressLargeTestConfig())

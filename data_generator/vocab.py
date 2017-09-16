@@ -1,11 +1,9 @@
-from data_generator.vocab_config import DefaultConfig
 from util import constant
 
 
 class Vocab:
-    def __init__(self, vocab_path=None, voc_config=None):
-        self.voc_config = (DefaultConfig()
-                           if voc_config is None else voc_config)
+    def __init__(self, model_config, vocab_path=None):
+        self.model_config = model_config
         self.vocab_path = vocab_path
         self.init_vocab()
         if vocab_path is not None:
@@ -14,25 +12,26 @@ class Vocab:
     def init_vocab(self):
         self.w2i = {}
         self.i2w = []
-        self.w2i[constant.SYMBOL_PAD] = 0
-        self.i2w.append(constant.SYMBOL_PAD)
-        self.w2i[constant.SYMBOL_UNK] = 1
-        self.i2w.append(constant.SYMBOL_UNK)
-        self.w2i[constant.SYMBOL_START] = 2
-        self.i2w.append(constant.SYMBOL_START)
-        self.w2i[constant.SYMBOL_END] = 3
-        self.i2w.append(constant.SYMBOL_END)
-        self.w2i[constant.SYMBOL_GO] = 4
+        self.w2i[constant.SYMBOL_GO] = 0
         self.i2w.append(constant.SYMBOL_GO)
+        self.w2i[constant.SYMBOL_PAD] = 1
+        self.i2w.append(constant.SYMBOL_PAD)
+        self.w2i[constant.SYMBOL_UNK] = 2
+        self.i2w.append(constant.SYMBOL_UNK)
+        self.w2i[constant.SYMBOL_START] = 3
+        self.i2w.append(constant.SYMBOL_START)
+        self.w2i[constant.SYMBOL_END] = 4
+        self.i2w.append(constant.SYMBOL_END)
 
-    def populate_vocab(self, mincount=-1):
-        mincount = max(mincount, self.voc_config.min_count)
         for i in range(len(self.i2w), constant.REVERED_VOCAB_SIZE):
             reserved_vocab = 'REVERED_%i' % i
             self.w2i[reserved_vocab] = i
             self.i2w.append(reserved_vocab)
 
-        for line in open(self.vocab_path):
+    def populate_vocab(self, mincount=-1):
+        mincount = max(mincount, self.model_config.min_count)
+
+        for line in open(self.vocab_path, encoding='utf-8'):
             items = line.strip().split('\t')
             w = items[0]
             cnt = int(items[1])
@@ -56,14 +55,9 @@ class Vocab:
     def describe(self, i):
         if i < len(self.i2w):
             return self.i2w[i]
-        else:
-            return constant.SYMBOL_UNK
 
     @staticmethod
-    def process_word(word, voc_config=None):
-        voc_config = (DefaultConfig()
-                      if voc_config is None else voc_config)
-
+    def process_word(word, model_config):
         if word:
             # All numeric will map to #
             if word[0].isnumeric() or word[0] == '+' or word[0] == '-':
@@ -73,6 +67,6 @@ class Vocab:
                 return word
             # Actual word
             else:
-                if voc_config.lower_case:
+                if model_config.lower_case:
                     word = word.lower()
                 return word
