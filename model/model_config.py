@@ -2,8 +2,8 @@ import os
 
 class DefaultConfig():
     use_gpu = True
-    batch_size = 2
-    dimension = 32
+    batch_size = 1
+    dimension = 128
     max_complex_sentence = 15
     max_simple_sentence = 15
     model_save_freq = 100
@@ -37,11 +37,12 @@ class DefaultConfig():
     per_process_gpu_memory_fraction = 1.0
 
 class DefaultTrainConfig(DefaultConfig):
-    beam_search_size = 1
-    train_with_hyp = True
+    beam_search_size = 0
+    train_with_hyp = False
 
 class DefaultTestConfig(DefaultConfig):
     beam_search_size = 4
+    # train_with_hyp = True
 
 
 class WikiTurk(DefaultConfig):

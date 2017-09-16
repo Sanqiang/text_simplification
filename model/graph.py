@@ -48,7 +48,7 @@ class Graph:
             decoder_logit_list = []
             if not self.model_config.train_with_hyp and self.model_config.beam_search_size < 1:
                 # General train
-                print('Use Generally Train.')
+                print('Use Generally Process.')
                 decoder_embed_inputs = self.embedding_fn(
                     self.sentence_simple_input_placeholder[:-1], self.emb_simple)
                 decoder_output_list = decode_step(decoder_embed_inputs)
@@ -64,7 +64,10 @@ class Graph:
                     decoder_output_list = decode_step(decoder_embed_inputs)
                     last_logits = self.output_to_logit(decoder_output_list[-1])
                     last_outid = tf.cast(tf.argmax(last_logits, 1), tf.int32)
-                    decoder_target_list.append(self.sentence_simple_input_placeholder[step])
+                    if self.is_train:
+                        decoder_target_list.append(self.sentence_simple_input_placeholder[step])
+                    else:
+                        decoder_target_list.append(last_outid)
                     decoder_logit_list.append(last_logits)
                     decoder_embed_inputs += self.embedding_fn([last_outid], self.emb_simple)
             else:

@@ -26,7 +26,6 @@ def get_graph_val_data(sentence_simple_input,
         if sentence_simple is None:
             # End of data set
             return None, None, None
-        sentence_simple = [voc.encode(constant.SYMBOL_GO)]
 
         for i_ref in range(model_config.num_refs):
             tmp_ref[i_ref].append(ref[i_ref])
