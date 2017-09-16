@@ -1,12 +1,14 @@
+import os
+
 class DefaultConfig():
     use_gpu = True
-    batch_size = 20
-    dimension = 256
-    max_complex_sentence = 85
-    max_simple_sentence = 85
+    batch_size = 2
+    dimension = 32
+    max_complex_sentence = 15
+    max_simple_sentence = 15
     model_save_freq = 100
 
-    min_count = 5
+    min_count = 0
     lower_case = True
     tokenizer = 'split' # ws: white space split / nltk: nltk tokenizer
 
@@ -22,11 +24,10 @@ class DefaultConfig():
     vocab_simple = '../data/dummy_simple_vocab'
     vocab_complex = '../data/dummy_complex_vocab'
 
-    val_dataset_simple_folder = '../../text_simplification_data/val/'
-    val_dataset_simple_file = 'tune.8turkers.tok.simp'
-    val_dataset_simple_references = 'tune.8turkers.tok.turk.'
-    val_dataset_complex = '../../text_simplification_data/val/tune.8turkers.tok.norm'
-    num_refs = 8
+    val_dataset_simple_folder = '../data/'
+    val_dataset_simple_file = 'dummy_simple_dataset'
+    val_dataset_complex = '../data/dummy_complex_dataset'
+    num_refs = 0
 
     logdir = '../../tmp/log/'
     outdir = '../../tmp/output/'
@@ -49,6 +50,12 @@ class WikiTurk(DefaultConfig):
     vocab_simple = '../../text_simplification_data/train/sentence-aligned.v2/simple.voc'
     vocab_complex = '../../text_simplification_data/train/sentence-aligned.v2/normal.voc'
 
+    val_dataset_simple_folder = '../../text_simplification_data/val/'
+    val_dataset_simple_file = 'tune.8turkers.tok.simp'
+    val_dataset_simple_references = 'tune.8turkers.tok.turk.'
+    val_dataset_complex = '../../text_simplification_data/val/tune.8turkers.tok.norm'
+    num_refs = 8
+
 class WikiTurkTrainConfig(WikiTurk):
     beam_search_size = 0
     train_with_hyp = False
@@ -67,6 +74,11 @@ class WikiDressLargeDefault(DefaultConfig):
     val_dataset_simple_folder = '../../text_simplification_data/train/dress/wikilarge/'
     val_dataset_simple_file = 'wiki.full.aner.valid.dst'
     val_dataset_complex = '../../text_simplification_data/train/dress/wikilarge/wiki.full.aner.valid.src'
+
+    dimension = 256
+    max_complex_sentence = 85
+    max_simple_sentence = 85
+    min_count = 5
 
 class WikiDressLargeTrainConfig(WikiDressLargeDefault):
     beam_search_size = 0

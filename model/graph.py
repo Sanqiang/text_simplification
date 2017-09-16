@@ -165,8 +165,11 @@ class Graph:
                 # in beam search, decoder_logit_list is beam score
                 self.loss = tf.reduce_mean(decoder_logit_list)
             else:
+                decode_word_weight = [tf.to_float(tf.not_equal(d, self.data.vocab_simple.encode(constant.SYMBOL_PAD)))
+                          for d in decoder_target_list]
                 self.loss = sequence_loss(tf.stack(decoder_logit_list, axis=1),
-                                          tf.stack(decoder_target_list, axis=1))
+                                          tf.stack(decoder_target_list, axis=1),
+                                          tf.stack(decode_word_weight, axis=1))
 
         with tf.variable_scope('optimization'):
             self.global_step = tf.get_variable('global_step',

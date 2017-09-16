@@ -3,7 +3,7 @@
 from collections import Counter
 
 from data_generator.vocab import Vocab
-from model.model_config import WikiDressLargeDefault
+from model.model_config import WikiDressLargeDefault, DefaultConfig
 
 from nltk import word_tokenize
 
@@ -39,11 +39,13 @@ class VocabPrepare:
 
 
 if __name__ == '__main__':
-    voc = VocabPrepare('../../text_simplification_data/train/dress/wikilarge/wiki.full.aner.train.src',
-                       '../../text_simplification_data/train/dress/wikilarge/wiki.full.aner.train.src.vocab',
-                       WikiDressLargeDefault())
+    model_config = DefaultConfig()
+
+    voc = VocabPrepare(model_config.train_dataset_complex,
+                       model_config.vocab_complex,
+                       model_config)
     voc.prepare_vocab()
-    voc = VocabPrepare('../../text_simplification_data/train/dress/wikilarge/wiki.full.aner.train.dst',
-                       '../../text_simplification_data/train/dress/wikilarge/wiki.full.aner.train.dst.vocab',
-                       WikiDressLargeDefault())
+    voc = VocabPrepare(model_config.train_dataset_simple,
+                       model_config.vocab_simple,
+                       model_config)
     voc.prepare_vocab()

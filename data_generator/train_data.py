@@ -23,7 +23,7 @@ class TrainData:
     def populate_data(self, data_path, vocab):
         # Populate data into memory
         data = []
-        for line in open(data_path):
+        for line in open(data_path, encoding='utf-8'):
             # line = line.split('\t')[2]
             if self.model_config.tokenizer == 'split':
                 words = line.split()
