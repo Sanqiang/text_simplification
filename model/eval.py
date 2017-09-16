@@ -159,4 +159,4 @@ def decode(target, voc):
 
 
 if __name__ == '__main__':
-    eval(DefaultTestConfig())
+    eval(WikiDressLargeTestConfig())

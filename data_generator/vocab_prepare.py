@@ -28,7 +28,7 @@ class VocabPrepare:
 
         c = c.most_common(len(c))
 
-        writer = open(self.output, 'w')
+        writer = open(self.output, 'w', encoding='utf-8')
         for word, cnt in c:
             writer.write(word)
             writer.write('\t')
@@ -39,7 +39,7 @@ class VocabPrepare:
 
 
 if __name__ == '__main__':
-    model_config = DefaultConfig()
+    model_config = WikiDressLargeDefault()
 
     voc = VocabPrepare(model_config.train_dataset_complex,
                        model_config.vocab_complex,

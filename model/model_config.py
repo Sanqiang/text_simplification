@@ -6,7 +6,7 @@ class DefaultConfig():
     dimension = 128
     max_complex_sentence = 15
     max_simple_sentence = 15
-    model_save_freq = 100
+    model_save_freq = 500
 
     min_count = 0
     lower_case = True
@@ -79,12 +79,14 @@ class WikiDressLargeDefault(DefaultConfig):
     dimension = 256
     max_complex_sentence = 85
     max_simple_sentence = 85
-    min_count = 5
+    min_count = 4
+    batch_size = 25
 
 class WikiDressLargeTrainConfig(WikiDressLargeDefault):
     beam_search_size = 0
     train_with_hyp = False
 
 class WikiDressLargeTestConfig(WikiDressLargeDefault):
-    beam_search_size = 0
-    use_gpu = True
+    beam_search_size = 4
+    use_gpu = False
+    batch_size = 1
