@@ -15,6 +15,7 @@ class Graph:
         self.is_train = is_train
         self.hparams = transformer.transformer_base()
         self.setup_hparams()
+        print('Batch Szie:\t%d.' % self.model_config.batch_size)
 
     def transformer_fn(self):
         def decode_step(decode_input_list):

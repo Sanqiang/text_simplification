@@ -147,13 +147,11 @@ def decode(target, voc):
     decode_results = []
     for i in range(batch_size):
         decode_result = list(map(voc.describe, target[i]))
-        if constant.SYMBOL_PAD in decode_result:
-            eos = decode_result.index(constant.SYMBOL_PAD)
+        if constant.SYMBOL_END in decode_result:
+            eos = decode_result.index(constant.SYMBOL_END)
             decode_result = decode_result[:eos]
-        if decode_result[0] == constant.SYMBOL_START:
+        if len(decode_result) > 0 and decode_result[0] == constant.SYMBOL_START:
             decode_result = decode_result[1:]
-        if decode_result[-1] == constant.SYMBOL_END:
-            decode_result = decode_result[:-1]
         decode_results.append(decode_result)
     return decode_results
 
