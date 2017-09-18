@@ -13,7 +13,7 @@ class DefaultConfig():
     tokenizer = 'split' # ws: white space split / nltk: nltk tokenizer
 
     optimizer = 'adagrad'
-    learning_rate = 0.001
+    learning_rate = 0.01
     max_grad_staleness = 0.0
     max_grad_norm = 4.0
     beam_search_size = -1
