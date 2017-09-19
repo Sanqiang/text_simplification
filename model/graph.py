@@ -139,7 +139,7 @@ class Graph:
                                                self.hparams)
 
     def setup_hparams(self):
-        self.hparams.num_heads = 1
+        self.hparams.pos = self.model_config.hparams_pos
         self.hparams.hidden_size = self.model_config.dimension
         if self.is_train:
             self.hparams.add_hparam('mode', tf.estimator.ModeKeys.TRAIN)

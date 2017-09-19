@@ -22,6 +22,7 @@ class DefaultConfig():
     train_with_hyp = False
 
     # Overwrite transformer config
+    hparams_pos = 'timing'
 
 
     # deprecated: std of trunc norm init, used for initializing embedding / w
