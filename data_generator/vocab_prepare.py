@@ -8,8 +8,9 @@ from model.model_config import WikiDressLargeDefault, DefaultConfig
 from nltk import word_tokenize
 
 class VocabPrepare:
-    def __init__(self, data_file, output, model_config):
+    def __init__(self, data_file, output, model_config, data_file2):
         self.data_file = data_file
+        self.data_file2 = data_file2
         self.output = output
         self.model_config = model_config
 
@@ -26,6 +27,18 @@ class VocabPrepare:
                      for word in words]
             c.update(words)
 
+        if self.data_file2 is not None:
+            for line in open(self.data_file2, encoding='utf-8'):
+                if self.model_config.tokenizer == 'split':
+                    words = line.split()
+                elif self.model_config.tokenizer == 'nltk':
+                    words = word_tokenize(line)
+                else:
+                    raise Exception('Unknown tokenizer.')
+                words = [Vocab.process_word(word, self.model_config)
+                         for word in words]
+                c.update(words)
+
         c = c.most_common(len(c))
 
         writer = open(self.output, 'w', encoding='utf-8')
@@ -38,14 +51,22 @@ class VocabPrepare:
         print('Processed vocab with size %d' % len(c))
 
 
+
 if __name__ == '__main__':
-    model_config = WikiDressLargeDefault()
+    model_config = DefaultConfig()
+
+    # voc = VocabPrepare(model_config.train_dataset_complex,
+    #                    model_config.vocab_complex,
+    #                    model_config)
+    # voc.prepare_vocab()
+    # voc = VocabPrepare(model_config.train_dataset_simple,
+    #                    model_config.vocab_simple,
+    #                    model_config)
+    # voc.prepare_vocab()
 
     voc = VocabPrepare(model_config.train_dataset_complex,
-                       model_config.vocab_complex,
-                       model_config)
+                       model_config.vocab_all,
+                       model_config,
+                       model_config.train_dataset_simple)
     voc.prepare_vocab()
-    voc = VocabPrepare(model_config.train_dataset_simple,
-                       model_config.vocab_simple,
-                       model_config)
-    voc.prepare_vocab()
+

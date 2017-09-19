@@ -59,7 +59,7 @@ def get_graph_val_data(sentence_simple_input,
 def eval(model_config=None):
     model_config = (DefaultConfig()
                     if model_config is None else model_config)
-    val_data = ValData(model_config, model_config.vocab_simple, model_config.vocab_complex)
+    val_data = ValData(model_config)
     graph = Graph(val_data, False, model_config)
     graph.create_model()
 
@@ -161,4 +161,4 @@ def decode(target, voc):
 
 
 if __name__ == '__main__':
-    eval(WikiDressLargeTestConfig())
+    eval(DefaultTestConfig())
