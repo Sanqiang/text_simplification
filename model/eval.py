@@ -104,19 +104,23 @@ def eval(model_config=None):
 
             for batch_i in range(model_config.batch_size):
                 # Compute iBLEU
-                batch_bleu_i = sentence_bleu(target[batch_i], sentence_simple[batch_i])
-                batch_bleu_rs = []
-                for ref_i in range(model_config.num_refs):
-                    batch_bleu_rs.append(
-                        sentence_bleu(target[batch_i], ref[ref_i][batch_i]))
-                if len(batch_bleu_rs) > 0:
-                    batch_bleu_r = np.mean(batch_bleu_rs)
-                    batch_ibleu = batch_bleu_r * 0.9 + batch_bleu_i * 0.1
-                else:
-                    batch_ibleu = batch_bleu_i
+                try:
+                    batch_bleu_i = sentence_bleu(target[batch_i], sentence_simple[batch_i])
+                    batch_bleu_rs = []
+                    for ref_i in range(model_config.num_refs):
+                        batch_bleu_rs.append(
+                            sentence_bleu(target[batch_i], ref[ref_i][batch_i]))
+                    if len(batch_bleu_rs) > 0:
+                        batch_bleu_r = np.mean(batch_bleu_rs)
+                        batch_ibleu = batch_bleu_r * 0.9 + batch_bleu_i * 0.1
+                    else:
+                        batch_ibleu = batch_bleu_i
+                except Exception as e:
+                    print('Bleu exception:\t' + str(e))
+                    batch_ibleu = 0
                 ibleus.append(batch_ibleu)
                 # print('Batch iBLEU: \t%f.' % batch_ibleu)
-                decode_outputs.append(target_output)
+            decode_outputs.append(target_output)
 
         ibleu = np.mean(ibleus)
         perplexity = np.mean(perplexitys)
