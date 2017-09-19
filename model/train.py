@@ -50,8 +50,7 @@ def get_graph_train_data(data,
 def train(model_config=None):
     model_config = (DefaultConfig()
                     if model_config is None else model_config)
-    data = TrainData(model_config, model_config.train_dataset_simple, model_config.train_dataset_complex,
-                     model_config.vocab_simple, model_config.vocab_complex)
+    data = TrainData(model_config)
     graph = Graph(data, True, model_config)
     graph.create_model()
 
@@ -78,4 +77,4 @@ def train(model_config=None):
 
 
 if __name__ == '__main__':
-    train(WikiDressLargeTrainConfig())
+    train(DefaultTrainConfig())

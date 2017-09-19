@@ -6,10 +6,21 @@ import copy as cp
 
 
 class ValData:
-    def __init__(self, model_config, vocab_simple_path, vocab_complex_path):
+    def __init__(self, model_config):
         self.model_config = model_config
-        self.vocab_simple = Vocab(model_config, vocab_simple_path)
-        self.vocab_complex = Vocab(model_config, vocab_complex_path)
+        vocab_simple_path = self.model_config.vocab_simple
+        vocab_complex_path = self.model_config.vocab_complex
+        vocab_all_path = self.model_config.vocab_all
+
+        if (self.model_config.tie_embedding == 'none' or
+                    self.model_config.tie_embedding == 'dec_out'):
+            self.vocab_simple = Vocab(model_config, vocab_simple_path)
+            self.vocab_complex = Vocab(model_config, vocab_complex_path)
+        elif (self.model_config.tie_embedding == 'all' or
+                    self.model_config.tie_embedding == 'enc_dec'):
+            self.vocab_simple = Vocab(model_config, vocab_all_path)
+            self.vocab_complex = Vocab(model_config, vocab_all_path)
+
         # Populate basic complex simple pairs
         self.data_complex = self.populate_data(self.model_config.val_dataset_complex, self.vocab_complex)
         self.data_simple = self.populate_data(

@@ -13,8 +13,7 @@ import numpy as np
 import time
 
 
-def get_graph_val_data(sentence_simple_input,
-                       sentence_complex_input,
+def get_graph_val_data(sentence_simple_input, sentence_complex_input,
                        model_config, it):
     input_feed = {}
     voc = Vocab(model_config)
@@ -25,7 +24,7 @@ def get_graph_val_data(sentence_simple_input,
         sentence_simple, sentence_complex, ref = next(it)
         if sentence_simple is None:
             # End of data set
-            return None, None, None
+            return None, None, None, None
 
         for i_ref in range(model_config.num_refs):
             tmp_ref[i_ref].append(ref[i_ref])
@@ -53,20 +52,20 @@ def get_graph_val_data(sentence_simple_input,
         input_feed[sentence_complex_input[step].name] = [tmp_sentence_complex[batch_idx][step]
                                                          for batch_idx in range(model_config.batch_size)]
 
-    return input_feed, tmp_sentence_simple, tmp_ref
+    return input_feed, tmp_sentence_simple, tmp_sentence_complex, tmp_ref
 
 
 def eval(model_config=None):
     model_config = (DefaultConfig()
                     if model_config is None else model_config)
-    val_data = ValData(model_config, model_config.vocab_simple, model_config.vocab_complex)
+    val_data = ValData(model_config)
     graph = Graph(val_data, False, model_config)
     graph.create_model()
 
     while True:
-        ibleus= []
-        perplexitys = []
-        decode_outputs = []
+        ibleus_all= []
+        perplexitys_all = []
+        decode_outputs_all = []
         it = val_data.get_data_iter()
 
         def init_fn(session):
@@ -83,7 +82,7 @@ def eval(model_config=None):
         sv = tf.train.Supervisor(init_fn=init_fn)
         sess = sv.PrepareSession(config=session.get_session_config(model_config))
         while True:
-            input_feed, sentence_simple, ref = get_graph_val_data(
+            input_feed, sentence_simple, sentence_complex, ref = get_graph_val_data(
                 graph.sentence_simple_input_placeholder,
                 graph.sentence_complex_input_placeholder,
                 model_config, it)
@@ -94,11 +93,13 @@ def eval(model_config=None):
             fetches = [graph.decoder_target_list, graph.loss, graph.global_step]
             target, loss, step = sess.run(fetches, input_feed)
             batch_perplexity = math.exp(loss)
-            perplexitys.append(batch_perplexity)
+            perplexitys_all.append(batch_perplexity)
 
-            target_output = decode_to_output(target, val_data)
+
             target = decode(target, val_data.vocab_simple)
             sentence_simple = decode(sentence_simple, val_data.vocab_simple)
+            sentence_complex = decode(sentence_complex, val_data.vocab_complex)
+            ibleus = []
             for ref_i in range(model_config.num_refs):
                 ref[ref_i] = decode(ref[ref_i], val_data.vocab_simple)
 
@@ -118,12 +119,15 @@ def eval(model_config=None):
                 except Exception as e:
                     print('Bleu exception:\t' + str(e))
                     batch_ibleu = 0
+                ibleus_all.append(batch_ibleu)
                 ibleus.append(batch_ibleu)
                 # print('Batch iBLEU: \t%f.' % batch_ibleu)
-            decode_outputs.append(target_output)
+            target_output = decode_to_output(target, sentence_simple, sentence_complex,
+                                             ibleus)
+            decode_outputs_all.append(target_output)
 
-        ibleu = np.mean(ibleus)
-        perplexity = np.mean(perplexitys)
+        ibleu = np.mean(ibleus_all)
+        perplexity = np.mean(perplexitys_all)
         print('Current iBLEU: \t%f' % ibleu)
         print('Current perplexity: \t%f' % perplexity)
         print('Current eval done!')
@@ -133,15 +137,23 @@ def eval(model_config=None):
         f.write(str(perplexity))
         f.flush()
         f = open(model_config.modeldir + '/step' + str(step) + '-ibleu' + str(ibleu) + '.result', 'w')
-        f.write('\n'.join(decode_outputs))
+        f.write('\n'.join(decode_outputs_all))
         f.flush()
 
 
-def decode_to_output(target, data):
+def decode_to_output(target, sentence_simple, sentence_complex, ibleus):
     output = ''
-    decode_results = decode(target, data.vocab_simple)
-    for decode_result in decode_results:
-        output = '\n'.join([output, ' '.join(decode_result)])
+    assert len(target) == len(sentence_simple)
+    assert len(target) == len(sentence_complex)
+    assert len(target) == len(ibleus)
+    for batch_i in range(len(target)):
+        target_batch = 'output=' + ' '.join(target[batch_i])
+        sentence_simple_batch ='gt_simple=' + ' '.join(sentence_simple[batch_i])
+        sentence_complex_batch = 'gt_complex='+ ' '.join(sentence_complex[batch_i])
+        batch_ibleu = 'iBLEU=' + str(ibleus[batch_i])
+        output_batch = '\n'.join([target_batch, sentence_simple_batch, sentence_complex_batch,
+                                  batch_ibleu, ''])
+        output = '\n'.join([output, output_batch])
     return output
 
 
@@ -161,4 +173,4 @@ def decode(target, voc):
 
 
 if __name__ == '__main__':
-    eval(WikiDressLargeTestConfig())
+    eval(DefaultTestConfig())

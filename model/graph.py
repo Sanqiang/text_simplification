@@ -34,7 +34,9 @@ class Graph:
         encoder_attn_bias = common_attention.attention_bias_ignore_padding(
             tf.to_float(tf.equal(tf.stack(self.sentence_complex_input_placeholder, axis=1),
                                  self.data.vocab_complex.encode(constant.SYMBOL_PAD))))
-        encoder_embed_inputs = common_attention.add_timing_signal_1d(encoder_embed_inputs)
+        if self.hparams.pos == 'timing':
+            encoder_embed_inputs = common_attention.add_timing_signal_1d(encoder_embed_inputs)
+            print('Use positional encoding in encoder text.')
 
         with tf.variable_scope('transformer_encoder'):
             encoder_embed_inputs = tf.nn.dropout(encoder_embed_inputs,
@@ -120,11 +122,13 @@ class Graph:
             return [tf.nn.embedding_lookup(embedding, inp) for inp in inputs]
 
     def output_to_logit(self, prev_out):
-        prev_logit = tf.add(tf.matmul(prev_out, self.w), self.b)
+        prev_logit = tf.add(tf.matmul(prev_out, tf.transpose(self.w)), self.b)
         return prev_logit
 
     def decode_inputs_to_outputs(self, decoder_embed_inputs, encoder_outputs, encoder_attn_bias):
-        decoder_embed_inputs = common_attention.add_timing_signal_1d(decoder_embed_inputs)
+        if self.hparams.pos == 'timing':
+            decoder_embed_inputs = common_attention.add_timing_signal_1d(decoder_embed_inputs)
+            print('Use positional encoding in decoder text.')
         decoder_attn_bias = common_attention.attention_bias_lower_triangle(tf.shape(decoder_embed_inputs)[1])
         decoder_embed_inputs = tf.nn.dropout(decoder_embed_inputs,
                                              1.0 - self.hparams.layer_prepostprocess_dropout)
@@ -135,11 +139,13 @@ class Graph:
                                                self.hparams)
 
     def setup_hparams(self):
+        self.hparams.pos = self.model_config.hparams_pos
         self.hparams.hidden_size = self.model_config.dimension
         if self.is_train:
             self.hparams.add_hparam('mode', tf.estimator.ModeKeys.TRAIN)
         else:
             self.hparams.add_hparam('mode', tf.estimator.ModeKeys.EVAL)
+
 
     def create_model(self):
         with tf.variable_scope('variables'):
@@ -153,14 +159,12 @@ class Graph:
                 self.sentence_complex_input_placeholder.append(tf.zeros(self.model_config.batch_size,
                                                                         tf.int32, name='simple_input'))
 
-            self.emb_simple = Embedding(self.data.vocab_simple, self.model_config).get_embedding()
-            self.emb_complex = Embedding(self.data.vocab_complex, self.model_config).get_embedding()
+            self.embedding = Embedding(self.data.vocab_complex, self.data.vocab_simple, self.model_config)
+            self.emb_simple = self.embedding.get_simple_embedding()
+            self.emb_complex = self.embedding.get_complex_embedding()
 
-            initializer = tf.random_uniform_initializer(minval=-0.08, maxval=0.08)
-            self.w = tf.get_variable('output_w',
-                                     shape=[self.model_config.dimension, len(self.data.vocab_simple.i2w)], initializer=initializer)
-            self.b = tf.get_variable('output_b',
-                                     shape=[len(self.data.vocab_simple.i2w)], initializer=initializer)
+            self.w = self.embedding.get_w()
+            self.b = self.embedding.get_b()
 
         with tf.variable_scope('transformer'):
             decoder_output_list, decoder_logit_list, decoder_target_list = self.transformer_fn()
