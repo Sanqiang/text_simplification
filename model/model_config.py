@@ -2,8 +2,8 @@ import os
 
 class DefaultConfig():
     use_gpu = True
-    batch_size = 1
-    dimension = 128
+    batch_size = 2
+    dimension = 32
     max_complex_sentence = 15
     max_simple_sentence = 15
     model_save_freq = 500
@@ -19,14 +19,14 @@ class DefaultConfig():
     beam_search_size = -1
     train_with_hyp = False
 
-    train_dataset_simple = '../data/dummy_simple_dataset'
-    train_dataset_complex = '../data/dummy_complex_dataset'
+    train_dataset_simple = '../data/train_dummy_simple_dataset'
+    train_dataset_complex = '../data/train_dummy_complex_dataset'
     vocab_simple = '../data/dummy_simple_vocab'
     vocab_complex = '../data/dummy_complex_vocab'
 
     val_dataset_simple_folder = '../data/'
-    val_dataset_simple_file = 'dummy_simple_dataset'
-    val_dataset_complex = '../data/dummy_complex_dataset'
+    val_dataset_simple_file = 'valid_dummy_simple_dataset'
+    val_dataset_complex = '../data/valid_dummy_complex_dataset'
     num_refs = 0
 
     logdir = '../../tmp/log/'
