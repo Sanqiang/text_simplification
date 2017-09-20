@@ -43,7 +43,12 @@ class ValData:
         # Populate data into memory
         data = []
         for line in open(data_path):
-            words = word_tokenize(line)
+            if self.model_config.tokenizer == 'split':
+                words = line.split()
+            elif self.model_config.tokenizer == 'nltk':
+                words = word_tokenize(line)
+            else:
+                raise Exception('Unknown tokenizer.')
             words = [Vocab.process_word(word, self.model_config)
                      for word in words]
             words = [vocab.encode(word) for word in words]

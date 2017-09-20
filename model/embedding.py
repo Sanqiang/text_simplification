@@ -7,13 +7,11 @@ class Embedding:
     def __init__(self, voc_complex, voc_simple, model_config):
         self.model_config = model_config
         self.voc_complex = voc_complex
+        self.voc_simple = voc_simple
         # self.init = tf.truncated_normal_initializer(
         #     stddev=self.model_config.trunc_norm_init_std)
         self.emb_init = tf.random_uniform_initializer(-0.08, 0.08)
         self.w_init = tf.random_uniform_initializer(-0.08, 0.08)
-        if (self.model_config.tie_embedding == 'none'
-            or self.model_config.tie_embedding == 'dec_out'):
-            self.voc_simple = voc_simple
         print('Use tie embedding: \t%s.' % self.model_config.tie_embedding)
 
 
@@ -40,11 +38,15 @@ class Embedding:
             return self.get_complex_embedding()
 
     def get_w(self):
-        if (self.model_config.tie_embedding == 'none' or
-                    self.model_config.tie_embedding == 'enc_dec'):
+        if self.model_config.tie_embedding == 'none':
             self.proj_w = tf.get_variable(
                 'output_w', [len(self.voc_simple.i2w), self.model_config.dimension], tf.float32,
-                initializer=self.init)
+                initializer=self.w_init)
+            return self.proj_w
+        elif self.model_config.tie_embedding == 'enc_dec':
+            self.proj_w = tf.get_variable(
+                'output_w', [len(self.voc_complex.i2w), self.model_config.dimension], tf.float32,
+                initializer=self.w_init)
             return self.proj_w
         elif self.model_config.tie_embedding == 'dec_out':
             return self.get_simple_embedding()

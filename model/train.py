@@ -77,4 +77,4 @@ def train(model_config=None):
 
 
 if __name__ == '__main__':
-    train(DefaultTrainConfig())
+    train(WikiDressLargeTrainConfig())

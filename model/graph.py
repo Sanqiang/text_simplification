@@ -160,8 +160,8 @@ class Graph:
                                                                         tf.int32, name='simple_input'))
 
             self.embedding = Embedding(self.data.vocab_complex, self.data.vocab_simple, self.model_config)
-            self.emb_simple = self.embedding.get_simple_embedding()
             self.emb_complex = self.embedding.get_complex_embedding()
+            self.emb_simple = self.embedding.get_simple_embedding()
 
             self.w = self.embedding.get_w()
             self.b = self.embedding.get_b()

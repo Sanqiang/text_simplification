@@ -3,10 +3,10 @@ import os
 class DefaultConfig():
     use_gpu = True
     batch_size = 2
-    dimension = 512
+    dimension = 32
     max_complex_sentence = 15
     max_simple_sentence = 15
-    model_save_freq = 100
+    model_save_freq = 1000
 
     min_count = 0
     lower_case = True
@@ -22,6 +22,7 @@ class DefaultConfig():
     train_with_hyp = False
 
     # Overwrite transformer config
+    # timing: use positional encoding
     hparams_pos = 'timing'
 
 
@@ -34,7 +35,7 @@ class DefaultConfig():
     # dec_out: decoder/output+transform;
     # enc_dec: encoder/decoder+transform
     # none: no tied embedding
-    tie_embedding = 'all'
+    tie_embedding = 'enc_dec'
 
     train_dataset_simple = '../data/train_dummy_simple_dataset'
     train_dataset_complex = '../data/train_dummy_complex_dataset'
@@ -104,7 +105,7 @@ class WikiDressLargeDefault(DefaultConfig):
     dimension = 256
     max_complex_sentence = 85
     max_simple_sentence = 85
-    min_count = 4
+    min_count = 5
     batch_size = 25
 
 
