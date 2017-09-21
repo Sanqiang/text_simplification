@@ -1,5 +1,10 @@
 import os
 
+
+def get_path(file_path):
+    return os.getcwd() + '/' + file_path
+
+
 class DefaultConfig():
     use_gpu = True
     batch_size = 2
@@ -37,20 +42,20 @@ class DefaultConfig():
     # none: no tied embedding
     tie_embedding = 'enc_dec'
 
-    train_dataset_simple = '../data/train_dummy_simple_dataset'
-    train_dataset_complex = '../data/train_dummy_complex_dataset'
-    vocab_simple = '../data/dummy_simple_vocab'
-    vocab_complex = '../data/dummy_complex_vocab'
-    vocab_all = '../data/dummy_vocab'
+    train_dataset_simple = get_path('data/train_dummy_simple_dataset')
+    train_dataset_complex = get_path('data/train_dummy_complex_dataset')
+    vocab_simple = get_path('data/dummy_simple_vocab')
+    vocab_complex = get_path('data/dummy_complex_vocab')
+    vocab_all = get_path('data/dummy_vocab')
 
-    val_dataset_simple_folder = '../data/'
-    val_dataset_simple_file = 'valid_dummy_simple_dataset'
-    val_dataset_complex = '../data/valid_dummy_complex_dataset'
+    val_dataset_simple_folder = get_path('data/')
+    val_dataset_simple_file = get_path('valid_dummy_simple_dataset')
+    val_dataset_complex = get_path('data/valid_dummy_complex_dataset')
     num_refs = 0
 
-    logdir = '../../tmp/log/'
-    outdir = '../../tmp/output/'
-    modeldir = '../../tmp/model/'
+    logdir = get_path('../tmp/log/')
+    outdir = get_path('../tmp/output/')
+    modeldir = get_path('../tmp/model/')
 
     allow_growth = True
     per_process_gpu_memory_fraction = 1.0
@@ -91,16 +96,16 @@ class WikiTurkTestConfig(WikiTurk):
 
 
 class WikiDressLargeDefault(DefaultConfig):
-    train_dataset_simple = '../../text_simplification_data/train/dress/wikilarge/wiki.full.aner.train.dst'
-    train_dataset_complex = '../../text_simplification_data/train/dress/wikilarge/wiki.full.aner.train.src'
-    vocab_simple = '../../text_simplification_data/train/dress/wikilarge/wiki.full.aner.train.dst.vocab'
-    vocab_complex = '../../text_simplification_data/train/dress/wikilarge/wiki.full.aner.train.src.vocab'
-    vocab_all = '../..//text_simplification_data/train/dress/wikilarge/wiki.full.aner.train.vocab'
+    train_dataset_simple = get_path('../text_simplification_data/train/dress/wikilarge/wiki.full.aner.train.dst')
+    train_dataset_complex = get_path('../text_simplification_data/train/dress/wikilarge/wiki.full.aner.train.src')
+    vocab_simple = get_path('../text_simplification_data/train/dress/wikilarge/wiki.full.aner.train.dst.vocab')
+    vocab_complex = get_path('../text_simplification_data/train/dress/wikilarge/wiki.full.aner.train.src.vocab')
+    vocab_all = get_path('../text_simplification_data/train/dress/wikilarge/wiki.full.aner.train.vocab')
 
     num_refs = 0
-    val_dataset_simple_folder = '../../text_simplification_data/train/dress/wikilarge/'
-    val_dataset_simple_file = 'wiki.full.aner.valid.dst'
-    val_dataset_complex = '../../text_simplification_data/train/dress/wikilarge/wiki.full.aner.valid.src'
+    val_dataset_simple_folder = get_path('../text_simplification_data/train/dress/wikilarge/')
+    val_dataset_simple_file = get_path('wiki.full.aner.valid.dst')
+    val_dataset_complex = get_path('../text_simplification_data/train/dress/wikilarge/wiki.full.aner.valid.src')
 
     dimension = 256
     max_complex_sentence = 85
