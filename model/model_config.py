@@ -2,7 +2,8 @@ import os
 
 
 def get_path(file_path):
-    return os.getcwd() + '/' + file_path
+    return os.path.dirname(os.path.abspath(__file__)) + '/../' + file_path
+    # return os.getcwd() + '/' + file_path
 
 
 class DefaultConfig():
@@ -11,7 +12,7 @@ class DefaultConfig():
     dimension = 32
     max_complex_sentence = 15
     max_simple_sentence = 15
-    model_save_freq = 1000
+    model_save_freq = 100
 
     min_count = 0
     lower_case = True
@@ -49,7 +50,7 @@ class DefaultConfig():
     vocab_all = get_path('data/dummy_vocab')
 
     val_dataset_simple_folder = get_path('data/')
-    val_dataset_simple_file = get_path('valid_dummy_simple_dataset')
+    val_dataset_simple_file = 'valid_dummy_simple_dataset'
     val_dataset_complex = get_path('data/valid_dummy_complex_dataset')
     num_refs = 0
 
@@ -68,20 +69,21 @@ class DefaultTrainConfig(DefaultConfig):
 
 class DefaultTestConfig(DefaultConfig):
     beam_search_size = 4
+    batch_size = 1
     # train_with_hyp = True
 
 
 class WikiTurk(DefaultConfig):
-    train_dataset_simple = '../../text_simplification_data/train/sentence-aligned.v2/simple.aligned'
-    train_dataset_complex = '../../text_simplification_data/train/sentence-aligned.v2/normal.aligned'
-    vocab_simple = '../../text_simplification_data/train/sentence-aligned.v2/simple.voc'
-    vocab_complex = '../../text_simplification_data/train/sentence-aligned.v2/normal.voc'
-    vocab_all = '../../text_simplification_data/train/sentence-aligned.v2/all.voc'
+    train_dataset_simple = get_path('../text_simplification_data/train/sentence-aligned.v2/simple.aligned')
+    train_dataset_complex = get_path('../text_simplification_data/train/sentence-aligned.v2/normal.aligned')
+    vocab_simple = get_path('../text_simplification_data/train/sentence-aligned.v2/simple.voc')
+    vocab_complex = get_path('../text_simplification_data/train/sentence-aligned.v2/normal.voc')
+    vocab_all = get_path('../text_simplification_data/train/sentence-aligned.v2/all.voc')
 
-    val_dataset_simple_folder = '../../text_simplification_data/val/'
+    val_dataset_simple_folder = get_path('../text_simplification_data/val/')
     val_dataset_simple_file = 'tune.8turkers.tok.simp'
     val_dataset_simple_references = 'tune.8turkers.tok.turk.'
-    val_dataset_complex = '../../text_simplification_data/val/tune.8turkers.tok.norm'
+    val_dataset_complex = get_path('../text_simplification_data/val/tune.8turkers.tok.norm')
     num_refs = 8
 
 
@@ -104,7 +106,7 @@ class WikiDressLargeDefault(DefaultConfig):
 
     num_refs = 0
     val_dataset_simple_folder = get_path('../text_simplification_data/train/dress/wikilarge/')
-    val_dataset_simple_file = get_path('wiki.full.aner.valid.dst')
+    val_dataset_simple_file = 'wiki.full.aner.valid.dst'
     val_dataset_complex = get_path('../text_simplification_data/train/dress/wikilarge/wiki.full.aner.valid.src')
 
     dimension = 256

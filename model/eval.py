@@ -20,11 +20,19 @@ def get_graph_val_data(sentence_simple_input, sentence_complex_input,
 
     tmp_sentence_simple, tmp_sentence_complex = [], []
     tmp_ref = [[] for _ in range(model_config.num_refs)]
+    effective_batch_size = 0
+    is_end = False
     for i in range(model_config.batch_size):
-        sentence_simple, sentence_complex, ref = next(it)
-        if sentence_simple is None:
+        if not is_end:
+            sentence_simple, sentence_complex, ref = next(it)
+            effective_batch_size += 1
+        if sentence_simple is None or is_end:
             # End of data set
-            return None, None, None, None
+            if not is_end:
+                effective_batch_size -= 1
+            is_end = True
+            sentence_simple, sentence_complex, ref = [], [], []
+
 
         for i_ref in range(model_config.num_refs):
             tmp_ref[i_ref].append(ref[i_ref])
@@ -52,7 +60,7 @@ def get_graph_val_data(sentence_simple_input, sentence_complex_input,
         input_feed[sentence_complex_input[step].name] = [tmp_sentence_complex[batch_idx][step]
                                                          for batch_idx in range(model_config.batch_size)]
 
-    return input_feed, tmp_sentence_simple, tmp_sentence_complex, tmp_ref
+    return input_feed, tmp_sentence_simple, tmp_sentence_complex, tmp_ref, effective_batch_size, is_end
 
 
 def eval(model_config=None):
@@ -82,19 +90,15 @@ def eval(model_config=None):
         sv = tf.train.Supervisor(init_fn=init_fn)
         sess = sv.PrepareSession(config=session.get_session_config(model_config))
         while True:
-            input_feed, sentence_simple, sentence_complex, ref = get_graph_val_data(
+            input_feed, sentence_simple, sentence_complex, ref, effective_batch_size, is_end = get_graph_val_data(
                 graph.sentence_simple_input_placeholder,
                 graph.sentence_complex_input_placeholder,
                 model_config, it)
-
-            if input_feed is None:
-                break
 
             fetches = [graph.decoder_target_list, graph.loss, graph.global_step]
             target, loss, step = sess.run(fetches, input_feed)
             batch_perplexity = math.exp(loss)
             perplexitys_all.append(batch_perplexity)
-
 
             target = decode(target, val_data.vocab_simple)
             sentence_simple = decode(sentence_simple, val_data.vocab_simple)
@@ -103,7 +107,7 @@ def eval(model_config=None):
             for ref_i in range(model_config.num_refs):
                 ref[ref_i] = decode(ref[ref_i], val_data.vocab_simple)
 
-            for batch_i in range(model_config.batch_size):
+            for batch_i in range(effective_batch_size):
                 # Compute iBLEU
                 try:
                     batch_bleu_i = sentence_bleu(target[batch_i], sentence_simple[batch_i])
@@ -123,8 +127,11 @@ def eval(model_config=None):
                 ibleus.append(batch_ibleu)
                 # print('Batch iBLEU: \t%f.' % batch_ibleu)
             target_output = decode_to_output(target, sentence_simple, sentence_complex,
-                                             ibleus)
+                                             ibleus, effective_batch_size)
             decode_outputs_all.append(target_output)
+
+            if is_end:
+                break
 
         ibleu = np.mean(ibleus_all)
         perplexity = np.mean(perplexitys_all)
@@ -141,12 +148,9 @@ def eval(model_config=None):
         f.flush()
 
 
-def decode_to_output(target, sentence_simple, sentence_complex, ibleus):
+def decode_to_output(target, sentence_simple, sentence_complex, ibleus, effective_batch_size):
     output = ''
-    assert len(target) == len(sentence_simple)
-    assert len(target) == len(sentence_complex)
-    assert len(target) == len(ibleus)
-    for batch_i in range(len(target)):
+    for batch_i in range(effective_batch_size):
         target_batch = 'output=' + ' '.join(target[batch_i])
         sentence_simple_batch ='gt_simple=' + ' '.join(sentence_simple[batch_i])
         sentence_complex_batch = 'gt_complex='+ ' '.join(sentence_complex[batch_i])
@@ -173,4 +177,4 @@ def decode(target, voc):
 
 
 if __name__ == '__main__':
-    eval(WikiDressLargeTestConfig())
+    eval(DefaultTestConfig())

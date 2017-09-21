@@ -6,7 +6,7 @@ def get_session_config(model_config):
     config.gpu_options.per_process_gpu_memory_fraction = model_config.per_process_gpu_memory_fraction
     if not model_config.use_gpu:
         config = tf.ConfigProto(
-            device_count={'GPU': 0}
+            device_count={'CPU': 0}
         )
         print('Not use GPU.')
     else:

@@ -53,7 +53,7 @@ class VocabPrepare:
 
 
 if __name__ == '__main__':
-    model_config = WikiDressLargeDefault()
+    model_config = DefaultConfig()
 
     # voc = VocabPrepare(model_config.train_dataset_complex,
     #                    model_config.vocab_complex,
