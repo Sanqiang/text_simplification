@@ -124,4 +124,4 @@ class WikiDressLargeTrainConfig(WikiDressLargeDefault):
 
 class WikiDressLargeTestConfig(WikiDressLargeDefault):
     beam_search_size = 4
-    batch_size = 1
+    batch_size = 64

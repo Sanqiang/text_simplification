@@ -63,8 +63,8 @@ class Vocab:
             if word[0].isnumeric() or word[0] == '+' or word[0] == '-':
                 return '#'
             # Keep mark
-            elif len(word) == 1 and not word[0].isalpha():
-                return word
+            # elif len(word) == 1 and not word[0].isalpha():
+            #     return word
             # Actual word
             else:
                 if model_config.lower_case:
