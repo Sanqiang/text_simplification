@@ -114,6 +114,7 @@ class WikiDressLargeDefault(DefaultConfig):
     max_simple_sentence = 85
     min_count = 5
     batch_size = 25
+    model_save_freq = 1000
 
 
 class WikiDressLargeTrainConfig(WikiDressLargeDefault):
@@ -123,5 +124,4 @@ class WikiDressLargeTrainConfig(WikiDressLargeDefault):
 
 class WikiDressLargeTestConfig(WikiDressLargeDefault):
     beam_search_size = 4
-    use_gpu = False
     batch_size = 1

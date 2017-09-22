@@ -10,6 +10,5 @@ def get_session_config(model_config):
         )
         print('Not use GPU.')
     else:
-        config = tf.ConfigProto()
         print('Use GPU.')
     return config

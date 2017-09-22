@@ -42,7 +42,7 @@ class ValData:
     def populate_data(self, data_path, vocab):
         # Populate data into memory
         data = []
-        for line in open(data_path):
+        for line in open(data_path, encoding='utf-8'):
             if self.model_config.tokenizer == 'split':
                 words = line.split()
             elif self.model_config.tokenizer == 'nltk':
