@@ -10,7 +10,7 @@ def get_session_config(model_config):
 
     if not model_config.use_gpu:
         config = tf.ConfigProto(
-            device_count={'CPU': 0}
+            device_count={'GPU': 0}
         )
         print('Not use GPU.')
     else:
