@@ -8,7 +8,7 @@ from model.model_config import WikiDressLargeDefault, DefaultConfig
 from nltk import word_tokenize
 
 class VocabPrepare:
-    def __init__(self, data_file, output, model_config, data_file2):
+    def __init__(self, data_file, output, model_config, data_file2=None):
         self.data_file = data_file
         self.data_file2 = data_file2
         self.output = output
@@ -55,18 +55,18 @@ class VocabPrepare:
 if __name__ == '__main__':
     model_config = WikiDressLargeDefault()
 
-    # voc = VocabPrepare(model_config.train_dataset_complex,
-    #                    model_config.vocab_complex,
-    #                    model_config)
-    # voc.prepare_vocab()
-    # voc = VocabPrepare(model_config.train_dataset_simple,
-    #                    model_config.vocab_simple,
-    #                    model_config)
-    # voc.prepare_vocab()
-
     voc = VocabPrepare(model_config.train_dataset_complex,
-                       model_config.vocab_all,
-                       model_config,
-                       model_config.train_dataset_simple)
+                       model_config.vocab_complex,
+                       model_config)
     voc.prepare_vocab()
+    voc = VocabPrepare(model_config.train_dataset_simple,
+                       model_config.vocab_simple,
+                       model_config)
+    voc.prepare_vocab()
+
+    # voc = VocabPrepare(model_config.train_dataset_complex,
+    #                    model_config.vocab_all,
+    #                    model_config,
+    #                    model_config.train_dataset_simple)
+    # voc.prepare_vocab()
 
