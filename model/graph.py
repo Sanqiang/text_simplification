@@ -179,7 +179,7 @@ class Graph:
                 metric = Metric(self.model_config, self.data)
                 sentence_simple_input_mat = tf.stack(self.sentence_simple_input_placeholder, axis=1)
                 sentence_complex_input_mat = tf.stack(self.sentence_complex_input_placeholder, axis=1)
-                weight_quality = tf.py_func(metric.bleu,
+                weight_quality = tf.py_func(metric.length_ratio,
                                             [sentence_simple_input_mat,
                                              sentence_complex_input_mat],
                                             [tf.float32], stateful=False, name='quality_weight')
