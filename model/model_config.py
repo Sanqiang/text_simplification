@@ -58,8 +58,8 @@ class DefaultConfig():
     outdir = get_path('../tmp/output/')
     modeldir = get_path('../tmp/model/')
 
-    allow_growth = True
-    per_process_gpu_memory_fraction = 1.0
+    # allow_growth = True
+    # per_process_gpu_memory_fraction = 1.0
 
 
 class DefaultTrainConfig(DefaultConfig):
@@ -115,6 +115,10 @@ class WikiDressLargeDefault(DefaultConfig):
     min_count = 5
     batch_size = 25
     model_save_freq = 1000
+
+    hparams_pos = 'none'
+    tokenizer = 'split'
+    tie_embedding = 'none'
 
 
 class WikiDressLargeTrainConfig(WikiDressLargeDefault):

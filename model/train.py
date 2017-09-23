@@ -7,7 +7,6 @@ from util import constant
 
 import tensorflow as tf
 import math
-from model.eval import decode_to_output
 
 
 def get_graph_train_data(data,
@@ -77,4 +76,4 @@ def train(model_config=None):
 
 
 if __name__ == '__main__':
-    train(DefaultTrainConfig())
+    train(WikiDressLargeTrainConfig())

@@ -1,5 +1,6 @@
 from model.embedding import Embedding
 from model.loss import sequence_loss
+from model.metric import Metric
 from util import constant
 
 import tensorflow as tf
@@ -163,6 +164,8 @@ class Graph:
             self.emb_complex = self.embedding.get_complex_embedding()
             self.emb_simple = self.embedding.get_simple_embedding()
 
+
+
             self.w = self.embedding.get_w()
             self.b = self.embedding.get_b()
 
@@ -173,11 +176,23 @@ class Graph:
                 # in beam search, decoder_logit_list is beam score
                 self.loss = tf.reduce_mean(decoder_logit_list)
             else:
-                decode_word_weight = [tf.to_float(tf.not_equal(d, self.data.vocab_simple.encode(constant.SYMBOL_PAD)))
-                          for d in decoder_target_list]
+                metric = Metric(self.model_config, self.data)
+                sentence_simple_input_mat = tf.stack(self.sentence_simple_input_placeholder, axis=1)
+                sentence_complex_input_mat = tf.stack(self.sentence_complex_input_placeholder, axis=1)
+                weight_quality = tf.py_func(metric.bleu,
+                                            [sentence_simple_input_mat,
+                                             sentence_complex_input_mat],
+                                            [tf.float32], stateful=False, name='quality_weight')
+                weight_quality[0].set_shape([self.model_config.batch_size])
+                weight_quality = tf.stack(
+                    [weight_quality[0] for _ in range(self.model_config.max_complex_sentence)], axis=-1)
+
+                weight_ignore_pad = tf.stack([tf.to_float(tf.not_equal(d, self.data.vocab_simple.encode(constant.SYMBOL_PAD)))
+                          for d in decoder_target_list], axis=1)
+                decode_word_weight = tf.multiply(weight_ignore_pad, weight_quality)
                 self.loss = sequence_loss(tf.stack(decoder_logit_list, axis=1),
                                           tf.stack(decoder_target_list, axis=1),
-                                          tf.stack(decode_word_weight, axis=1))
+                                          decode_word_weight)
 
         with tf.variable_scope('optimization'):
             self.global_step = tf.get_variable('global_step',
