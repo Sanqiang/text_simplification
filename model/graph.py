@@ -140,6 +140,7 @@ class Graph:
                                                self.hparams)
 
     def setup_hparams(self):
+        self.hparams.num_heads = self.model_config.num_heads
         self.hparams.pos = self.model_config.hparams_pos
         self.hparams.hidden_size = self.model_config.dimension
         if self.is_train:
@@ -158,13 +159,21 @@ class Graph:
             self.sentence_complex_input_placeholder = []
             for step in range(self.model_config.max_complex_sentence):
                 self.sentence_complex_input_placeholder.append(tf.zeros(self.model_config.batch_size,
-                                                                        tf.int32, name='simple_input'))
+                                                                        tf.int32, name='complex_input'))
 
             self.embedding = Embedding(self.data.vocab_complex, self.data.vocab_simple, self.model_config)
             self.emb_complex = self.embedding.get_complex_embedding()
             self.emb_simple = self.embedding.get_simple_embedding()
+            if self.is_train and self.model_config.pretrained_embedding is not None:
+                self.embed_complex_placeholder = tf.placeholder(
+                    tf.float32, (len(self.data.vocab_complex.i2w), self.model_config.dimension),
+                    'complex_emb')
+                self.replace_emb_complex = self.emb_complex.assign(self.embed_complex_placeholder)
 
-
+                self.embed_simple_placeholder = tf.placeholder(
+                    tf.float32, (len(self.data.vocab_simple.i2w), self.model_config.dimension),
+                    'simple_emb')
+                self.replace_emb_simple = self.emb_simple.assign(self.embed_simple_placeholder)
 
             self.w = self.embedding.get_w()
             self.b = self.embedding.get_b()

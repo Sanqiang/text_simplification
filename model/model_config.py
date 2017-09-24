@@ -42,6 +42,7 @@ class DefaultConfig():
     # enc_dec: encoder/decoder+transform
     # none: no tied embedding
     tie_embedding = 'enc_dec'
+    pretrained_embedding = None
 
     train_dataset_simple = get_path('data/train_dummy_simple_dataset')
     train_dataset_complex = get_path('data/train_dummy_complex_dataset')
@@ -109,23 +110,29 @@ class WikiDressLargeDefault(DefaultConfig):
     val_dataset_simple_file = 'wiki.full.aner.valid.dst'
     val_dataset_complex = get_path('../text_simplification_data/train/dress/wikilarge/wiki.full.aner.valid.src')
 
-    dimension = 256
+    dimension = 300
+    num_heads = 5
     max_complex_sentence = 85
     max_simple_sentence = 85
-    min_count = 5
-    batch_size = 25
-    model_save_freq = 1000
+    min_count = 3
+    batch_size = 32
+    model_save_freq = 500
 
-    hparams_pos = 'none'
+    hparams_pos = 'timing'
     tokenizer = 'split'
     tie_embedding = 'none'
+    pretrained_embedding = get_path('../text_simplification_data/glove/glove.840B.300d.txt')
+    pretrained_embedding_simple = get_path(
+        '../text_simplification_data/train/dress/wikilarge/wiki.full.aner.train.dst.vocab.pretrained')
+    pretrained_embedding_complex = get_path(
+        '../text_simplification_data/train/dress/wikilarge/wiki.full.aner.train.src.vocab.pretrained')
 
 
 class WikiDressLargeTrainConfig(WikiDressLargeDefault):
     beam_search_size = 0
-    train_with_hyp = False
+    train_with_hyp = True
 
 
 class WikiDressLargeTestConfig(WikiDressLargeDefault):
-    beam_search_size = 4
+    beam_search_size = 32
     batch_size = 64

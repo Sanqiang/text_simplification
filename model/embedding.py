@@ -2,6 +2,8 @@ from model.model_config import DefaultConfig
 
 import tensorflow as tf
 import math
+import os
+import numpy as np
 
 class Embedding:
     def __init__(self, voc_complex, voc_simple, model_config):
@@ -14,11 +16,9 @@ class Embedding:
         self.w_init = tf.random_uniform_initializer(-0.08, 0.08)
         print('Use tied embedding: \t%s.' % self.model_config.tie_embedding)
 
-
     def get_complex_embedding(self):
         if hasattr(self, 'emb_complex'):
             return self.emb_complex
-
         self.emb_complex = tf.get_variable(
             'embedding_complex', [len(self.voc_complex.i2w),self.model_config.dimension], tf.float32,
             initializer=self.emb_init)

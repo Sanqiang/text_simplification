@@ -53,9 +53,18 @@ def train(model_config=None):
     graph = Graph(data, True, model_config)
     graph.create_model()
 
+    def init_fn(session):
+        if model_config.pretrained_embedding is not None:
+            input_feed = {graph.embed_simple_placeholder: data.pretrained_emb_simple,
+                          graph.embed_complex_placeholder: data.pretrained_emb_complex}
+            session.run([graph.replace_emb_complex, graph.replace_emb_simple], input_feed)
+            print('Replace Pretrained Word Embedding.')
+
+
     sv = tf.train.Supervisor(logdir=model_config.logdir,
                              global_step=graph.global_step,
-                             saver=graph.saver)
+                             saver=graph.saver,
+                             init_fn=init_fn)
     sess = sv.PrepareSession(config=session.get_session_config(model_config))
     while True:
         input_feed = get_graph_train_data(data,
