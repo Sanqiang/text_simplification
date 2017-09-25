@@ -7,11 +7,14 @@ def get_path(file_path):
 
 
 class DefaultConfig():
+    framework = 'seq2seq'
     use_gpu = True
     batch_size = 2
     dimension = 32
+    num_heads = 4
     max_complex_sentence = 15
     max_simple_sentence = 15
+    min_simple_sentence = 5 #Used for Beam Search
     model_save_freq = 100
 
     min_count = 0
@@ -111,10 +114,10 @@ class WikiDressLargeDefault(DefaultConfig):
     val_dataset_complex = get_path('../text_simplification_data/train/dress/wikilarge/wiki.full.aner.valid.src')
 
     dimension = 300
-    num_heads = 5
+    num_heads = 15
     max_complex_sentence = 85
     max_simple_sentence = 85
-    min_count = 3
+    min_count = 4
     batch_size = 32
     model_save_freq = 500
 
@@ -130,9 +133,9 @@ class WikiDressLargeDefault(DefaultConfig):
 
 class WikiDressLargeTrainConfig(WikiDressLargeDefault):
     beam_search_size = 0
-    train_with_hyp = True
+    train_with_hyp = False
 
 
 class WikiDressLargeTestConfig(WikiDressLargeDefault):
-    beam_search_size = 32
+    beam_search_size = 10
     batch_size = 64

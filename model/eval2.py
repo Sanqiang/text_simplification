@@ -1,5 +1,5 @@
 from data_generator.val_data import ValData
-from model.transformer import TransformerGraph
+from model.seq2seq import Seq2SeqGraph
 from model.model_config import DefaultConfig, DefaultTestConfig, WikiDressLargeTestConfig
 from data_generator.vocab import Vocab
 from util import constant
@@ -67,13 +67,14 @@ def eval(model_config=None):
     model_config = (DefaultConfig()
                     if model_config is None else model_config)
     val_data = ValData(model_config)
-    if model_config.framework == 'transformer':
-        graph = TransformerGraph(val_data, False, model_config)
+    if model_config.framework == 'seq2seq':
+        model_config.max_simple_sentence = 1
+        graph = Seq2SeqGraph(val_data, False, model_config)
+
     graph.create_model()
 
     while True:
         ibleus_all= []
-        perplexitys_all = []
         decode_outputs_all = []
         it = val_data.get_data_iter()
 
@@ -96,10 +97,9 @@ def eval(model_config=None):
                 graph.sentence_complex_input_placeholder,
                 model_config, it)
 
-            fetches = [graph.decoder_target_list, graph.loss, graph.global_step]
-            target, loss, step = sess.run(fetches, input_feed)
-            batch_perplexity = math.exp(loss)
-            perplexitys_all.append(batch_perplexity)
+            best_hyp = graph.beam_search(sess, input_feed)
+            target = [int(t) for t in best_hyp.tokens[1:]]
+
 
             target = decode(target, val_data.vocab_simple)
             sentence_simple = decode(sentence_simple, val_data.vocab_simple)
@@ -135,16 +135,12 @@ def eval(model_config=None):
                 break
 
         ibleu = np.mean(ibleus_all)
-        perplexity = np.mean(perplexitys_all)
         print('Current iBLEU: \t%f' % ibleu)
-        print('Current perplexity: \t%f' % perplexity)
         print('Current eval done!')
-        f = open(model_config.modeldir + '/step' + str(step) + 'ibleu' + str(ibleu), 'w', encoding='utf-8')
+        f = open(model_config.modeldir + '/ibleu' + str(ibleu), 'w', encoding='utf-8')
         f.write(str(ibleu))
-        f.write('\t')
-        f.write(str(perplexity))
         f.flush()
-        f = open(model_config.modeldir + '/step' + str(step) + '-ibleu' + str(ibleu) + '.result', 'w', encoding='utf-8')
+        f = open(model_config.modeldir + '/ibleu' + str(ibleu) + '.result', 'w', encoding='utf-8')
         f.write('\n'.join(decode_outputs_all))
         f.flush()
 
@@ -178,4 +174,4 @@ def decode(target, voc):
 
 
 if __name__ == '__main__':
-    eval(WikiDressLargeTestConfig())
+    eval(DefaultTestConfig())

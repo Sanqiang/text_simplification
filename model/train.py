@@ -1,5 +1,7 @@
 from data_generator.train_data import TrainData
 from model.graph import Graph
+from model.transformer import TransformerGraph
+from model.seq2seq import Seq2SeqGraph
 from model.model_config import DefaultConfig, DefaultTrainConfig, WikiDressLargeTrainConfig
 from data_generator.vocab import Vocab
 from util import session
@@ -50,7 +52,11 @@ def train(model_config=None):
     model_config = (DefaultConfig()
                     if model_config is None else model_config)
     data = TrainData(model_config)
-    graph = Graph(data, True, model_config)
+    if model_config.framework == 'transformer':
+        graph = TransformerGraph(data, True, model_config)
+    elif model_config.framework == 'seq2seq':
+        graph = Seq2SeqGraph(data, True, model_config)
+
     graph.create_model()
 
     def init_fn(session):
@@ -85,4 +91,4 @@ def train(model_config=None):
 
 
 if __name__ == '__main__':
-    train(WikiDressLargeTrainConfig())
+    train(DefaultTrainConfig())

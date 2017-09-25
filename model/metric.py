@@ -40,7 +40,7 @@ class Metric:
                             if wid != self.data.vocab_complex.encode(constant.SYMBOL_PAD)
                             and wid != self.data.vocab_complex.encode(constant.SYMBOL_UNK)]
 
-            ratio = (len(sent_simple) + 1) / (len(sent_complex) + 1)
+            ratio = (len(sent_simple) - 1) / (len(sent_complex) - 1)
             len_ratios.append(ratio)
 
         return np.array(len_ratios, dtype=np.float32)

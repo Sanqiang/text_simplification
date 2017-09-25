@@ -38,34 +38,46 @@ class Embedding:
             return self.get_complex_embedding()
 
     def get_w(self):
-        if self.model_config.tie_embedding == 'none':
+        if self.model_config.framework == 'transformer':
+            if self.model_config.tie_embedding == 'none':
+                self.proj_w = tf.get_variable(
+                    'output_w', [len(self.voc_simple.i2w), self.model_config.dimension], tf.float32,
+                    initializer=self.w_init)
+                return self.proj_w
+            elif self.model_config.tie_embedding == 'enc_dec':
+                self.proj_w = tf.get_variable(
+                    'output_w', [len(self.voc_complex.i2w), self.model_config.dimension], tf.float32,
+                    initializer=self.w_init)
+                return self.proj_w
+            elif self.model_config.tie_embedding == 'dec_out':
+                return self.get_simple_embedding()
+            elif self.model_config.tie_embedding == 'all':
+                return self.get_complex_embedding()
+            else:
+                raise NotImplementedError('Not Implemented tie_embedding option.')
+        elif self.model_config.framework == 'seq2seq':
             self.proj_w = tf.get_variable(
-                'output_w', [len(self.voc_simple.i2w), self.model_config.dimension], tf.float32,
+                'output_w', [len(self.voc_simple.i2w), self.model_config.dimension * 2], tf.float32,
                 initializer=self.w_init)
             return self.proj_w
-        elif self.model_config.tie_embedding == 'enc_dec':
-            self.proj_w = tf.get_variable(
-                'output_w', [len(self.voc_complex.i2w), self.model_config.dimension], tf.float32,
-                initializer=self.w_init)
-            return self.proj_w
-        elif self.model_config.tie_embedding == 'dec_out':
-            return self.get_simple_embedding()
-        elif self.model_config.tie_embedding == 'all':
-            return self.get_complex_embedding()
-        else:
-            raise NotImplementedError('Not Implemented tie_embedding option.')
 
     def get_b(self):
-        if (self.model_config.tie_embedding == 'none' or
-                    self.model_config.tie_embedding == 'enc_dec' or
-                    self.model_config.tie_embedding == 'dec_out'):
-            self.proj_b = tf.get_variable('output_b',
-                                          shape=[len(self.voc_simple.i2w)], initializer=self.w_init)
-            return self.proj_b
-        elif self.model_config.tie_embedding == 'all':
+        if self.model_config.framework == 'transformer':
+            if (self.model_config.tie_embedding == 'none' or
+                        self.model_config.tie_embedding == 'enc_dec' or
+                        self.model_config.tie_embedding == 'dec_out'):
+                self.proj_b = tf.get_variable('output_b',
+                                              shape=[len(self.voc_simple.i2w)], initializer=self.w_init)
+                return self.proj_b
+            elif self.model_config.tie_embedding == 'all':
+                self.proj_b = tf.get_variable('output_b',
+                                              shape=[len(self.voc_complex.i2w)], initializer=self.w_init)
+                return self.proj_b
+        elif self.model_config.framework == 'seq2seq':
             self.proj_b = tf.get_variable('output_b',
                                           shape=[len(self.voc_complex.i2w)], initializer=self.w_init)
             return self.proj_b
+
 
 
 
