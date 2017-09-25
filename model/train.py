@@ -52,10 +52,14 @@ def train(model_config=None):
     model_config = (DefaultConfig()
                     if model_config is None else model_config)
     data = TrainData(model_config)
+
+    graph = None
     if model_config.framework == 'transformer':
         graph = TransformerGraph(data, True, model_config)
     elif model_config.framework == 'seq2seq':
         graph = Seq2SeqGraph(data, True, model_config)
+    else:
+        raise NotImplementedError('Unknown Framework.')
 
     graph.create_model()
 
@@ -65,7 +69,6 @@ def train(model_config=None):
                           graph.embed_complex_placeholder: data.pretrained_emb_complex}
             session.run([graph.replace_emb_complex, graph.replace_emb_simple], input_feed)
             print('Replace Pretrained Word Embedding.')
-
 
     sv = tf.train.Supervisor(logdir=model_config.logdir,
                              global_step=graph.global_step,

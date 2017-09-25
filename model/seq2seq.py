@@ -51,7 +51,6 @@ class Seq2SeqGraph(Graph):
         with tf.variable_scope('attention_decoder') as scope:
             encoder_states = tf.expand_dims(self._enc_states, axis=2)
 
-
             # Attention-based feature vector
             W_h = tf.get_variable("W_h",
                                   [1, 1, att_size, att_size])
