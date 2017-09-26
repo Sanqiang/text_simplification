@@ -14,6 +14,9 @@ class Seq2SeqGraph(Graph):
 
 
     def seq2seq_fn(self):
+        if not self.is_train:
+            del self.sentence_simple_input_placeholder[1:]
+
         self._enc_padding_mask = tf.stack(
             [tf.to_float(tf.not_equal(d, self.data.vocab_simple.encode(constant.SYMBOL_PAD)))
              for d in self.sentence_complex_input_placeholder], axis=1)
@@ -39,7 +42,7 @@ class Seq2SeqGraph(Graph):
             assert len(logits) == 1
             final_dists = logits[0]
             topk_probs, self._topk_ids = tf.nn.top_k(
-                final_dists, self.model_config.beam_search_size)
+                final_dists, self.model_config.beam_search_size * 2)
             self._topk_log_probs = tf.log(topk_probs)
 
         return decoder_outputs, logits, self.sentence_simple_input_placeholder
@@ -161,18 +164,25 @@ class Seq2SeqGraph(Graph):
         results = []
         steps = 0
         while steps < self.model_config.max_simple_sentence and len(results) < self.model_config.beam_search_size:
-            latest_tokens = [h.latest_token for h in hyps]
-            states = [h.state for h in hyps]
-            (topk_ids, topk_log_probs, new_states, attn_dists) = self.beam_search_onestep(
-                sess, latest_tokens, enc_states, states, input_feed)
+            topk_ids = []
+            topk_log_probs = []
+            new_states = []
+            attn_dists = []
+            for h in hyps:
+                (topk_id, topk_log_prob, new_state, attn_dist) = self.beam_search_onestep(
+                    sess, h.latest_token, enc_states, h.state, input_feed)
+                topk_ids.append(topk_id[0])
+                topk_log_probs.append(topk_log_prob[0])
+                new_states.append(new_state)
+                attn_dists.append(attn_dist)
 
             all_hyps = []
             num_orig_hyps = 1 if steps == 0 else len(hyps)
             for i in range(num_orig_hyps):
                 h, new_state, attn_dist = hyps[i], new_states[i], attn_dists[i]
                 for j in range(self.model_config.beam_search_size * 2):
-                    new_hyp = h.extend(token=topk_ids[i, j],
-                                       log_prob=topk_log_probs[i, j],
+                    new_hyp = h.extend(token=topk_ids[i][j],
+                                       log_prob=topk_log_probs[i][j],
                                        state=new_state,
                                        attn_dist=attn_dist)
                     all_hyps.append(new_hyp)
@@ -197,18 +207,14 @@ class Seq2SeqGraph(Graph):
     def sort_hyps(self, hyps):
         return sorted(hyps, key=lambda h: h.avg_log_prob, reverse=True)
 
-    def beam_search_onestep(self, sess, latest_tokens, enc_states, dec_init_states, input_feed):
-        cells = [np.expand_dims(state.c, axis=0) for state in dec_init_states]
-        hiddens = [np.expand_dims(state.h, axis=0) for state in dec_init_states]
-        new_c = np.concatenate(cells, axis=0)
-        new_h = np.concatenate(hiddens, axis=0)
-        new_dec_in_state = tf.contrib.rnn.LSTMStateTuple(new_c, new_h)
-
+    def beam_search_onestep(self, sess, latest_token, enc_state, dec_init_state, input_feed):
         feed = {
-            self._enc_states: enc_states,
-            self._dec_in_state: new_dec_in_state,
-            self.sentence_simple_input_placeholder: np.transpose(np.array([latest_tokens])),
+            self._enc_states: enc_state,
+            self._dec_in_state: dec_init_state,
         }
+
+        feed[self.sentence_simple_input_placeholder[0].name] = [latest_token]
+
 
         to_return = {
             "ids": self._topk_ids,
@@ -218,8 +224,7 @@ class Seq2SeqGraph(Graph):
         }
 
         results = sess.run(to_return, feed_dict=feed)
-        new_states = [tf.contrib.rnn.LSTMStateTuple(results['states'].c[i, :], results['states'].h[i, :]) for i in
-                      range(self.model_config.beam_search_size)]
+        new_states = tf.contrib.rnn.LSTMStateTuple(results['states'].c, results['states'].h)
         assert len(results['attn_dists']) == 1
         attn_dists = results['attn_dists'][0].tolist()
 

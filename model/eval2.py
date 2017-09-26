@@ -53,9 +53,9 @@ def get_graph_val_data(sentence_simple_input, sentence_complex_input,
         tmp_sentence_simple.append(sentence_simple)
         tmp_sentence_complex.append(sentence_complex)
 
-    for step in range(model_config.max_simple_sentence):
-        input_feed[sentence_simple_input[step].name] = [tmp_sentence_simple[batch_idx][step]
-                                                        for batch_idx in range(model_config.batch_size)]
+    # for step in range(model_config.max_simple_sentence):
+    #     input_feed[sentence_simple_input[step].name] = [tmp_sentence_simple[batch_idx][step]
+    #                                                     for batch_idx in range(model_config.batch_size)]
     for step in range(model_config.max_complex_sentence):
         input_feed[sentence_complex_input[step].name] = [tmp_sentence_complex[batch_idx][step]
                                                          for batch_idx in range(model_config.batch_size)]
@@ -66,15 +66,14 @@ def get_graph_val_data(sentence_simple_input, sentence_complex_input,
 def eval(model_config=None):
     model_config = (DefaultConfig()
                     if model_config is None else model_config)
+    model_config.batch_size = 1
     val_data = ValData(model_config)
     if model_config.framework == 'seq2seq':
-        model_config.max_simple_sentence = 1
         graph = Seq2SeqGraph(val_data, False, model_config)
-
     graph.create_model()
 
     while True:
-        ibleus_all= []
+        ibleus_all = []
         decode_outputs_all = []
         it = val_data.get_data_iter()
 
@@ -102,8 +101,8 @@ def eval(model_config=None):
 
 
             target = decode(target, val_data.vocab_simple)
-            sentence_simple = decode(sentence_simple, val_data.vocab_simple)
-            sentence_complex = decode(sentence_complex, val_data.vocab_complex)
+            sentence_simple = decode(sentence_simple[0], val_data.vocab_simple)
+            sentence_complex = decode(sentence_complex[0], val_data.vocab_complex)
             ibleus = []
             for ref_i in range(model_config.num_refs):
                 ref[ref_i] = decode(ref[ref_i], val_data.vocab_simple)
@@ -162,14 +161,14 @@ def decode(target, voc):
     target = list(target)
     batch_size = len(target)
     decode_results = []
-    for i in range(batch_size):
-        decode_result = list(map(voc.describe, target[i]))
-        if constant.SYMBOL_END in decode_result:
-            eos = decode_result.index(constant.SYMBOL_END)
-            decode_result = decode_result[:eos]
-        if len(decode_result) > 0 and decode_result[0] == constant.SYMBOL_START:
-            decode_result = decode_result[1:]
-        decode_results.append(decode_result)
+    # for i in range(batch_size):
+    decode_result = list(map(voc.describe, target))
+    if constant.SYMBOL_END in decode_result:
+        eos = decode_result.index(constant.SYMBOL_END)
+        decode_result = decode_result[:eos]
+    if len(decode_result) > 0 and decode_result[0] == constant.SYMBOL_START:
+        decode_result = decode_result[1:]
+    decode_results.append(decode_result)
     return decode_results
 
 

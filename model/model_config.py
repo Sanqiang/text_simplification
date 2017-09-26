@@ -73,7 +73,7 @@ class DefaultTrainConfig(DefaultConfig):
 
 class DefaultTestConfig(DefaultConfig):
     beam_search_size = 4
-    batch_size = 1
+    batch_size = 2
     # train_with_hyp = True
 
 

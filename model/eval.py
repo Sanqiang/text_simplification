@@ -72,7 +72,7 @@ def eval(model_config=None):
     graph.create_model()
 
     while True:
-        ibleus_all= []
+        ibleus_all = []
         perplexitys_all = []
         decode_outputs_all = []
         it = val_data.get_data_iter()
