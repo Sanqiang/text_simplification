@@ -12,16 +12,20 @@ class Seq2SeqGraph(Graph):
         super(Seq2SeqGraph, self).__init__(data, is_train, model_config)
         self.model_fn = self.seq2seq_fn
 
-
     def seq2seq_fn(self):
+        self.sentence_simple_input = ([tf.zeros(
+            self.model_config.batch_size, tf.int32, name='simple_input_go')] +
+                                 self.sentence_simple_input_placeholder[:-1])
+        self.sentence_simple_output = self.sentence_simple_input_placeholder
+
         if not self.is_train:
-            del self.sentence_simple_input_placeholder[1:]
+            del self.sentence_simple_input[1:]
 
         self._enc_padding_mask = tf.stack(
             [tf.to_float(tf.not_equal(d, self.data.vocab_simple.encode(constant.SYMBOL_PAD)))
              for d in self.sentence_complex_input_placeholder], axis=1)
         self._enc = self.embedding_fn(self.sentence_complex_input_placeholder, self.emb_complex)
-        self._enc_len = tf.to_int32(tf.reduce_mean(self._enc_padding_mask, axis=1))
+        self._enc_len = tf.to_int32(tf.reduce_sum(self._enc_padding_mask, axis=1))
 
         enc_outputs, fw_st, bw_st = self._encoder()
         self._enc_states = enc_outputs
@@ -40,12 +44,12 @@ class Seq2SeqGraph(Graph):
 
         if not self.is_train:
             assert len(logits) == 1
-            final_dists = logits[0]
+            self.final_dists = logits[0]
             topk_probs, self._topk_ids = tf.nn.top_k(
-                final_dists, self.model_config.beam_search_size * 2)
+                self.final_dists, self.model_config.beam_search_size * 2)
             self._topk_log_probs = tf.log(topk_probs)
 
-        return decoder_outputs, logits, self.sentence_simple_input_placeholder
+        return decoder_outputs, logits, self.sentence_simple_output
 
     def _decoder(self):
         att_size = self._enc_states.get_shape()[-1].value
@@ -85,9 +89,9 @@ class Seq2SeqGraph(Graph):
             state = self._dec_in_state
             context_vector = tf.zeros((self.model_config.batch_size, att_size))
             if not self.is_train:
-                context_vector, _ = attention(self._dec_in_state)
+                context_vector, _ = attention(state)
             for i, inp in enumerate(
-                    self.embedding_fn(self.sentence_simple_input_placeholder, self.emb_simple)):
+                    self.embedding_fn(self.sentence_simple_input, self.emb_simple)):
                 if i > 0:
                     tf.get_variable_scope().reuse_variables()
                 x = linear([inp] + [context_vector], att_size, True)
@@ -147,14 +151,15 @@ class Seq2SeqGraph(Graph):
     # For Evaluation Beam Search Graph
     # Following code will only dedicated to beam search in evaluation.
 
-    def run_encoder(self, sess, input_feed):
-        fetches = [self._enc_states, self._dec_in_state, self.global_step]
-        (enc_states, dec_in_state, global_step) = sess.run(
+    def run_encoder(self, sess, graph, input_feed):
+        fetches = [graph._enc_states, graph._dec_in_state, graph.global_step,
+                   graph.decoder_target_list, graph.loss, graph._enc, graph._enc_len, graph._enc_padding_mask]
+        (enc_states, dec_in_state, global_step, decode, loss, enc, enc_len, enc_mask) = sess.run(
             fetches, input_feed)
         return enc_states, dec_in_state
 
-    def beam_search(self, sess, input_feed):
-        enc_states, dec_in_state = self.run_encoder(sess, input_feed)
+    def beam_search(self, sess, graph, input_feed):
+        enc_states, dec_in_state = self.run_encoder(sess, graph, input_feed)
         hyps = [BeamSearch_Hypothesis(
             tokens=[self.data.vocab_simple.encode(constant.SYMBOL_START)],
             log_probs=[0.0],
@@ -170,7 +175,7 @@ class Seq2SeqGraph(Graph):
             attn_dists = []
             for h in hyps:
                 (topk_id, topk_log_prob, new_state, attn_dist) = self.beam_search_onestep(
-                    sess, h.latest_token, enc_states, h.state, input_feed)
+                    sess, h.latest_token, enc_states, h.state, graph, input_feed)
                 topk_ids.append(topk_id[0])
                 topk_log_probs.append(topk_log_prob[0])
                 new_states.append(new_state)
@@ -207,20 +212,21 @@ class Seq2SeqGraph(Graph):
     def sort_hyps(self, hyps):
         return sorted(hyps, key=lambda h: h.avg_log_prob, reverse=True)
 
-    def beam_search_onestep(self, sess, latest_token, enc_state, dec_init_state, input_feed):
+    def beam_search_onestep(self, sess, latest_token, enc_state, dec_init_state, graph, input_feed):
         feed = {
-            self._enc_states: enc_state,
-            self._dec_in_state: dec_init_state,
+            graph._enc_states: enc_state,
+            graph._dec_in_state: dec_init_state,
         }
 
-        feed[self.sentence_simple_input_placeholder[0].name] = [latest_token]
+        feed[graph.sentence_simple_input[0].name] = [latest_token]
 
 
         to_return = {
-            "ids": self._topk_ids,
-            "probs": self._topk_log_probs,
-            "states": self._dec_out_state,
-            "attn_dists": self.attn_dists
+            "ids": graph._topk_ids,
+            "probs": graph._topk_log_probs,
+            "states": graph._dec_out_state,
+            "attn_dists": graph.attn_dists,
+            'final_dists':graph.final_dists
         }
 
         results = sess.run(to_return, feed_dict=feed)

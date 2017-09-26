@@ -53,9 +53,15 @@ def get_graph_val_data(sentence_simple_input, sentence_complex_input,
         tmp_sentence_simple.append(sentence_simple)
         tmp_sentence_complex.append(sentence_complex)
 
+    for step in range(1):
+        input_feed[sentence_simple_input[step].name] = [tmp_sentence_simple[batch_idx][step]
+                                                        for batch_idx in range(model_config.batch_size)]
+
     # for step in range(model_config.max_simple_sentence):
     #     input_feed[sentence_simple_input[step].name] = [tmp_sentence_simple[batch_idx][step]
     #                                                     for batch_idx in range(model_config.batch_size)]
+
+
     for step in range(model_config.max_complex_sentence):
         input_feed[sentence_complex_input[step].name] = [tmp_sentence_complex[batch_idx][step]
                                                          for batch_idx in range(model_config.batch_size)]
@@ -96,7 +102,7 @@ def eval(model_config=None):
                 graph.sentence_complex_input_placeholder,
                 model_config, it)
 
-            best_hyp = graph.beam_search(sess, input_feed)
+            best_hyp = graph.beam_search(sess, graph, input_feed)
             target = [int(t) for t in best_hyp.tokens[1:]]
 
 

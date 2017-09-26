@@ -128,7 +128,7 @@ def eval(model_config=None):
                 ibleus.append(batch_ibleu)
                 # print('Batch iBLEU: \t%f.' % batch_ibleu)
             target_output = decode_to_output(target, sentence_simple, sentence_complex,
-                                             ibleus, effective_batch_size)
+                                             effective_batch_size, ibleus)
             decode_outputs_all.append(target_output)
 
             if is_end:
@@ -149,13 +149,15 @@ def eval(model_config=None):
         f.flush()
 
 
-def decode_to_output(target, sentence_simple, sentence_complex, ibleus, effective_batch_size):
+def decode_to_output(target, sentence_simple, sentence_complex, effective_batch_size, ibleus=None):
     output = ''
     for batch_i in range(effective_batch_size):
         target_batch = 'output=' + ' '.join(target[batch_i])
         sentence_simple_batch ='gt_simple=' + ' '.join(sentence_simple[batch_i])
         sentence_complex_batch = 'gt_complex='+ ' '.join(sentence_complex[batch_i])
-        batch_ibleu = 'iBLEU=' + str(ibleus[batch_i])
+        batch_ibleu = ''
+        if ibleus is not None:
+            batch_ibleu = 'iBLEU=' + str(ibleus[batch_i])
         output_batch = '\n'.join([target_batch, sentence_simple_batch, sentence_complex_batch,
                                   batch_ibleu, ''])
         output = '\n'.join([output, output_batch])

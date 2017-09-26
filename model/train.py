@@ -6,6 +6,7 @@ from model.model_config import DefaultConfig, DefaultTrainConfig, WikiDressLarge
 from data_generator.vocab import Vocab
 from util import session
 from util import constant
+from model.eval import decode_to_output, decode
 
 import tensorflow as tf
 import math
@@ -45,7 +46,7 @@ def get_graph_train_data(data,
         input_feed[sentence_complex_input[step].name] = [tmp_sentence_complex[batch_idx][step]
                                                          for batch_idx in range(model_config.batch_size)]
 
-    return input_feed
+    return input_feed, tmp_sentence_simple, tmp_sentence_complex
 
 
 def train(model_config=None):
@@ -73,13 +74,15 @@ def train(model_config=None):
     sv = tf.train.Supervisor(logdir=model_config.logdir,
                              global_step=graph.global_step,
                              saver=graph.saver,
-                             init_fn=init_fn)
+                             init_fn=init_fn,
+                             save_model_secs=model_config.save_model_secs)
     sess = sv.PrepareSession(config=session.get_session_config(model_config))
     while True:
-        input_feed = get_graph_train_data(data,
-                                    graph.sentence_simple_input_placeholder,
-                                    graph.sentence_complex_input_placeholder,
-                                    model_config)
+        input_feed, sentence_simple, sentence_complex = get_graph_train_data(
+            data,
+            graph.sentence_simple_input_placeholder,
+            graph.sentence_complex_input_placeholder,
+            model_config)
 
         fetches = [graph.train_op, graph.loss, graph.global_step, graph.decoder_target_list]
         _, loss, step, result = sess.run(fetches, input_feed)
@@ -88,9 +91,13 @@ def train(model_config=None):
 
         if step % model_config.model_save_freq == 0:
             graph.saver.save(sess, model_config.outdir + '/model.ckpt-%d' % step)
-            # f = open(model_config.outdir + '/output_model.ckpt-%d' % step, 'w')
-            # f.write(decode_output(result, data))
-            # f.flush()
+            f = open(model_config.outdir + '/output_model.ckpt-%d' % step, 'w')
+            result = decode(result, data.vocab_simple)
+            sentence_simple = decode(sentence_simple, data.vocab_simple)
+            sentence_complex = decode(sentence_complex, data.vocab_complex)
+            r = decode_to_output(result, sentence_simple, sentence_complex, model_config.batch_size)
+            f.write(r)
+            f.flush()
 
 
 if __name__ == '__main__':

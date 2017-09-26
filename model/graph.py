@@ -15,7 +15,7 @@ class Graph:
         self.data = data
         self.is_train = is_train
         self.model_fn = None
-        print('Batch Szie:\t%d.' % self.model_config.batch_size)
+        print('Batch Size:\t%d.' % self.model_config.batch_size)
         self.rand_unif_init = tf.random_uniform_initializer(-0,.08, 0.08)
 
     def embedding_fn(self, inputs, embedding):

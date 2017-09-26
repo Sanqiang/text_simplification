@@ -16,6 +16,7 @@ class DefaultConfig():
     max_simple_sentence = 15
     min_simple_sentence = 5 #Used for Beam Search
     model_save_freq = 100
+    save_model_secs = 60
 
     min_count = 0
     lower_case = True
@@ -44,7 +45,7 @@ class DefaultConfig():
     # dec_out: decoder/output+transform;
     # enc_dec: encoder/decoder+transform
     # none: no tied embedding
-    tie_embedding = 'enc_dec'
+    tie_embedding = 'none'
     pretrained_embedding = None
 
     train_dataset_simple = get_path('data/train_dummy_simple_dataset')
@@ -112,6 +113,8 @@ class WikiDressLargeDefault(DefaultConfig):
     val_dataset_simple_folder = get_path('../text_simplification_data/train/dress/wikilarge/')
     val_dataset_simple_file = 'wiki.full.aner.valid.dst'
     val_dataset_complex = get_path('../text_simplification_data/train/dress/wikilarge/wiki.full.aner.valid.src')
+
+    save_model_secs = 600
 
     dimension = 300
     num_heads = 15

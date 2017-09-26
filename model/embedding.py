@@ -75,7 +75,7 @@ class Embedding:
                 return self.proj_b
         elif self.model_config.framework == 'seq2seq':
             self.proj_b = tf.get_variable('output_b',
-                                          shape=[len(self.voc_complex.i2w)], initializer=self.w_init)
+                                          shape=[len(self.voc_simple.i2w)], initializer=self.w_init)
             return self.proj_b
 
 
