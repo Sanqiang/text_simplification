@@ -57,7 +57,7 @@ class Embedding:
                 raise NotImplementedError('Not Implemented tie_embedding option.')
         elif self.model_config.framework == 'seq2seq':
             self.proj_w = tf.get_variable(
-                'output_w', [len(self.voc_simple.i2w), self.model_config.dimension * 2], tf.float32,
+                'output_w', [len(self.voc_simple.i2w), self.model_config.dimension], tf.float32,
                 initializer=self.w_init)
             return self.proj_w
 

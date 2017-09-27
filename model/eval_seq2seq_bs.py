@@ -33,9 +33,9 @@ def get_graph_val_data(sentence_simple_input, sentence_complex_input,
             is_end = True
             sentence_simple, sentence_complex, ref = [], [], []
 
-
-        for i_ref in range(model_config.num_refs):
-            tmp_ref[i_ref].append(ref[i_ref])
+        if ref:
+            for i_ref in range(model_config.num_refs):
+                tmp_ref[i_ref].append(ref[i_ref])
 
         # PAD zeros
         if len(sentence_simple) < model_config.max_simple_sentence:
@@ -102,7 +102,7 @@ def eval(model_config=None):
                 graph.sentence_complex_input_placeholder,
                 model_config, it)
 
-            best_hyp = graph.beam_search(sess, graph, input_feed)
+            best_hyp, step = graph.beam_search(sess, graph, input_feed)
             target = [int(t) for t in best_hyp.tokens[1:]]
 
 
@@ -122,7 +122,7 @@ def eval(model_config=None):
                         batch_bleu_rs.append(
                             sentence_bleu(target[batch_i], ref[ref_i][batch_i]))
                     if len(batch_bleu_rs) > 0:
-                        batch_bleu_r = np.mean(batch_bleu_rs)
+                        batch_bleu_r = max(batch_bleu_rs)
                         batch_ibleu = batch_bleu_r * 0.9 + batch_bleu_i * 0.1
                     else:
                         batch_ibleu = batch_bleu_i
@@ -142,10 +142,10 @@ def eval(model_config=None):
         ibleu = np.mean(ibleus_all)
         print('Current iBLEU: \t%f' % ibleu)
         print('Current eval done!')
-        f = open(model_config.modeldir + '/ibleu' + str(ibleu), 'w', encoding='utf-8')
+        f = open(model_config.modeldir + '/step' + str(step) + '-ibleu' + str(ibleu), 'w', encoding='utf-8')
         f.write(str(ibleu))
         f.flush()
-        f = open(model_config.modeldir + '/ibleu' + str(ibleu) + '.result', 'w', encoding='utf-8')
+        f = open(model_config.modeldir + '/step' + str(step) + '-ibleu' + str(ibleu) + '.result', 'w', encoding='utf-8')
         f.write('\n'.join(decode_outputs_all))
         f.flush()
 

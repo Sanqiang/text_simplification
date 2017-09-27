@@ -9,13 +9,13 @@ def get_path(file_path):
 class DefaultConfig():
     framework = 'seq2seq'
     use_gpu = True
-    batch_size = 2
+    batch_size = 3
     dimension = 32
     num_heads = 4
     max_complex_sentence = 15
     max_simple_sentence = 15
     min_simple_sentence = 5 #Used for Beam Search
-    model_save_freq = 100
+    model_save_freq = 1000
     save_model_secs = 60
 
     min_count = 0
@@ -63,7 +63,7 @@ class DefaultConfig():
     outdir = get_path('../tmp/output/')
     modeldir = get_path('../tmp/model/')
 
-    # allow_growth = True
+    allow_growth = True
     # per_process_gpu_memory_fraction = 1.0
 
 
@@ -73,7 +73,7 @@ class DefaultTrainConfig(DefaultConfig):
 
 
 class DefaultTestConfig(DefaultConfig):
-    beam_search_size = 4
+    beam_search_size = 2
     batch_size = 2
     # train_with_hyp = True
 
@@ -109,10 +109,15 @@ class WikiDressLargeDefault(DefaultConfig):
     vocab_complex = get_path('../text_simplification_data/train/dress/wikilarge/wiki.full.aner.train.src.vocab')
     vocab_all = get_path('../text_simplification_data/train/dress/wikilarge/wiki.full.aner.train.vocab')
 
-    num_refs = 0
-    val_dataset_simple_folder = get_path('../text_simplification_data/train/dress/wikilarge/')
-    val_dataset_simple_file = 'wiki.full.aner.valid.dst'
-    val_dataset_complex = get_path('../text_simplification_data/train/dress/wikilarge/wiki.full.aner.valid.src')
+    # num_refs = 0
+    # val_dataset_simple_folder = get_path('../text_simplification_data/train/dress/wikilarge/')
+    # val_dataset_simple_file = 'wiki.full.aner.valid.dst'
+    # val_dataset_complex = get_path('../text_simplification_data/train/dress/wikilarge/wiki.full.aner.valid.src')
+    val_dataset_simple_folder = get_path('../text_simplification_data/val/')
+    val_dataset_simple_file = 'tune.8turkers.tok.simp'
+    val_dataset_simple_references = 'tune.8turkers.tok.turk.'
+    val_dataset_complex = get_path('../text_simplification_data/val/tune.8turkers.tok.norm')
+    num_refs = 8
 
     save_model_secs = 600
 

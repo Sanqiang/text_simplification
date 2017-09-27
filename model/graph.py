@@ -53,7 +53,7 @@ class Graph:
             self.w = self.embedding.get_w()
             self.b = self.embedding.get_b()
 
-        with tf.variable_scope('transformer'):
+        with tf.variable_scope('model'):
             decoder_output_list, decoder_logit_list, decoder_target_list = self.model_fn()
             self.decoder_target_list = tf.stack(decoder_target_list, axis=-1)
             if not self.is_train and self.model_config.beam_search_size > 1:

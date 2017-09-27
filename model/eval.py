@@ -1,5 +1,6 @@
 from data_generator.val_data import ValData
 from model.transformer import TransformerGraph
+from model.seq2seq import Seq2SeqGraph
 from model.model_config import DefaultConfig, DefaultTestConfig, WikiDressLargeTestConfig
 from data_generator.vocab import Vocab
 from util import constant
@@ -34,8 +35,9 @@ def get_graph_val_data(sentence_simple_input, sentence_complex_input,
             sentence_simple, sentence_complex, ref = [], [], []
 
 
-        for i_ref in range(model_config.num_refs):
-            tmp_ref[i_ref].append(ref[i_ref])
+        if ref:
+            for i_ref in range(model_config.num_refs):
+                tmp_ref[i_ref].append(ref[i_ref])
 
         # PAD zeros
         if len(sentence_simple) < model_config.max_simple_sentence:
@@ -69,6 +71,8 @@ def eval(model_config=None):
     val_data = ValData(model_config)
     if model_config.framework == 'transformer':
         graph = TransformerGraph(val_data, False, model_config)
+    elif model_config.framework == 'seq2seq':
+        graph = Seq2SeqGraph(val_data, False, model_config)
     graph.create_model()
 
     while True:
@@ -117,7 +121,7 @@ def eval(model_config=None):
                         batch_bleu_rs.append(
                             sentence_bleu(target[batch_i], ref[ref_i][batch_i]))
                     if len(batch_bleu_rs) > 0:
-                        batch_bleu_r = np.mean(batch_bleu_rs)
+                        batch_bleu_r = max(batch_bleu_rs)
                         batch_ibleu = batch_bleu_r * 0.9 + batch_bleu_i * 0.1
                     else:
                         batch_ibleu = batch_bleu_i

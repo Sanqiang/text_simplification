@@ -43,8 +43,8 @@ class Seq2SeqGraph(Graph):
         logits = [tf.nn.softmax(s) for s in logits]
 
         if not self.is_train:
-            assert len(logits) == 1
-            self.final_dists = logits[0]
+            # assert len(logits) == 1
+            self.final_dists = logits[-1]
             topk_probs, self._topk_ids = tf.nn.top_k(
                 self.final_dists, self.model_config.beam_search_size * 2)
             self._topk_log_probs = tf.log(topk_probs)
@@ -54,9 +54,10 @@ class Seq2SeqGraph(Graph):
     def _decoder(self):
         att_size = self._enc_states.get_shape()[-1].value
         cell = tf.contrib.rnn.LSTMCell(
-            att_size, state_is_tuple=True, initializer=self.rand_unif_init)
-        with tf.variable_scope('attention_decoder') as scope:
+            self.model_config.dimension, state_is_tuple=True, initializer=self.rand_unif_init)
+        with tf.variable_scope('attention_decoder'):
             encoder_states = tf.expand_dims(self._enc_states, axis=2)
+            encoder_memorys = tf.expand_dims(tf.stack(self.embedding_fn(self.sentence_complex_input_placeholder, self.emb_complex), axis=1), axis=2)
 
             # Attention-based feature vector
             W_h = tf.get_variable("W_h",
@@ -67,41 +68,48 @@ class Seq2SeqGraph(Graph):
 
             def attention(decoder_state):
                 with tf.variable_scope("attention"):
-                    def masked_attention(e):
-                        attn_dist = tf.nn.softmax(e)  # take softmax. shape (batch_size, attn_length)
-                        attn_dist *= self._enc_padding_mask  # apply mask
-                        masked_sums = tf.reduce_sum(attn_dist, axis=1)  # shape (batch_size)
-                        return attn_dist / tf.reshape(masked_sums, [-1, 1])  # re-normalize
-
-                    decoder_features = linear(decoder_state, att_size, True)
+                    decoder_features = linear(decoder_state.h, att_size, True)
                     decoder_features = tf.expand_dims(tf.expand_dims(decoder_features, 1), 1)
+
+                    def masked_attention(e):
+                        attn_dist = tf.nn.softmax(e)
+                        attn_dist *= self._enc_padding_mask
+                        masked_sums = tf.reduce_sum(attn_dist, axis=1)
+                        return attn_dist / tf.reshape(masked_sums, [-1, 1])
+
                     e = tf.reduce_sum(v * tf.tanh(encoder_features + decoder_features), [2, 3])
                     attn_dist = masked_attention(e)
                     context_vector = tf.reduce_sum(
-                        tf.reshape(attn_dist, [self.model_config.batch_size, -1, 1, 1]) * encoder_states,
+                        tf.reshape(attn_dist, [self.model_config.batch_size, -1, 1, 1]) * encoder_memorys,
                         [1, 2])  # shape (batch_size, attn_size).
-                    context_vector = tf.reshape(context_vector, [-1, att_size])
+                    context_vector = tf.reshape(context_vector, [-1, self.model_config.dimension])
 
                 return context_vector, attn_dist
 
             outputs = []
             attn_dists = []
             state = self._dec_in_state
-            context_vector = tf.zeros((self.model_config.batch_size, att_size))
-            if not self.is_train:
-                context_vector, _ = attention(state)
-            for i, inp in enumerate(
-                    self.embedding_fn(self.sentence_simple_input, self.emb_simple)):
+            context_vector = tf.zeros((self.model_config.batch_size, self.model_config.dimension))
+            # if not self.is_train:
+            #     context_vector, _ = attention(state)
+            gt_inps = self.embedding_fn(self.sentence_simple_input, self.emb_simple)
+            for i in range(self.model_config.max_simple_sentence):
+                if self.is_train or i == 0:
+                    inp = gt_inps[i]
+
                 if i > 0:
                     tf.get_variable_scope().reuse_variables()
-                x = linear([inp] + [context_vector], att_size, True)
+                    if not self.is_train:
+                        inp = output
+                # x = linear([inp] + [context_vector], self.model_config.dimension, True)
+                x = inp
                 cell_output, state = cell(x, state)
-                if i == 0 and not self.is_train:
-                    with tf.variable_scope(
-                            tf.get_variable_scope(), reuse=True):
-                        context_vector, attn_dist = attention(state)
-                else:
-                    context_vector, attn_dist = attention(state)
+                # if i == 0 and not self.is_train:
+                #     with tf.variable_scope(
+                #             tf.get_variable_scope(), reuse=True):
+                #         context_vector, attn_dist = attention(state)
+                # else:
+                context_vector, attn_dist = attention(state)
                 attn_dists.append(attn_dist)
 
                 with tf.variable_scope("AttnOutputProjection"):
@@ -129,16 +137,16 @@ class Seq2SeqGraph(Graph):
         with tf.variable_scope('reduce_final_st'):
             # Define weights and biases to reduce the cell and reduce the state
             w_reduce_c = tf.get_variable(
-                'w_reduce_c', [self.model_config.dimension * 2, self.model_config.dimension * 2],
+                'w_reduce_c', [self.model_config.dimension * 2, self.model_config.dimension],
                 dtype=tf.float32, initializer=self.rand_unif_init)
             w_reduce_h = tf.get_variable(
-                'w_reduce_h', [self.model_config.dimension * 2, self.model_config.dimension * 2],
+                'w_reduce_h', [self.model_config.dimension * 2, self.model_config.dimension],
                 dtype=tf.float32, initializer=self.rand_unif_init)
             bias_reduce_c = tf.get_variable(
-                'bias_reduce_c', [self.model_config.dimension * 2],
+                'bias_reduce_c', [self.model_config.dimension],
                 dtype=tf.float32, initializer=self.rand_unif_init)
             bias_reduce_h = tf.get_variable(
-                'bias_reduce_h', [self.model_config.dimension * 2],
+                'bias_reduce_h', [self.model_config.dimension],
                 dtype=tf.float32, initializer=self.rand_unif_init)
 
             # Apply linear layer
@@ -152,14 +160,13 @@ class Seq2SeqGraph(Graph):
     # Following code will only dedicated to beam search in evaluation.
 
     def run_encoder(self, sess, graph, input_feed):
-        fetches = [graph._enc_states, graph._dec_in_state, graph.global_step,
-                   graph.decoder_target_list, graph.loss, graph._enc, graph._enc_len, graph._enc_padding_mask]
-        (enc_states, dec_in_state, global_step, decode, loss, enc, enc_len, enc_mask) = sess.run(
+        fetches = [graph._enc_states, graph._dec_in_state, graph.global_step]
+        (enc_states, dec_in_state, global_step) = sess.run(
             fetches, input_feed)
-        return enc_states, dec_in_state
+        return enc_states, dec_in_state, global_step
 
     def beam_search(self, sess, graph, input_feed):
-        enc_states, dec_in_state = self.run_encoder(sess, graph, input_feed)
+        enc_states, dec_in_state, global_step = self.run_encoder(sess, graph, input_feed)
         hyps = [BeamSearch_Hypothesis(
             tokens=[self.data.vocab_simple.encode(constant.SYMBOL_START)],
             log_probs=[0.0],
@@ -201,13 +208,13 @@ class Seq2SeqGraph(Graph):
                     hyps.append(h)
                 if len(hyps) == self.model_config.beam_search_size or len(results) == self.model_config.beam_search_size:
                     break
-                steps += 1
+            steps += 1
 
         if len(results) == 0:
             results = hyps
 
         hyps_sorted = self.sort_hyps(results)
-        return hyps_sorted[0]
+        return hyps_sorted[0], global_step
 
     def sort_hyps(self, hyps):
         return sorted(hyps, key=lambda h: h.avg_log_prob, reverse=True)
@@ -220,7 +227,6 @@ class Seq2SeqGraph(Graph):
 
         feed[graph.sentence_simple_input[0].name] = [latest_token]
 
-
         to_return = {
             "ids": graph._topk_ids,
             "probs": graph._topk_log_probs,
@@ -231,7 +237,7 @@ class Seq2SeqGraph(Graph):
 
         results = sess.run(to_return, feed_dict=feed)
         new_states = tf.contrib.rnn.LSTMStateTuple(results['states'].c, results['states'].h)
-        assert len(results['attn_dists']) == 1
+        # assert len(results['attn_dists']) == 1
         attn_dists = results['attn_dists'][0].tolist()
 
         return results['ids'], results['probs'], new_states, attn_dists

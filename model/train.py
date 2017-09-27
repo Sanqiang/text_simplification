@@ -84,8 +84,8 @@ def train(model_config=None):
             graph.sentence_complex_input_placeholder,
             model_config)
 
-        fetches = [graph.train_op, graph.loss, graph.global_step, graph.decoder_target_list]
-        _, loss, step, result = sess.run(fetches, input_feed)
+        fetches = [graph.train_op, graph.loss, graph.global_step, graph.decoder_target_list, graph.attn_dists]
+        _, loss, step, result, attn_dists = sess.run(fetches, input_feed)
         perplexity = math.exp(loss)
         print('Perplexity:\t%f at step %d.' % (perplexity, step))
 
@@ -101,4 +101,4 @@ def train(model_config=None):
 
 
 if __name__ == '__main__':
-    train(DefaultTrainConfig())
+    train(WikiDressLargeTrainConfig())
