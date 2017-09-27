@@ -24,7 +24,7 @@ class DefaultConfig():
 
     # Follow the configuration from https://github.com/XingxingZhang/dress
     optimizer = 'adagrad'
-    learning_rate = 0.1
+    learning_rate = 0.01
     max_grad_staleness = 0.0
     max_grad_norm = 4.0
 
