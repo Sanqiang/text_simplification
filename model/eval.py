@@ -26,6 +26,8 @@ def get_graph_val_data(sentence_simple_input, sentence_complex_input,
     for i in range(model_config.batch_size):
         if not is_end:
             sentence_simple, sentence_complex, ref = next(it)
+            if sentence_simple:
+                del sentence_simple[1:]
             effective_batch_size += 1
         if sentence_simple is None or is_end:
             # End of data set
@@ -115,11 +117,11 @@ def eval(model_config=None):
             for batch_i in range(effective_batch_size):
                 # Compute iBLEU
                 try:
-                    batch_bleu_i = sentence_bleu(target[batch_i], sentence_simple[batch_i])
+                    batch_bleu_i = sentence_bleu([target[batch_i]], sentence_simple[batch_i], weights=[1])
                     batch_bleu_rs = []
                     for ref_i in range(model_config.num_refs):
                         batch_bleu_rs.append(
-                            sentence_bleu(target[batch_i], ref[ref_i][batch_i]))
+                            sentence_bleu([target[batch_i]], ref[ref_i][batch_i]), weights=[1])
                     if len(batch_bleu_rs) > 0:
                         batch_bleu_r = max(batch_bleu_rs)
                         batch_ibleu = batch_bleu_r * 0.9 + batch_bleu_i * 0.1
@@ -184,4 +186,4 @@ def decode(target, voc):
 
 
 if __name__ == '__main__':
-    eval(WikiDressLargeTestConfig())
+    eval(DefaultTestConfig())

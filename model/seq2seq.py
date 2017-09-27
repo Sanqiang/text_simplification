@@ -40,7 +40,7 @@ class Seq2SeqGraph(Graph):
             if i > 0:
                 tf.get_variable_scope().reuse_variables()
             logits.append(tf.nn.xw_plus_b(output, tf.transpose(self.w), self.b))
-        logits = [tf.nn.softmax(s) for s in logits]
+        # logits = [tf.nn.softmax(s) for s in logits]
 
         if not self.is_train:
             # assert len(logits) == 1
