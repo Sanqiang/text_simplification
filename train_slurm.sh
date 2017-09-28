@@ -2,8 +2,8 @@
 #SBATCH --cluster=gpu
 #SBATCH --gres=gpu:1
 #SBATCH --partition=gtx1080
-#SBATCH --job-name=dress_no_timing_train
-#SBATCH --output=dress_no_timing_train.out
+#SBATCH --job-name=tr
+#SBATCH --output=tr.out
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
 #SBATCH --cpus-per-task=1
