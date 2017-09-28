@@ -6,12 +6,15 @@ from data_generator.vocab import Vocab
 from util import constant
 from util import session
 from util.checkpoint import copy_ckpt_to_modeldir
+from util.decode import decode, decode_to_output, exclude_list, get_exclude_list
 
 from nltk.translate.bleu_score import sentence_bleu
+from util.mteval_bleu import MtEval_BLEU
 import tensorflow as tf
 import math
 import numpy as np
 import time
+from html import escape
 
 
 def get_graph_val_data(sentence_simple_input, sentence_complex_input,
@@ -26,8 +29,8 @@ def get_graph_val_data(sentence_simple_input, sentence_complex_input,
     for i in range(model_config.batch_size):
         if not is_end:
             sentence_simple, sentence_complex, ref = next(it)
-            if sentence_simple:
-                del sentence_simple[1:]
+            # if sentence_simple:
+            #     del sentence_simple[1:]
             effective_batch_size += 1
         if sentence_simple is None or is_end:
             # End of data set
@@ -81,6 +84,11 @@ def eval(model_config=None):
         ibleus_all = []
         perplexitys_all = []
         decode_outputs_all = []
+        targets = []
+        sentence_simples = []
+        sentence_complexs = []
+        refs = [[] for _ in range(model_config.num_refs)]
+
         it = val_data.get_data_iter()
 
         def init_fn(session):
@@ -107,13 +115,27 @@ def eval(model_config=None):
             batch_perplexity = math.exp(loss)
             perplexitys_all.append(batch_perplexity)
 
+            exclude_idxs = get_exclude_list(sentence_complex, val_data.vocab_complex)
+            if exclude_idxs:
+                sentence_complex = exclude_list(sentence_complex, exclude_idxs)
+                sentence_simple = exclude_list(sentence_simple, exclude_idxs)
+                target = exclude_list(target, exclude_idxs)
+                for ref_i in range(model_config.num_refs):
+                    ref[ref_i] = exclude_list(ref[ref_i], exclude_idxs)
+
+
             target = decode(target, val_data.vocab_simple)
             sentence_simple = decode(sentence_simple, val_data.vocab_simple)
             sentence_complex = decode(sentence_complex, val_data.vocab_complex)
-            ibleus = []
             for ref_i in range(model_config.num_refs):
                 ref[ref_i] = decode(ref[ref_i], val_data.vocab_simple)
+            targets.extend(target)
+            sentence_simples.extend(sentence_simple)
+            sentence_complexs.extend(sentence_complex)
+            for ref_i in range(model_config.num_refs):
+                refs[ref_i].extend(ref[ref_i])
 
+            ibleus = []
             for batch_i in range(effective_batch_size):
                 # Compute iBLEU
                 try:
@@ -121,7 +143,7 @@ def eval(model_config=None):
                     batch_bleu_rs = []
                     for ref_i in range(model_config.num_refs):
                         batch_bleu_rs.append(
-                            sentence_bleu([target[batch_i]], ref[ref_i][batch_i]), weights=[1])
+                            sentence_bleu([target[batch_i]], ref[ref_i][batch_i], weights=[1]))
                     if len(batch_bleu_rs) > 0:
                         batch_bleu_r = max(batch_bleu_rs)
                         batch_ibleu = batch_bleu_r * 0.9 + batch_bleu_i * 0.1
@@ -145,44 +167,69 @@ def eval(model_config=None):
         print('Current iBLEU: \t%f' % ibleu)
         print('Current perplexity: \t%f' % perplexity)
         print('Current eval done!')
-        f = open(model_config.modeldir + '/step' + str(step) + 'ibleu' + str(ibleu), 'w', encoding='utf-8')
+        # MtEval Result
+        mteval = MtEval_BLEU(model_config)
+        # MtEval Result - Decode
+        bleu_oi_decode = mteval.get_bleu_from_decoderesult(sentence_complexs, sentence_simples, targets)
+        bleu_ors_decode = []
+        for ref_i in range(model_config.num_refs):
+            bleu_or_decode = mteval.get_bleu_from_decoderesult(sentence_complexs, refs[ref_i], targets)
+            bleu_ors_decode.append(bleu_or_decode)
+        bleu_decode = 0.9 * max(bleu_ors_decode) + 0.1 * bleu_oi_decode
+        print('Current Mteval iBLEU decode: \t%f' % bleu_decode)
+
+        # MtEval Result - Raw
+        bleu_oi_raw = mteval.get_bleu_from_rawresult(targets)
+        bleu_ors_raw = []
+        for ref_i in range(model_config.num_refs):
+            bleu_or_raw = mteval.get_bleu_from_rawresult(
+                targets, path_gt_simple=(model_config.val_dataset_simple_folder +
+                                         model_config.val_dataset_simple_references + str(ref_i)))
+            bleu_ors_raw.append(bleu_or_raw)
+        bleu_raw = 0.9 * max(bleu_ors_raw) + 0.1 * bleu_oi_raw
+        print('Current Mteval iBLEU decode: \t%f' % bleu_raw)
+
+
+        # Output Result
+        f = open((model_config.modeldir + '/step' + str(step) +
+                  '-ibleu_raw' + str(bleu_raw) +
+                  '-ibleu_decode' + str(bleu_decode) +
+                  '-ibleu' + str(ibleu)),
+                 'w', encoding='utf-8')
         f.write(str(ibleu))
         f.write('\t')
         f.write(str(perplexity))
-        f.flush()
-        f = open(model_config.modeldir + '/step' + str(step) + '-ibleu' + str(ibleu) + '.result', 'w', encoding='utf-8')
+        f.close()
+        f = open((model_config.modeldir + '/step' + str(step) +
+                  '-ibleu_raw' + str(bleu_raw) +
+                  '-ibleu_decode' + str(bleu_decode) +
+                  '-ibleu' + str(ibleu) + '.result'),
+                 'w', encoding='utf-8')
         f.write('\n'.join(decode_outputs_all))
-        f.flush()
+        f.close()
 
 
-def decode_to_output(target, sentence_simple, sentence_complex, effective_batch_size, ibleus=None):
-    output = ''
-    for batch_i in range(effective_batch_size):
-        target_batch = 'output=' + ' '.join(target[batch_i])
-        sentence_simple_batch ='gt_simple=' + ' '.join(sentence_simple[batch_i])
-        sentence_complex_batch = 'gt_complex='+ ' '.join(sentence_complex[batch_i])
-        batch_ibleu = ''
-        if ibleus is not None:
-            batch_ibleu = 'iBLEU=' + str(ibleus[batch_i])
-        output_batch = '\n'.join([target_batch, sentence_simple_batch, sentence_complex_batch,
-                                  batch_ibleu, ''])
-        output = '\n'.join([output, output_batch])
-    return output
+def decode_to_mteval(decode_result, setlabel):
+    """Generate Decode Output for MtEval Script."""
+    template = ('<?xml version="1.0" encoding="UTF-8"?>\n' +
+                '<!DOCTYPE mteval SYSTEM "ftp://jaguar.ncsl.nist.gov/mt/resources/mteval-xml-v1.3.dtd">\n' +
+                '<mteval>\n' +
+                '<SET_LABEL setid="example_set" srclang="Arabic" trglang="English" refid="ref1" sysid="sample_system">\n' +
+                '<doc docid="doc1" genre="nw">\n' +
+                'CONTENT\n' +
+                '</doc>\n' +
+                '</SET_LABEL>\n' +
+                '</mteval>\n')
+    template = template.replace('SET_LABEL', setlabel)
 
+    tmp_output = ''
+    for batch_i in range(len(decode_result)):
+        tmp_line = ' '.join(decode_result[batch_i])
+        tmp_line = '<p><seg id="%d"> %s </seg></p>' % (1 + batch_i, escape(tmp_line.replace('<','').replace('>','')))
+        tmp_output = '\n'.join([tmp_line, tmp_output])
+    template = template.replace('CONTENT', tmp_output)
 
-def decode(target, voc):
-    target = list(target)
-    batch_size = len(target)
-    decode_results = []
-    for i in range(batch_size):
-        decode_result = list(map(voc.describe, target[i]))
-        if constant.SYMBOL_END in decode_result:
-            eos = decode_result.index(constant.SYMBOL_END)
-            decode_result = decode_result[:eos]
-        if len(decode_result) > 0 and decode_result[0] == constant.SYMBOL_START:
-            decode_result = decode_result[1:]
-        decode_results.append(decode_result)
-    return decode_results
+    return template
 
 
 if __name__ == '__main__':

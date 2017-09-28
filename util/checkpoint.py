@@ -1,6 +1,6 @@
 from os import listdir
-from os.path import isfile, join
-from os import remove
+from os.path import isfile, join, exists
+from os import remove, makedirs
 from shutil import copy2
 
 from model.model_config import DefaultConfig
@@ -37,6 +37,11 @@ def get_model_files(steps, path):
 
 
 def copy_ckpt_to_modeldir(model_config):
+    if not exists(model_config.modeldir):
+        makedirs(model_config.modeldir)
+    if not exists(model_config.outdir):
+        makedirs(model_config.outdir)
+
     files, max_step = find_train_ckpt(model_config.outdir, True)
     _, cur_max_step = find_train_ckpt(model_config.modeldir, False)
     if cur_max_step == max_step:
@@ -48,6 +53,7 @@ def copy_ckpt_to_modeldir(model_config):
         copy2(source, target)
         print('Copy Ckpt from %s \t to \t %s.' % (source, target))
     return model_config.modeldir + ckpt_prefix + str(max_step)
+
 
 
 if __name__ == '__main__':

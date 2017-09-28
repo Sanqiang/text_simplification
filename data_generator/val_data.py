@@ -61,14 +61,9 @@ class ValData:
     def get_data_iter(self):
         i = 0
         while True:
-            if self.model_config.num_refs == 8:
-                yield cp.deepcopy(self.data_simple[i]), cp.deepcopy(self.data_complex[i]),\
-                      (cp.deepcopy(self.data_references[0][i]), cp.deepcopy(self.data_references[1][i]),
-                       cp.deepcopy(self.data_references[2][i]), cp.deepcopy(self.data_references[3][i]),
-                       cp.deepcopy(self.data_references[4][i]), cp.deepcopy(self.data_references[5][i]),
-                       cp.deepcopy(self.data_references[6][i]), cp.deepcopy(self.data_references[7][i]))
-            elif self.model_config.num_refs == 0:
-                yield cp.deepcopy(self.data_simple[i]), cp.deepcopy(self.data_complex[i]), None
+            ref_batch = cp.deepcopy([self.data_references[j][i] for j in range(self.model_config.num_refs)])
+            yield cp.deepcopy(self.data_simple[i]), cp.deepcopy(self.data_complex[i]), ref_batch
+
             i += 1
             if i == len(self.data_simple):
                 yield None, None, None

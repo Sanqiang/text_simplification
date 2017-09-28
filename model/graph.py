@@ -55,25 +55,30 @@ class Graph:
 
         with tf.variable_scope('model'):
             decoder_output_list, decoder_logit_list, decoder_target_list = self.model_fn()
-            self.decoder_target_list = tf.stack(decoder_target_list, axis=-1)
-            if not self.is_train and self.model_config.beam_search_size > 1:
+            self.decoder_target_list = tf.stack(decoder_target_list, axis=1)
+            if (not self.is_train and self.model_config.beam_search_size > 1 and
+                        self.model_config.framework == 'transformer'):
                 # in beam search, decoder_logit_list is beam score
                 self.loss = tf.reduce_mean(decoder_logit_list)
             else:
-                metric = Metric(self.model_config, self.data)
-                sentence_simple_input_mat = tf.stack(self.sentence_simple_input_placeholder, axis=1)
-                sentence_complex_input_mat = tf.stack(self.sentence_complex_input_placeholder, axis=1)
-                weight_quality = tf.py_func(metric.length_ratio,
-                                            [sentence_simple_input_mat,
-                                             sentence_complex_input_mat],
-                                            [tf.float32], stateful=False, name='quality_weight')
-                weight_quality[0].set_shape([self.model_config.batch_size])
-                weight_quality = tf.stack(
+                decode_word_weight = tf.stack(
+                    [tf.to_float(tf.not_equal(d, self.data.vocab_simple.encode(constant.SYMBOL_PAD)))
+                     for d in decoder_target_list], axis=1)
+
+                if self.model_config.use_quality_model:
+                    metric = Metric(self.model_config, self.data)
+                    sentence_simple_input_mat = tf.stack(self.sentence_simple_input_placeholder, axis=1)
+                    sentence_complex_input_mat = tf.stack(self.sentence_complex_input_placeholder, axis=1)
+                    weight_quality = tf.py_func(metric.length_ratio,
+                                                [sentence_simple_input_mat,
+                                                 sentence_complex_input_mat],
+                                                [tf.float32], stateful=False, name='quality_weight')
+                    weight_quality[0].set_shape([self.model_config.batch_size])
+                    weight_quality = tf.stack(
                     [weight_quality[0] for _ in range(self.model_config.max_complex_sentence)], axis=-1)
 
-                weight_ignore_pad = tf.stack([tf.to_float(tf.not_equal(d, self.data.vocab_simple.encode(constant.SYMBOL_PAD)))
-                          for d in decoder_target_list], axis=1)
-                decode_word_weight = tf.multiply(weight_ignore_pad, weight_quality)
+                    decode_word_weight = tf.multiply(decode_word_weight, weight_quality)
+
                 self.loss = sequence_loss(tf.stack(decoder_logit_list, axis=1),
                                           tf.stack(decoder_target_list, axis=1),
                                           decode_word_weight)

@@ -7,7 +7,8 @@ def get_path(file_path):
 
 
 class DefaultConfig():
-    framework = 'seq2seq'
+
+    framework = 'transformer'
     use_gpu = True
     batch_size = 3
     dimension = 32
@@ -33,7 +34,10 @@ class DefaultConfig():
 
     # Overwrite transformer config
     # timing: use positional encoding
-    hparams_pos = 'timing'
+    hparams_pos = 'none'
+
+    # data quality model
+    use_quality_model = False
 
 
     # deprecated: std of trunc norm init, used for initializing embedding / w
@@ -57,14 +61,19 @@ class DefaultConfig():
     val_dataset_simple_folder = get_path('data/')
     val_dataset_simple_file = 'valid_dummy_simple_dataset'
     val_dataset_complex = get_path('data/valid_dummy_complex_dataset')
-    num_refs = 0
+    val_dataset_simple_references = 'valid_dummy_simple_dataset.'
+    num_refs = 3
 
-    logdir = get_path('../tmp/log/')
-    outdir = get_path('../tmp/output/')
-    modeldir = get_path('../tmp/model/')
+    output_folder = 'tmp1'
+    logdir = get_path('../' + output_folder + '/log/')
+    outdir = get_path('../' + output_folder + '/output/')
+    modeldir = get_path('../' + output_folder + '/model/')
 
     allow_growth = True
     # per_process_gpu_memory_fraction = 1.0
+
+    use_mteval = True
+    mteval_script = get_path('script/mteval-v13a.pl')
 
 
 class DefaultTrainConfig(DefaultConfig):
