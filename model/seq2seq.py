@@ -43,7 +43,7 @@ class Seq2SeqGraph(Graph):
         #     logits.append(tf.nn.xw_plus_b(output, tf.transpose(self.w), self.b))
         # logits = [tf.nn.softmax(s) for s in logits]
 
-        if not self.is_train:
+        if not self.is_train and self.model_config.beam_search_size > 1:
             # assert len(logits) == 1
             self.final_dists = logits[-1]
             topk_probs, self._topk_ids = tf.nn.top_k(
@@ -51,7 +51,10 @@ class Seq2SeqGraph(Graph):
             self._topk_log_probs = tf.log(topk_probs)
 
         self.logits = logits
-        return decoder_outputs, logits, self.sentence_simple_output # TODO(sanqiang): sentence_simple_output is output
+        if self.is_train:
+            return decoder_outputs, logits, self.sentence_simple_output
+        else:
+            return decoder_outputs, logits, [tf.argmax(logit, axis=1) for logit in logits]
 
     def _decoder(self):
         att_size = self._enc_states.get_shape()[-1].value

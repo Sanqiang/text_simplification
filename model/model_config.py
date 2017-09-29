@@ -1,5 +1,14 @@
 import os
+import argparse
 
+parser = argparse.ArgumentParser(description='Model Parameter')
+parser.add_argument('-fw', '--framework', default='transformer',
+                    help='Framework we are using?')
+parser.add_argument('-uqm', '--use_quality_model', default=False, type=bool,
+                    help='Whether to use quality model?')
+
+
+args = parser.parse_args()
 
 def get_path(file_path):
     return os.path.dirname(os.path.abspath(__file__)) + '/../' + file_path
@@ -7,8 +16,7 @@ def get_path(file_path):
 
 
 class DefaultConfig():
-
-    framework = 'transformer'
+    framework = args.framework
     use_gpu = True
     batch_size = 3
     dimension = 32
@@ -37,11 +45,11 @@ class DefaultConfig():
     hparams_pos = 'none'
 
     # data quality model
-    use_quality_model = False
+    use_quality_model = args.use_quality_model
 
     # post process
     replace_unk_by_emb = False
-    replace_unk_by_cnt = True
+    replace_unk_by_cnt = False
 
     # deprecated: std of trunc norm init, used for initializing embedding / w
     # trunc_norm_init_std = 1e-4
@@ -137,9 +145,9 @@ class WikiDressLargeDefault(DefaultConfig):
     num_heads = 15
     max_complex_sentence = 85
     max_simple_sentence = 85
-    min_count = 4
+    min_count = 5
     batch_size = 32
-    model_save_freq = 500
+    model_save_freq = 5000
 
     hparams_pos = 'timing'
     tokenizer = 'split'
@@ -157,5 +165,15 @@ class WikiDressLargeTrainConfig(WikiDressLargeDefault):
 
 
 class WikiDressLargeTestConfig(WikiDressLargeDefault):
-    beam_search_size = 10
+    beam_search_size = -1
     batch_size = 64
+    replace_unk_by_emb = True
+
+def list_config(config):
+    attrs = [attr for attr in dir(config)
+               if not callable(getattr(config, attr)) and not attr.startswith("__")]
+    output = ''
+    for attr in attrs:
+        val = getattr(config, attr)
+        output = '\n'.join([output, '%s=\t%s' % (attr, val)])
+    return output

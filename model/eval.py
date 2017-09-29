@@ -1,7 +1,7 @@
 from data_generator.val_data import ValData
 from model.transformer import TransformerGraph
 from model.seq2seq import Seq2SeqGraph
-from model.model_config import DefaultConfig, DefaultTestConfig, WikiDressLargeTestConfig
+from model.model_config import DefaultConfig, DefaultTestConfig, WikiDressLargeTestConfig, list_config
 from data_generator.vocab import Vocab
 from util import constant
 from util import session
@@ -15,7 +15,7 @@ import tensorflow as tf
 import math
 import numpy as np
 import time
-from html import escape
+import pprint
 
 
 def get_graph_val_data(sentence_simple_input, sentence_complex_input,
@@ -112,7 +112,8 @@ def eval(model_config=None):
 
             fetches = {'decoder_target_list': graph.decoder_target_list,
                        'loss': graph.loss,
-                       'global_step': graph.global_step}
+                       'global_step': graph.global_step,
+                       'attn_dists':graph.attn_dists}
             if model_config.replace_unk_by_emb:
                 fetches.update({'encoder_embs': graph.encoder_embs, 'decoder_output_list': graph.decoder_output_list})
             results = sess.run(fetches, input_feed)
@@ -137,6 +138,8 @@ def eval(model_config=None):
                 target_raw = postprocess.replace_unk_by_emb(sentence_complex_raw, encoder_embs, decoder_outputs, target)
             elif model_config.replace_unk_by_cnt:
                 target_raw = postprocess.replace_unk_by_cnt(sentence_complex_raw, target)
+            else:
+                target_raw = target
 
             sentence_simple = decode(sentence_simple, val_data.vocab_simple)
             sentence_complex = decode(sentence_complex, val_data.vocab_complex)
@@ -224,4 +227,6 @@ def eval(model_config=None):
 
 
 if __name__ == '__main__':
-    eval(DefaultTestConfig())
+    config = WikiDressLargeTestConfig()
+    print(list_config(config))
+    eval(config)

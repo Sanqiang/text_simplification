@@ -2,7 +2,7 @@ from data_generator.train_data import TrainData
 from model.graph import Graph
 from model.transformer import TransformerGraph
 from model.seq2seq import Seq2SeqGraph
-from model.model_config import DefaultConfig, DefaultTrainConfig, WikiDressLargeTrainConfig
+from model.model_config import DefaultConfig, DefaultTrainConfig, WikiDressLargeTrainConfig, list_config
 from data_generator.vocab import Vocab
 from util import session
 from util import constant
@@ -10,6 +10,7 @@ from model.eval import decode_to_output, decode
 
 import tensorflow as tf
 import math
+import pprint
 
 
 def get_graph_train_data(data,
@@ -84,8 +85,8 @@ def train(model_config=None):
             graph.sentence_complex_input_placeholder,
             model_config)
 
-        fetches = [graph.train_op, graph.loss, graph.global_step, graph.decoder_target_list]
-        _, loss, step, result = sess.run(fetches, input_feed)
+        fetches = [graph.train_op, graph.loss, graph.global_step, graph.decoder_target_list, graph.attn_dists]
+        _, loss, step, result, attn_dists = sess.run(fetches, input_feed)
         perplexity = math.exp(loss)
         print('Perplexity:\t%f at step %d.' % (perplexity, step))
 
@@ -101,4 +102,6 @@ def train(model_config=None):
 
 
 if __name__ == '__main__':
-    train(DefaultTrainConfig())
+    config = WikiDressLargeTrainConfig()
+    print(list_config(config))
+    train(config)
