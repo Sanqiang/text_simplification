@@ -1,12 +1,10 @@
 from model.embedding import Embedding
 from model.loss import sequence_loss
 from model.metric import Metric
+from model.postprocess import PostProcess
 from util import constant
 
 import tensorflow as tf
-from tensor2tensor.layers import common_attention
-from tensor2tensor.models import transformer
-from tensor2tensor.utils import beam_search
 
 
 class Graph:
@@ -14,6 +12,13 @@ class Graph:
         self.model_config = model_config
         self.data = data
         self.is_train = is_train
+        # model_fn defines core computational graph
+        # decoder_outputs, logits, target_outputs
+        # decoder_outputs is [batch * length * dimension]
+        # logits is [batch * length * vocab_size]
+        # target_outputs is [batch * length * vocab_size]
+        # in training, target_outputs is gt target
+        # in eval, target_outputs is output target
         self.model_fn = None
         print('Batch Size:\t%d.' % self.model_config.batch_size)
         self.rand_unif_init = tf.random_uniform_initializer(-0,.08, 0.08)
@@ -56,6 +61,13 @@ class Graph:
         with tf.variable_scope('model'):
             decoder_output_list, decoder_logit_list, decoder_target_list = self.model_fn()
             self.decoder_target_list = tf.stack(decoder_target_list, axis=1)
+
+            if not self.is_train and self.model_config.replace_unk_by_emb:
+                self.encoder_embs = tf.stack(
+                    self.embedding_fn(self.sentence_complex_input_placeholder, self.emb_complex),
+                    axis=1)
+                self.decoder_output_list = tf.stack(decoder_output_list, axis=1)
+
             if (not self.is_train and self.model_config.beam_search_size > 1 and
                         self.model_config.framework == 'transformer'):
                 # in beam search, decoder_logit_list is beam score

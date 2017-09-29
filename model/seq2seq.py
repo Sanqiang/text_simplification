@@ -51,7 +51,7 @@ class Seq2SeqGraph(Graph):
             self._topk_log_probs = tf.log(topk_probs)
 
         self.logits = logits
-        return decoder_outputs, logits, self.sentence_simple_output
+        return decoder_outputs, logits, self.sentence_simple_output # TODO(sanqiang): sentence_simple_output is output
 
     def _decoder(self):
         att_size = self._enc_states.get_shape()[-1].value

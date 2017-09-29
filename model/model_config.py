@@ -39,6 +39,9 @@ class DefaultConfig():
     # data quality model
     use_quality_model = False
 
+    # post process
+    replace_unk_by_emb = False
+    replace_unk_by_cnt = True
 
     # deprecated: std of trunc norm init, used for initializing embedding / w
     # trunc_norm_init_std = 1e-4
@@ -82,7 +85,7 @@ class DefaultTrainConfig(DefaultConfig):
 
 
 class DefaultTestConfig(DefaultConfig):
-    beam_search_size = 2
+    beam_search_size = -1
     batch_size = 2
     # train_with_hyp = True
 

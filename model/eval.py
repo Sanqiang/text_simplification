@@ -7,6 +7,7 @@ from util import constant
 from util import session
 from util.checkpoint import copy_ckpt_to_modeldir
 from util.decode import decode, decode_to_output, exclude_list, get_exclude_list
+from model.postprocess import PostProcess
 
 from nltk.translate.bleu_score import sentence_bleu
 from util.mteval_bleu import MtEval_BLEU
@@ -22,15 +23,13 @@ def get_graph_val_data(sentence_simple_input, sentence_complex_input,
     input_feed = {}
     voc = Vocab(model_config)
 
-    tmp_sentence_simple, tmp_sentence_complex = [], []
+    tmp_sentence_simple, tmp_sentence_complex, tmp_sentence_complex_raw = [], [], []
     tmp_ref = [[] for _ in range(model_config.num_refs)]
     effective_batch_size = 0
     is_end = False
     for i in range(model_config.batch_size):
         if not is_end:
-            sentence_simple, sentence_complex, ref = next(it)
-            # if sentence_simple:
-            #     del sentence_simple[1:]
+            sentence_simple, sentence_complex, sentence_complex_raw, ref = next(it)
             effective_batch_size += 1
         if sentence_simple is None or is_end:
             # End of data set
@@ -38,7 +37,6 @@ def get_graph_val_data(sentence_simple_input, sentence_complex_input,
                 effective_batch_size -= 1
             is_end = True
             sentence_simple, sentence_complex, ref = [], [], []
-
 
         if ref:
             for i_ref in range(model_config.num_refs):
@@ -59,6 +57,7 @@ def get_graph_val_data(sentence_simple_input, sentence_complex_input,
 
         tmp_sentence_simple.append(sentence_simple)
         tmp_sentence_complex.append(sentence_complex)
+        tmp_sentence_complex_raw.append(sentence_complex_raw)
 
     for step in range(model_config.max_simple_sentence):
         input_feed[sentence_simple_input[step].name] = [tmp_sentence_simple[batch_idx][step]
@@ -67,7 +66,7 @@ def get_graph_val_data(sentence_simple_input, sentence_complex_input,
         input_feed[sentence_complex_input[step].name] = [tmp_sentence_complex[batch_idx][step]
                                                          for batch_idx in range(model_config.batch_size)]
 
-    return input_feed, tmp_sentence_simple, tmp_sentence_complex, tmp_ref, effective_batch_size, is_end
+    return input_feed, tmp_sentence_simple, tmp_sentence_complex, tmp_sentence_complex_raw, tmp_ref, effective_batch_size, is_end
 
 
 def eval(model_config=None):
@@ -85,6 +84,7 @@ def eval(model_config=None):
         perplexitys_all = []
         decode_outputs_all = []
         targets = []
+        targets_raw = []
         sentence_simples = []
         sentence_complexs = []
         refs = [[] for _ in range(model_config.num_refs)]
@@ -105,13 +105,20 @@ def eval(model_config=None):
         sv = tf.train.Supervisor(init_fn=init_fn)
         sess = sv.PrepareSession(config=session.get_session_config(model_config))
         while True:
-            input_feed, sentence_simple, sentence_complex, ref, effective_batch_size, is_end = get_graph_val_data(
+            input_feed, sentence_simple, sentence_complex, sentence_complex_raw, ref, effective_batch_size, is_end = get_graph_val_data(
                 graph.sentence_simple_input_placeholder,
                 graph.sentence_complex_input_placeholder,
                 model_config, it)
 
-            fetches = [graph.decoder_target_list, graph.loss, graph.global_step]
-            target, loss, step = sess.run(fetches, input_feed)
+            fetches = {'decoder_target_list': graph.decoder_target_list,
+                       'loss': graph.loss,
+                       'global_step': graph.global_step}
+            if model_config.replace_unk_by_emb:
+                fetches.update({'encoder_embs': graph.encoder_embs, 'decoder_output_list': graph.decoder_output_list})
+            results = sess.run(fetches, input_feed)
+            target, loss, step = results['decoder_target_list'], results['loss'], results['global_step']
+            if model_config.replace_unk_by_emb:
+                encoder_embs, decoder_outputs = results['encoder_embs'], results['decoder_output_list']
             batch_perplexity = math.exp(loss)
             perplexitys_all.append(batch_perplexity)
 
@@ -125,11 +132,18 @@ def eval(model_config=None):
 
 
             target = decode(target, val_data.vocab_simple)
+            postprocess = PostProcess(model_config, val_data)
+            if model_config.replace_unk_by_emb:
+                target_raw = postprocess.replace_unk_by_emb(sentence_complex_raw, encoder_embs, decoder_outputs, target)
+            elif model_config.replace_unk_by_cnt:
+                target_raw = postprocess.replace_unk_by_cnt(sentence_complex_raw, target)
+
             sentence_simple = decode(sentence_simple, val_data.vocab_simple)
             sentence_complex = decode(sentence_complex, val_data.vocab_complex)
             for ref_i in range(model_config.num_refs):
                 ref[ref_i] = decode(ref[ref_i], val_data.vocab_simple)
             targets.extend(target)
+            targets_raw.extend(target_raw)
             sentence_simples.extend(sentence_simple)
             sentence_complexs.extend(sentence_complex)
             for ref_i in range(model_config.num_refs):
@@ -156,7 +170,7 @@ def eval(model_config=None):
                 ibleus.append(batch_ibleu)
                 # print('Batch iBLEU: \t%f.' % batch_ibleu)
             target_output = decode_to_output(target, sentence_simple, sentence_complex,
-                                             effective_batch_size, ibleus)
+                                             effective_batch_size, ibleus, targets_raw, sentence_complex_raw)
             decode_outputs_all.append(target_output)
 
             if is_end:
@@ -178,12 +192,12 @@ def eval(model_config=None):
         bleu_decode = 0.9 * max(bleu_ors_decode) + 0.1 * bleu_oi_decode
         print('Current Mteval iBLEU decode: \t%f' % bleu_decode)
 
-        # MtEval Result - Raw
-        bleu_oi_raw = mteval.get_bleu_from_rawresult(targets)
+        # MtEval Result - raw
+        bleu_oi_raw = mteval.get_bleu_from_rawresult(targets_raw)
         bleu_ors_raw = []
         for ref_i in range(model_config.num_refs):
             bleu_or_raw = mteval.get_bleu_from_rawresult(
-                targets, path_gt_simple=(model_config.val_dataset_simple_folder +
+                targets_raw, path_gt_simple=(model_config.val_dataset_simple_folder +
                                          model_config.val_dataset_simple_references + str(ref_i)))
             bleu_ors_raw.append(bleu_or_raw)
         bleu_raw = 0.9 * max(bleu_ors_raw) + 0.1 * bleu_oi_raw
@@ -207,29 +221,6 @@ def eval(model_config=None):
                  'w', encoding='utf-8')
         f.write('\n'.join(decode_outputs_all))
         f.close()
-
-
-def decode_to_mteval(decode_result, setlabel):
-    """Generate Decode Output for MtEval Script."""
-    template = ('<?xml version="1.0" encoding="UTF-8"?>\n' +
-                '<!DOCTYPE mteval SYSTEM "ftp://jaguar.ncsl.nist.gov/mt/resources/mteval-xml-v1.3.dtd">\n' +
-                '<mteval>\n' +
-                '<SET_LABEL setid="example_set" srclang="Arabic" trglang="English" refid="ref1" sysid="sample_system">\n' +
-                '<doc docid="doc1" genre="nw">\n' +
-                'CONTENT\n' +
-                '</doc>\n' +
-                '</SET_LABEL>\n' +
-                '</mteval>\n')
-    template = template.replace('SET_LABEL', setlabel)
-
-    tmp_output = ''
-    for batch_i in range(len(decode_result)):
-        tmp_line = ' '.join(decode_result[batch_i])
-        tmp_line = '<p><seg id="%d"> %s </seg></p>' % (1 + batch_i, escape(tmp_line.replace('<','').replace('>','')))
-        tmp_output = '\n'.join([tmp_line, tmp_output])
-    template = template.replace('CONTENT', tmp_output)
-
-    return template
 
 
 if __name__ == '__main__':

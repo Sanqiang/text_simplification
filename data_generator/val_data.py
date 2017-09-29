@@ -22,8 +22,9 @@ class ValData:
             self.vocab_complex = Vocab(model_config, vocab_all_path)
 
         # Populate basic complex simple pairs
-        self.data_complex = self.populate_data(self.model_config.val_dataset_complex, self.vocab_complex)
-        self.data_simple = self.populate_data(
+        self.data_complex, self.data_complex_raw = self.populate_data(
+            self.model_config.val_dataset_complex, self.vocab_complex, need_raw=True)
+        self.data_simple, _ = self.populate_data(
             self.model_config.val_dataset_simple_folder + self.model_config.val_dataset_simple_file,
             self.vocab_simple)
         # Populate simple references
@@ -32,16 +33,17 @@ class ValData:
             self.data_references.append(
                 self.populate_data(self.model_config.val_dataset_simple_folder +
                                    self.model_config.val_dataset_simple_references +
-                                   str(i), self.vocab_simple))
+                                   str(i), self.vocab_simple)[0])
 
         self.size = len(self.data_simple)
         print('Use Val Dataset: \n Simple\t %s. \n Complex\t %s. \n Size\t %d'
               % (self.model_config.val_dataset_simple_folder + self.model_config.val_dataset_simple_file,
                  self.model_config.val_dataset_complex, self.size))
 
-    def populate_data(self, data_path, vocab):
+    def populate_data(self, data_path, vocab, need_raw=False):
         # Populate data into memory
         data = []
+        data_raw = []
         for line in open(data_path, encoding='utf-8'):
             if self.model_config.tokenizer == 'split':
                 words = line.split()
@@ -51,19 +53,23 @@ class ValData:
                 raise Exception('Unknown tokenizer.')
             words = [Vocab.process_word(word, self.model_config)
                      for word in words]
+            if need_raw:
+                words_raw = [constant.SYMBOL_START] + words + [constant.SYMBOL_END]
+                data_raw.append(words_raw)
             words = [vocab.encode(word) for word in words]
             words = ([self.vocab_simple.encode(constant.SYMBOL_START)] + words +
                      [self.vocab_simple.encode(constant.SYMBOL_END)])
 
             data.append(words)
-        return data
+        return data, data_raw
 
     def get_data_iter(self):
         i = 0
         while True:
             ref_batch = cp.deepcopy([self.data_references[j][i] for j in range(self.model_config.num_refs)])
-            yield cp.deepcopy(self.data_simple[i]), cp.deepcopy(self.data_complex[i]), ref_batch
+            yield (cp.deepcopy(self.data_simple[i]), cp.deepcopy(self.data_complex[i]),
+                   cp.deepcopy(self.data_complex_raw[i]), ref_batch)
 
             i += 1
             if i == len(self.data_simple):
-                yield None, None, None
+                yield None, None, None, None

@@ -61,7 +61,7 @@ class Vocab:
         if word:
             # All numeric will map to #
             if word[0].isnumeric() or word[0] == '+' or word[0] == '-':
-                return '#'
+                return constant.SYMBOL_NUM
             # Keep mark
             # elif len(word) == 1 and not word[0].isalpha():
             #     return word

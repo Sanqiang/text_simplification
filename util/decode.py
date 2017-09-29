@@ -1,18 +1,29 @@
 from util import constant
 
 
-def decode_to_output(target, sentence_simple, sentence_complex, effective_batch_size, ibleus=None):
+def decode_to_output(target, sentence_simple, sentence_complex, effective_batch_size,
+                     ibleus=None, targets_raw=None, sentence_complex_raw=None):
     """Generate Decode Output for human read (Aggregate result together)."""
     output = ''
     for batch_i in range(effective_batch_size):
         target_batch = 'output=' + ' '.join(target[batch_i])
         sentence_simple_batch ='gt_simple=' + ' '.join(sentence_simple[batch_i])
         sentence_complex_batch = 'gt_complex='+ ' '.join(sentence_complex[batch_i])
+
+        batch_targets_raw = ''
+        if targets_raw is not None:
+            batch_targets_raw = 'output_pp=' + ' '.join(targets_raw[batch_i])
+
+        batch_sentence_complex_raw = ''
+        if sentence_complex_raw is not None:
+            batch_sentence_complex_raw = 'gt_complex_raw=' + ' '.join(sentence_complex_raw[batch_i])
+
         batch_ibleu = ''
         if ibleus is not None:
             batch_ibleu = 'iBLEU=' + str(ibleus[batch_i])
+
         output_batch = '\n'.join([target_batch, sentence_simple_batch, sentence_complex_batch,
-                                  batch_ibleu, ''])
+                                  batch_ibleu, batch_targets_raw, batch_sentence_complex_raw, ''])
         output = '\n'.join([output, output_batch])
     return output
 

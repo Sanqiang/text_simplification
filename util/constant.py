@@ -6,6 +6,7 @@ SYMBOL_PAD = '<pad>'
 SYMBOL_UNK = '<unk>'
 SYMBOL_START = '<s>'
 SYMBOL_END = '</s>'
+SYMBOL_NUM = '#'
 
 REVERED_VOCAB_SIZE = 10
 
