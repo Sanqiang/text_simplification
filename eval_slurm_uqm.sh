@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
-#SBATCH --cluster=gpu
 #SBATCH --gres=gpu:1
+#SBATCH --cluster=gpu
 #SBATCH --partition=gtx1080
-#SBATCH --job-name=tr_uqm
-#SBATCH --output=tr_uqm.out
+#SBATCH --job-name=vl_uqm
+#SBATCH --output=vl_uqm.out
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
 #SBATCH --cpus-per-task=1
@@ -15,4 +15,4 @@ module restore
 # module load tensorflow/1.3.0
 
 # Run the job
-srun python ../model/train.py --framework transformer --use_quality_model True
+srun python model/eval.py --framework transformer --use_quality_model True --output_folder uqm

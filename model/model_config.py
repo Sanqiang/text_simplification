@@ -6,7 +6,8 @@ parser.add_argument('-fw', '--framework', default='transformer',
                     help='Framework we are using?')
 parser.add_argument('-uqm', '--use_quality_model', default=False, type=bool,
                     help='Whether to use quality model?')
-
+parser.add_argument('-out', '--output_folder', default='tmp',
+                    help='Output folder?')
 
 args = parser.parse_args()
 
@@ -48,7 +49,7 @@ class DefaultConfig():
     use_quality_model = args.use_quality_model
 
     # post process
-    replace_unk_by_emb = False
+    replace_unk_by_emb = True
     replace_unk_by_cnt = False
 
     # deprecated: std of trunc norm init, used for initializing embedding / w
@@ -75,12 +76,12 @@ class DefaultConfig():
     val_dataset_simple_references = 'valid_dummy_simple_dataset.'
     num_refs = 3
 
-    output_folder = 'tmp1'
+    output_folder = args.output_folder
     logdir = get_path('../' + output_folder + '/log/')
     outdir = get_path('../' + output_folder + '/output/')
     modeldir = get_path('../' + output_folder + '/model/')
 
-    allow_growth = True
+    allow_growth = False
     # per_process_gpu_memory_fraction = 1.0
 
     use_mteval = True
@@ -147,7 +148,7 @@ class WikiDressLargeDefault(DefaultConfig):
     max_simple_sentence = 85
     min_count = 5
     batch_size = 32
-    model_save_freq = 5000
+    model_save_freq = 1000
 
     hparams_pos = 'timing'
     tokenizer = 'split'
@@ -165,9 +166,10 @@ class WikiDressLargeTrainConfig(WikiDressLargeDefault):
 
 
 class WikiDressLargeTestConfig(WikiDressLargeDefault):
-    beam_search_size = -1
+    beam_search_size = 1
     batch_size = 64
     replace_unk_by_emb = True
+    train_with_hyp = True
 
 def list_config(config):
     attrs = [attr for attr in dir(config)

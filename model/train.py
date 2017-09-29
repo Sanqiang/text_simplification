@@ -85,14 +85,14 @@ def train(model_config=None):
             graph.sentence_complex_input_placeholder,
             model_config)
 
-        fetches = [graph.train_op, graph.loss, graph.global_step, graph.decoder_target_list, graph.attn_dists]
-        _, loss, step, result, attn_dists = sess.run(fetches, input_feed)
+        fetches = [graph.train_op, graph.loss, graph.global_step, graph.decoder_target_list]
+        _, loss, step, result = sess.run(fetches, input_feed)
         perplexity = math.exp(loss)
         print('Perplexity:\t%f at step %d.' % (perplexity, step))
 
         if step % model_config.model_save_freq == 0:
             graph.saver.save(sess, model_config.outdir + '/model.ckpt-%d' % step)
-            f = open(model_config.outdir + '/output_model.ckpt-%d' % step, 'w')
+            f = open(model_config.outdir + '/output_model.ckpt-%d' % step, 'w', encoding='utf-8')
             result = decode(result, data.vocab_simple)
             sentence_simple = decode(sentence_simple, data.vocab_simple)
             sentence_complex = decode(sentence_complex, data.vocab_complex)

@@ -112,8 +112,7 @@ def eval(model_config=None):
 
             fetches = {'decoder_target_list': graph.decoder_target_list,
                        'loss': graph.loss,
-                       'global_step': graph.global_step,
-                       'attn_dists':graph.attn_dists}
+                       'global_step': graph.global_step}
             if model_config.replace_unk_by_emb:
                 fetches.update({'encoder_embs': graph.encoder_embs, 'decoder_output_list': graph.decoder_output_list})
             results = sess.run(fetches, input_feed)

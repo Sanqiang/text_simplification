@@ -15,4 +15,4 @@ module restore
 # module load tensorflow/1.3.0
 
 # Run the job
-srun python ../model/eval.py --framework transformer --use_quality_model False
+srun python model/eval.py --framework transformer --use_quality_model False --output_folder nuqm
