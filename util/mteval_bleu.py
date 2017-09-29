@@ -85,12 +85,11 @@ class MtEval_BLEU:
         return self.template_cp
 
     def html_escape(self, txt):
-        txt = txt.replace('<','&lt;')
-        txt = txt.replace('>', '&gt;')
-        txt = txt.replace('', '')
-        txt = txt.replace('&', '&amp;')
-        txt = txt.replace('"', '&quot;')
-        txt = txt.replace('\'', '&apos;')
+        txt = txt.replace('<','#lt#')
+        txt = txt.replace('>', '#rt#')
+        txt = txt.replace('&', '#and#')
+        txt = txt.replace('"', '#quot#')
+        txt = txt.replace('\'', '#apos#')
         return txt
 
 if __name__ == '__main__':

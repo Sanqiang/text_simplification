@@ -1,4 +1,5 @@
 from util import constant
+from util.vocab_util import is_numeric, data_parse
 
 
 class Vocab:
@@ -60,13 +61,10 @@ class Vocab:
     def process_word(word, model_config):
         if word:
             # All numeric will map to #
-            if word[0].isnumeric() or word[0] == '+' or word[0] == '-':
+            if is_numeric(word):
                 return constant.SYMBOL_NUM
-            # Keep mark
-            # elif len(word) == 1 and not word[0].isalpha():
-            #     return word
-            # Actual word
             else:
                 if model_config.lower_case:
                     word = word.lower()
+                word = data_parse(word)
                 return word
