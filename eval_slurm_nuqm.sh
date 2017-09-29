@@ -14,5 +14,7 @@ module restore
 # module load cuda/8.0.44
 # module load tensorflow/1.3.0
 
+export PERL5LIB="/ihome/hdaqing/saz31/perl_lib"
+
 # Run the job
 srun python model/eval.py --framework transformer --use_quality_model False --output_folder nuqm
