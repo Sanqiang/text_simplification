@@ -175,7 +175,7 @@ def eval(model_config=None):
                 ibleus.append(batch_ibleu)
                 # print('Batch iBLEU: \t%f.' % batch_ibleu)
             target_output = decode_to_output(target, sentence_simple, sentence_complex,
-                                             effective_batch_size, ibleus, targets_raw, sentence_complex_raw)
+                                             effective_batch_size, ibleus, target_raw, sentence_complex_raw)
             decode_outputs_all.append(target_output)
 
             if is_end:
@@ -229,6 +229,6 @@ def eval(model_config=None):
 
 
 if __name__ == '__main__':
-    config = WikiDressLargeTestConfig()
+    config = DefaultTestConfig()
     print(list_config(config))
     eval(config)
