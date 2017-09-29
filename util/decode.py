@@ -39,6 +39,14 @@ def decode(target, voc):
     return decode_results
 
 
+def truncate_sents(decode_results):
+    ndecode_results = []
+    for decode_result in decode_results:
+        decode_result = truncate_sent(decode_result)
+        ndecode_results.append(decode_result)
+    return ndecode_results
+
+
 def truncate_sent(decode_result):
     if constant.SYMBOL_END in decode_result:
         eos = decode_result.index(constant.SYMBOL_END)
@@ -60,6 +68,7 @@ def get_exclude_list(results, voc):
         if is_exclude:
             exclude_idxs.append(re_id)
     return exclude_idxs
+
 
 def exclude_list(results, exclude_idxs):
     nresults = []

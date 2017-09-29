@@ -6,7 +6,7 @@ from data_generator.vocab import Vocab
 from util import constant
 from util import session
 from util.checkpoint import copy_ckpt_to_modeldir
-from util.decode import decode, decode_to_output, exclude_list, get_exclude_list, truncate_sent
+from util.decode import decode, decode_to_output, exclude_list, get_exclude_list, truncate_sents
 from model.postprocess import PostProcess
 
 from nltk.translate.bleu_score import sentence_bleu
@@ -127,6 +127,7 @@ def eval(model_config=None):
                 sentence_complex = exclude_list(sentence_complex, exclude_idxs)
                 sentence_simple = exclude_list(sentence_simple, exclude_idxs)
                 target = exclude_list(target, exclude_idxs)
+                sentence_complex_raw = exclude_list(sentence_complex_raw, exclude_idxs)
                 for ref_i in range(model_config.num_refs):
                     ref[ref_i] = exclude_list(ref[ref_i], exclude_idxs)
 
@@ -142,7 +143,7 @@ def eval(model_config=None):
 
             sentence_simple = decode(sentence_simple, val_data.vocab_simple)
             sentence_complex = decode(sentence_complex, val_data.vocab_complex)
-            sentence_complex_raw = truncate_sent(sentence_complex_raw)
+            sentence_complex_raw = truncate_sents(sentence_complex_raw)
             for ref_i in range(model_config.num_refs):
                 ref[ref_i] = decode(ref[ref_i], val_data.vocab_simple)
             targets.extend(target)
