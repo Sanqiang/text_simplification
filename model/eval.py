@@ -229,6 +229,6 @@ def eval(model_config=None):
 
 
 if __name__ == '__main__':
-    config = DefaultTestConfig()
+    config = WikiDressLargeTestConfig()
     print(list_config(config))
     eval(config)
