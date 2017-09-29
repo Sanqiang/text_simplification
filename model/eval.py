@@ -6,7 +6,7 @@ from data_generator.vocab import Vocab
 from util import constant
 from util import session
 from util.checkpoint import copy_ckpt_to_modeldir
-from util.decode import decode, decode_to_output, exclude_list, get_exclude_list
+from util.decode import decode, decode_to_output, exclude_list, get_exclude_list, truncate_sent
 from model.postprocess import PostProcess
 
 from nltk.translate.bleu_score import sentence_bleu
@@ -15,7 +15,6 @@ import tensorflow as tf
 import math
 import numpy as np
 import time
-import pprint
 
 
 def get_graph_val_data(sentence_simple_input, sentence_complex_input,
@@ -87,6 +86,7 @@ def eval(model_config=None):
         targets_raw = []
         sentence_simples = []
         sentence_complexs = []
+        sentence_complexs_raw = []
         refs = [[] for _ in range(model_config.num_refs)]
 
         it = val_data.get_data_iter()
@@ -142,12 +142,14 @@ def eval(model_config=None):
 
             sentence_simple = decode(sentence_simple, val_data.vocab_simple)
             sentence_complex = decode(sentence_complex, val_data.vocab_complex)
+            sentence_complex_raw = truncate_sent(sentence_complex_raw)
             for ref_i in range(model_config.num_refs):
                 ref[ref_i] = decode(ref[ref_i], val_data.vocab_simple)
             targets.extend(target)
             targets_raw.extend(target_raw)
             sentence_simples.extend(sentence_simple)
             sentence_complexs.extend(sentence_complex)
+            sentence_complexs_raw.extend(sentence_complex_raw)
             for ref_i in range(model_config.num_refs):
                 refs[ref_i].extend(ref[ref_i])
 
@@ -186,20 +188,20 @@ def eval(model_config=None):
         # MtEval Result
         mteval = MtEval_BLEU(model_config)
         # MtEval Result - Decode
-        bleu_oi_decode = mteval.get_bleu_from_decoderesult(sentence_complexs, sentence_simples, targets)
+        bleu_oi_decode = mteval.get_bleu_from_decoderesult(step, sentence_complexs, sentence_simples, targets)
         bleu_ors_decode = []
         for ref_i in range(model_config.num_refs):
-            bleu_or_decode = mteval.get_bleu_from_decoderesult(sentence_complexs, refs[ref_i], targets)
+            bleu_or_decode = mteval.get_bleu_from_decoderesult(step, sentence_complexs, refs[ref_i], targets)
             bleu_ors_decode.append(bleu_or_decode)
         bleu_decode = 0.9 * max(bleu_ors_decode) + 0.1 * bleu_oi_decode
         print('Current Mteval iBLEU decode: \t%f' % bleu_decode)
 
         # MtEval Result - raw
-        bleu_oi_raw = mteval.get_bleu_from_rawresult(targets_raw)
+        bleu_oi_raw = mteval.get_bleu_from_rawresult(step, targets_raw)
         bleu_ors_raw = []
         for ref_i in range(model_config.num_refs):
             bleu_or_raw = mteval.get_bleu_from_rawresult(
-                targets_raw, path_gt_simple=(model_config.val_dataset_simple_folder +
+                step, targets_raw, path_gt_simple=(model_config.val_dataset_simple_folder +
                                          model_config.val_dataset_simple_references + str(ref_i)))
             bleu_ors_raw.append(bleu_or_raw)
         bleu_raw = 0.9 * max(bleu_ors_raw) + 0.1 * bleu_oi_raw

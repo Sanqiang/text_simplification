@@ -34,13 +34,18 @@ def decode(target, voc):
     decode_results = []
     for i in range(batch_size):
         decode_result = list(map(voc.describe, target[i]))
-        if constant.SYMBOL_END in decode_result:
-            eos = decode_result.index(constant.SYMBOL_END)
-            decode_result = decode_result[:eos]
-        if len(decode_result) > 0 and decode_result[0] == constant.SYMBOL_START:
-            decode_result = decode_result[1:]
+        decode_result = truncate_sent(decode_result)
         decode_results.append(decode_result)
     return decode_results
+
+
+def truncate_sent(decode_result):
+    if constant.SYMBOL_END in decode_result:
+        eos = decode_result.index(constant.SYMBOL_END)
+        decode_result = decode_result[:eos]
+    if len(decode_result) > 0 and decode_result[0] == constant.SYMBOL_START:
+        decode_result = decode_result[1:]
+    return decode_result
 
 
 def get_exclude_list(results, voc):

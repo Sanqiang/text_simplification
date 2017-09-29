@@ -25,10 +25,10 @@ class MtEval_BLEU:
         m = re.search(b'BLEU score = (.+) for', mteval_result)
         return float(m.group(1))
 
-    def get_bleu_from_decoderesult(self, sentence_complexs, sentence_simples, targets):
-        path_ref = self.model_config.modeldir + '/mteval_reference.xml'
-        path_src = self.model_config.modeldir + '/mteval_source.xml'
-        path_tar = self.model_config.modeldir + '/mteval_target.xml'
+    def get_bleu_from_decoderesult(self, step, sentence_complexs, sentence_simples, targets):
+        path_ref = self.model_config.modeldir + '/mteval_reference_%s.xml' % step
+        path_src = self.model_config.modeldir + '/mteval_source_%s.xml' % step
+        path_tar = self.model_config.modeldir + '/mteval_target_%s.xml' % step
 
         mteval_reference = open(path_ref, 'w', encoding='utf-8')
         mteval_source = open(path_src, 'w', encoding='utf-8')
@@ -44,13 +44,13 @@ class MtEval_BLEU:
 
         return self.get_result(path_ref, path_src, path_tar)
 
-    def get_bleu_from_rawresult(self, targets, path_gt_simple=None):
+    def get_bleu_from_rawresult(self, step, targets, path_gt_simple=None):
         if path_gt_simple is None:
             path_gt_simple = self.model_config.val_dataset_simple_folder + self.model_config.val_dataset_simple_file
 
-        path_ref = self.model_config.modeldir + '/mteval_reference_real.xml'
-        path_src = self.model_config.modeldir + '/mteval_source_real.xml'
-        path_tar = self.model_config.modeldir + '/mteval_target_real.xml'
+        path_ref = self.model_config.modeldir + '/mteval_reference_real_%s.xml' % step
+        path_src = self.model_config.modeldir + '/mteval_source_real_%s.xml' % step
+        path_tar = self.model_config.modeldir + '/mteval_target_real_%s.xml' % step
 
         mteval_reference = open(path_ref, 'w', encoding='utf-8')
         mteval_source = open(path_src, 'w', encoding='utf-8')
