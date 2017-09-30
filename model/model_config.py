@@ -35,8 +35,8 @@ class DefaultConfig():
     tokenizer = 'split' # ws: white space split / nltk: nltk tokenizer
 
     # Follow the configuration from https://github.com/XingxingZhang/dress
-    optimizer = 'adam'
-    learning_rate = 0.001
+    optimizer = 'adagrad'
+    learning_rate = 0.1
     max_grad_staleness = 0.0
     max_grad_norm = 5.0
 
@@ -168,6 +168,7 @@ class WikiDressLargeTrainConfig(WikiDressLargeDefault):
 
 class WikiDressLargeTestConfig(WikiDressLargeDefault):
     beam_search_size = 1
+    batch_size = 86
     replace_unk_by_emb = True
     train_with_hyp = True
 
