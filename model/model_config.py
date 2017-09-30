@@ -149,7 +149,7 @@ class WikiDressLargeDefault(DefaultConfig):
     max_complex_sentence = 85
     max_simple_sentence = 85
     min_count = 5
-    batch_size = 128
+    batch_size = 86
     model_save_freq = 1000
 
     tokenizer = 'split'
@@ -168,7 +168,6 @@ class WikiDressLargeTrainConfig(WikiDressLargeDefault):
 
 class WikiDressLargeTestConfig(WikiDressLargeDefault):
     beam_search_size = 1
-    batch_size = 128
     replace_unk_by_emb = True
     train_with_hyp = True
 
