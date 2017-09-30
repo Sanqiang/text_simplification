@@ -17,4 +17,4 @@ module restore
 export PERL5LIB="/ihome/hdaqing/saz31/perl_lib"
 
 # Run the job
-srun python model/eval.py --framework transformer --use_quality_model False --output_folder
+srun python model/eval.py --framework transformer --use_quality_model False --output_folder --hparams_pos none

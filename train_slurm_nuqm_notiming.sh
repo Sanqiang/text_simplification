@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
-#SBATCH --gres=gpu:1
 #SBATCH --cluster=gpu
+#SBATCH --gres=gpu:1
 #SBATCH --partition=gtx1080
-#SBATCH --job-name=vl_nuqm
-#SBATCH --output=vl_nuqm.out
+#SBATCH --job-name=tr_nuqm_nt
+#SBATCH --output=tr_nuqm_nt.out
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
 #SBATCH --cpus-per-task=1
@@ -14,7 +14,5 @@ module restore
 # module load cuda/8.0.44
 # module load tensorflow/1.3.0
 
-export PERL5LIB="/ihome/hdaqing/saz31/perl_lib"
-
 # Run the job
-srun python model/eval.py --framework transformer --use_quality_model False --output_folder
+srun python model/train.py --framework transformer --use_quality_model False --output_folder --hparams_pos none
