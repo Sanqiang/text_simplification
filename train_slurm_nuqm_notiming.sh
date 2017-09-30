@@ -15,4 +15,4 @@ module restore
 # module load tensorflow/1.3.0
 
 # Run the job
-srun python model/train.py --framework transformer --use_quality_model False --output_folder --hparams_pos none
+srun python model/train.py --framework transformer --use_quality_model False --output_folder notiming --hparams_pos none
