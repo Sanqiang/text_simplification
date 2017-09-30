@@ -45,7 +45,7 @@ class DefaultConfig():
 
     # Overwrite transformer config
     # timing: use positional encoding
-    hparams_pos = 'none'
+    hparams_pos = args.hparams_pos
 
     # data quality model
     use_quality_model = args.use_quality_model
@@ -152,7 +152,6 @@ class WikiDressLargeDefault(DefaultConfig):
     batch_size = 32
     model_save_freq = 1000
 
-    hparams_pos = 'timing'
     tokenizer = 'split'
     tie_embedding = 'none'
     pretrained_embedding = get_path('../text_simplification_data/glove/glove.840B.300d.txt')
