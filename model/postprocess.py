@@ -16,7 +16,7 @@ class PostProcess:
         for batch_i in range(batch_size):
             for len_i in range(len(decoder_targets[batch_i])):
                 target = decoder_targets[batch_i][len_i]
-                if target == constant.SYMBOL_UNK or target == constant.SYMBOL_NUM:
+                if target == constant.SYMBOL_UNK:
                     query = decoder_outputs[batch_i, len_i, :]
                     word_exclude = set(ndecoder_targets[batch_i])
                     word_exclude.update([
@@ -60,7 +60,7 @@ class PostProcess:
         for batch_i in range(batch_size):
             for len_i in range(len(decoder_targets[batch_i])):
                 target = decoder_targets[batch_i][len_i]
-                if target == constant.SYMBOL_UNK or target == constant.SYMBOL_NUM:
+                if target == constant.SYMBOL_UNK:
                     word_cands = set(encoder_words[batch_i]) - set(ndecoder_targets[batch_i])
                     exclude_word = set([
                         constant.SYMBOL_START, constant.SYMBOL_END, constant.SYMBOL_UNK,
