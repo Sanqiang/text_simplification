@@ -8,7 +8,7 @@ parser.add_argument('-uqm', '--use_quality_model', default=False, type=bool,
                     help='Whether to use quality model?')
 parser.add_argument('-out', '--output_folder', default='tmp',
                     help='Output folder?')
-parser.add_argument('-pos', '--hparams_pos', default=True, type=bool,
+parser.add_argument('-pos', '--hparams_pos', default=True,
                     help='Whether to use positional encoding?')
 
 args = parser.parse_args()
