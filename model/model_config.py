@@ -10,6 +10,8 @@ parser.add_argument('-out', '--output_folder', default='tmp',
                     help='Output folder?')
 parser.add_argument('-pos', '--hparams_pos', default='timing',
                     help='Whether to use positional encoding?')
+parser.add_argument('-warm', '--warm_start', default='',
+                    help='Path for warm start checkpoint?')
 
 args = parser.parse_args()
 
@@ -20,6 +22,7 @@ def get_path(file_path):
 
 class DefaultConfig():
     framework = args.framework
+    warm_start = args.warm_start
     use_gpu = True
     batch_size = 3
     dimension = 32

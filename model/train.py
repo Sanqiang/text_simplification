@@ -9,6 +9,7 @@ from util import constant
 from model.eval import decode_to_output, decode
 
 import tensorflow as tf
+import tensorflow.contrib.slim as slim
 import math
 import pprint
 
@@ -65,12 +66,26 @@ def train(model_config=None):
 
     graph.create_model()
 
+    if model_config.warm_start:
+        partial_restore_ckpt = slim.assign_from_checkpoint_fn(
+            model_config.warm_start, slim.get_model_variables(),
+            ignore_missing_vars=True, reshape_variables=False)
+
     def init_fn(session):
         if model_config.pretrained_embedding is not None:
             input_feed = {graph.embed_simple_placeholder: data.pretrained_emb_simple,
                           graph.embed_complex_placeholder: data.pretrained_emb_complex}
             session.run([graph.replace_emb_complex, graph.replace_emb_simple], input_feed)
             print('Replace Pretrained Word Embedding.')
+
+        if model_config.warm_start:
+            try:
+                graph.saver.restore(session, model_config.warm_start)
+            except Exception as ex:
+                print('Fully restore failed, use partial restore instead. \n %s' % str(ex))
+                partial_restore_ckpt(session)
+
+            print('Warm start with checkpoint %s' % model_config.warm_start)
 
     sv = tf.train.Supervisor(logdir=model_config.logdir,
                              global_step=graph.global_step,
