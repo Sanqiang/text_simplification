@@ -68,7 +68,7 @@ def train(model_config=None):
 
     if model_config.warm_start:
         partial_restore_ckpt = slim.assign_from_checkpoint_fn(
-            model_config.warm_start, slim.get_model_variables(),
+            model_config.warm_start, slim.get_variables_to_restore(),
             ignore_missing_vars=True, reshape_variables=False)
 
     def init_fn(session):
