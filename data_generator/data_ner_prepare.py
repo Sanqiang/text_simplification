@@ -16,7 +16,8 @@ class DataNERPrepareBase:
     def __init__(self, out_path='out.txt', map_path='map.txt'):
         self.st = StanfordNERTagger('english.all.3class.distsim.crf.ser.gz')
 
-        self.tag_set = set(['PERSON', 'LOCATION', 'ORGANIZATION'])
+        self.concat_tag_set = set(['PERSON', 'LOCATION', 'ORGANIZATION'])
+        self.replace_tag_set = set(['PERSON', 'LOCATION', 'ORGANIZATION', 'NUMBER'])
 
     def process(self):
         for stage in ['eval', 'test']:
@@ -78,11 +79,11 @@ class DataNERPrepareBase:
 
             complex_lines = [complex_line.split() for complex_line in complex_lines]
             simple_lines = [simple_line.split() for simple_line in simple_lines]
-            complex_line_tags = self.st.tag_sents(complex_lines)
-            simple_line_tags = self.st.tag_sents(simple_lines)
+            complex_line_tags = self.concat_tag_sents(self.st.tag_sents(complex_lines))
+            simple_line_tags = self.concat_tag_sents(self.st.tag_sents(simple_lines))
             refer_lines_arr_tags = [[] for _ in range(8)]
             for rid in range(8):
-                refer_lines_arr_tags[rid] = self.st.tag_sents(refer_lines_arr[rid])
+                refer_lines_arr_tags[rid] = self.concat_tag_sents(self.st.tag_sents(refer_lines_arr[rid]))
 
             ncomplex_lines = []
             nsimple_lines = []
@@ -94,34 +95,27 @@ class DataNERPrepareBase:
                 simple_line = simple_lines[lid]
 
                 # Get Mapper
-                complex_line_tag = set([p for p in complex_line_tags[lid] if p[1] in self.tag_set])
-                simple_line_tag = set([p for p in simple_line_tags[lid] if p[1] in self.tag_set])
+                complex_line_tag = set([(p[0], p[1])
+                                        for p in complex_line_tags[lid] if p[1] in self.replace_tag_set])
+                simple_line_tag = set([(p[0], p[1])
+                                       for p in simple_line_tags[lid] if p[1] in self.replace_tag_set])
                 all_tag = complex_line_tag | simple_line_tag
                 for rid in range(8):
-                    all_tag |= set([p for p in refer_lines_arr_tags[rid][lid] if p[1] in self.tag_set])
+                    all_tag |= set([(p[0], p[1])
+                                    for p in refer_lines_arr_tags[rid][lid] if p[1] in self.replace_tag_set])
 
                 mapper_tag = {}
-                mapper_idx = 1
-                for tag in all_tag:
-                    mapper_tag[tag[0]] = tag[1] + '@' + str(mapper_idx)
-                    mapper_idx += 1
 
-                complex_line_num = set([w for w in complex_line if self.is_numeric(w)])
-                simple_line_num = set([w for w in simple_line if self.is_numeric(w)])
-                all_num = complex_line_num | simple_line_num
-                for rid in range(8):
-                    all_num |= set([w for w in refer_lines_arr[rid][lid] if self.is_numeric(w)])
-
-                mapper_num = {}
-                mapper_idx = 1
-                for tag in all_num:
-                    mapper_num[tag] = 'NUMBER@' + str(mapper_idx)
-                    mapper_idx += 1
+                for tag_type in self.replace_tag_set:
+                    mapper_idx = 1
+                    for tag_pair in all_tag:
+                        if tag_pair[1] == tag_type:
+                            mapper_tag[tag_pair[0]] = tag_pair[1] + '@' + str(mapper_idx)
+                            mapper_idx += 1
 
                 # Update mapper
                 mapper = {}
                 mapper.update(mapper_tag)
-                mapper.update(mapper_num)
                 mappers.append(mapper)
 
                 # Replace based on Mapper
@@ -252,6 +246,25 @@ class DataNERPrepareBase:
             f_complex.close()
             f_simple.write(output_simple.strip())
             f_simple.close()
+
+    def concat_tag_sents(self, tag_sents):
+        ntag_sents = []
+        for tag_sent in tag_sents:
+            ntag_sent = []
+            last_tag = ''
+            for id in range(len(tag_sent)):
+                tag = tag_sent[id][1]
+                word = tag_sent[id][0]
+                if self.is_numeric(word):
+                    tag = "NUMBER"
+
+                if tag == last_tag and tag in self.concat_tag_set:
+                    ntag_sent[-1][0] += '_' + word
+                else:
+                    ntag_sent.append([word, tag])
+                last_tag = tag
+            ntag_sents.append(ntag_sent)
+        return ntag_sents
 
     def replace_word(self, word):
         if word == '(':
