@@ -46,7 +46,7 @@ class MtEval_BLEU:
 
     def get_bleu_from_rawresult(self, step, targets, path_gt_simple=None):
         if path_gt_simple is None:
-            path_gt_simple = self.model_config.val_dataset_simple_folder + self.model_config.val_dataset_simple_file
+            path_gt_simple = self.model_config.val_dataset_simple_folder + self.model_config.val_dataset_simple_raw_file
 
         path_ref = self.model_config.modeldir + '/mteval_reference_real_%s.xml' % step
         path_src = self.model_config.modeldir + '/mteval_source_real_%s.xml' % step
@@ -56,8 +56,10 @@ class MtEval_BLEU:
         mteval_source = open(path_src, 'w', encoding='utf-8')
         mteval_target = open(path_tar, 'w', encoding='utf-8')
 
-        mteval_source.write(self.txt2xml(self.model_config.val_dataset_complex, 'srcset'))
-        mteval_reference.write(self.txt2xml(path_gt_simple, 'refset'))
+        mteval_source.write(self.txt2xml(self.model_config.val_dataset_complex_raw, 'srcset',
+                                         lower_case=self.model_config.lower_case))
+        mteval_reference.write(self.txt2xml(path_gt_simple, 'refset',
+                                            lower_case=self.model_config.lower_case))
         mteval_target.write(self.result2xml(targets, 'tstset'))
         mteval_source.close()
         mteval_reference.close()
@@ -65,9 +67,11 @@ class MtEval_BLEU:
 
         return self.get_result(path_ref, path_src, path_tar)
 
-    def txt2xml(self, path, setlabel):
+    def txt2xml(self, path, setlabel, lower_case=False):
         sents = []
         for sent in open(path, encoding='utf-8'):
+            if lower_case:
+                sent = sent.lower()
             sents.append(sent)
         return self.result2xml(sents, setlabel, join_split='')
 

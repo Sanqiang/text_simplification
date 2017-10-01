@@ -138,12 +138,13 @@ def eval(model_config=None):
 
             target = decode(target, val_data.vocab_simple)
             postprocess = PostProcess(model_config, val_data)
+            target_raw = target
             if model_config.replace_unk_by_emb:
-                target_raw = postprocess.replace_unk_by_emb(sentence_complex_raw, encoder_embs, decoder_outputs, target)
-            if model_config.replace_unk_by_cnt:
-                target_raw = postprocess.replace_unk_by_cnt(sentence_complex_raw, target)
+                target_raw = postprocess.replace_unk_by_emb(sentence_complex_raw, encoder_embs, decoder_outputs, target_raw)
+            elif model_config.replace_unk_by_cnt:
+                target_raw = postprocess.replace_unk_by_cnt(sentence_complex_raw, target_raw)
             if model_config.replace_ner:
-                target_raw = postprocess.replace_ner(target, mapper)
+                target_raw = postprocess.replace_ner(target_raw, mapper)
             sentence_simple = decode(sentence_simple, val_data.vocab_simple)
             sentence_complex = decode(sentence_complex, val_data.vocab_complex)
             sentence_complex_raw = truncate_sents(sentence_complex_raw)
@@ -208,7 +209,7 @@ def eval(model_config=None):
         for ref_i in range(model_config.num_refs):
             bleu_or_raw = mteval.get_bleu_from_rawresult(
                 step, targets_raw, path_gt_simple=(model_config.val_dataset_simple_folder +
-                                         model_config.val_dataset_simple_references + str(ref_i)))
+                                                   model_config.val_dataset_simple_raw_references + str(ref_i)))
             bleu_ors_raw.append(bleu_or_raw)
         bleu_raw = 0.9 * max(bleu_ors_raw) + 0.1 * bleu_oi_raw
         print('Current Mteval iBLEU decode: \t%f' % bleu_raw)

@@ -143,6 +143,9 @@ class WikiDressLargeDefault(DefaultConfig):
     val_dataset_simple_references = 'tune.8turkers.tok.turk.processed.'
     val_dataset_complex = get_path('../text_simplification_data/val/tune.8turkers.tok.norm.processed')
     val_mapper = get_path('../text_simplification_data/val/tune.8turkers.tok.map')
+    val_dataset_simple_raw_file = 'tune.8turkers.tok.simp.raw'
+    val_dataset_simple_raw_references = 'tune.8turkers.tok.turk.raw.'
+    val_dataset_complex_raw = get_path('../text_simplification_data/val/tune.8turkers.tok.norm.raw')
     num_refs = 8
 
     save_model_secs = 600
