@@ -32,7 +32,7 @@ class DefaultConfig():
 
     min_count = 0
     lower_case = True
-    tokenizer = 'split' # ws: white space split / nltk: nltk tokenizer
+    tokenizer = 'split' # split: white space split / nltk: nltk tokenizer
 
     # Follow the configuration from https://github.com/XingxingZhang/dress
     optimizer = 'adagrad'

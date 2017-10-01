@@ -161,13 +161,13 @@ def eval(model_config=None):
             for batch_i in range(effective_batch_size):
                 # Compute iBLEU
                 try:
-                    batch_bleu_i = sentence_bleu([target[batch_i]], sentence_simple[batch_i])
+                    batch_bleu_i = sentence_bleu([sentence_simple[batch_i]], target[batch_i])
                     batch_bleu_rs = []
                     for ref_i in range(model_config.num_refs):
                         batch_bleu_rs.append(
                             # Note: default sentence_bleu weight unigram, bigram, trigram, quagram equally,
                             # i.e. [.25, .25, .25, .25]
-                            sentence_bleu([target[batch_i]], ref[ref_i][batch_i]))
+                            sentence_bleu([ref[ref_i][batch_i]], target[batch_i]))
                     if len(batch_bleu_rs) > 0:
                         batch_bleu_r = max(batch_bleu_rs)
                         batch_ibleu = batch_bleu_r * 0.9 + batch_bleu_i * 0.1
