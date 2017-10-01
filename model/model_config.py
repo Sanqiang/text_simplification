@@ -53,6 +53,7 @@ class DefaultConfig():
     # post process
     replace_unk_by_emb = True
     replace_unk_by_cnt = False
+    replace_ner = True
 
     # deprecated: std of trunc norm init, used for initializing embedding / w
     # trunc_norm_init_std = 1e-4
@@ -76,6 +77,7 @@ class DefaultConfig():
     val_dataset_simple_file = 'valid_dummy_simple_dataset'
     val_dataset_complex = get_path('data/valid_dummy_complex_dataset')
     val_dataset_simple_references = 'valid_dummy_simple_dataset.'
+    val_mapper = get_path('data/valid_dummy_mapper')
     num_refs = 3
 
     output_folder = args.output_folder
@@ -137,9 +139,10 @@ class WikiDressLargeDefault(DefaultConfig):
     # val_dataset_simple_file = 'wiki.full.aner.valid.dst'
     # val_dataset_complex = get_path('../text_simplification_data/train/dress/wikilarge/wiki.full.aner.valid.src')
     val_dataset_simple_folder = get_path('../text_simplification_data/val/')
-    val_dataset_simple_file = 'tune.8turkers.tok.simp'
-    val_dataset_simple_references = 'tune.8turkers.tok.turk.'
-    val_dataset_complex = get_path('../text_simplification_data/val/tune.8turkers.tok.norm')
+    val_dataset_simple_file = 'tune.8turkers.tok.simp.processed'
+    val_dataset_simple_references = 'tune.8turkers.tok.turk.processed.'
+    val_dataset_complex = get_path('../text_simplification_data/val/tune.8turkers.tok.norm.processed')
+    val_mapper = get_path('../text_simplification_data/val/tune.8turkers.tok.map')
     num_refs = 8
 
     save_model_secs = 600

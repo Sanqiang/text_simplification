@@ -23,12 +23,13 @@ def get_graph_val_data(sentence_simple_input, sentence_complex_input,
     voc = Vocab(model_config)
 
     tmp_sentence_simple, tmp_sentence_complex, tmp_sentence_complex_raw = [], [], []
+    tmp_mapper = []
     tmp_ref = [[] for _ in range(model_config.num_refs)]
     effective_batch_size = 0
     is_end = False
     for i in range(model_config.batch_size):
         if not is_end:
-            sentence_simple, sentence_complex, sentence_complex_raw, ref = next(it)
+            sentence_simple, sentence_complex, sentence_complex_raw, mapper, ref = next(it)
             effective_batch_size += 1
         if sentence_simple is None or is_end:
             # End of data set
@@ -56,6 +57,7 @@ def get_graph_val_data(sentence_simple_input, sentence_complex_input,
 
         tmp_sentence_simple.append(sentence_simple)
         tmp_sentence_complex.append(sentence_complex)
+        tmp_mapper.append(mapper)
         tmp_sentence_complex_raw.append(sentence_complex_raw)
 
     for step in range(model_config.max_simple_sentence):
@@ -65,7 +67,8 @@ def get_graph_val_data(sentence_simple_input, sentence_complex_input,
         input_feed[sentence_complex_input[step].name] = [tmp_sentence_complex[batch_idx][step]
                                                          for batch_idx in range(model_config.batch_size)]
 
-    return input_feed, tmp_sentence_simple, tmp_sentence_complex, tmp_sentence_complex_raw, tmp_ref, effective_batch_size, is_end
+    return (input_feed, tmp_sentence_simple, tmp_sentence_complex,
+            tmp_sentence_complex_raw, tmp_mapper, tmp_ref, effective_batch_size, is_end)
 
 
 def eval(model_config=None):
@@ -105,7 +108,8 @@ def eval(model_config=None):
         sv = tf.train.Supervisor(init_fn=init_fn)
         sess = sv.PrepareSession(config=session.get_session_config(model_config))
         while True:
-            input_feed, sentence_simple, sentence_complex, sentence_complex_raw, ref, effective_batch_size, is_end = get_graph_val_data(
+            (input_feed, sentence_simple, sentence_complex,
+             sentence_complex_raw, mapper, ref, effective_batch_size, is_end) = get_graph_val_data(
                 graph.sentence_simple_input_placeholder,
                 graph.sentence_complex_input_placeholder,
                 model_config, it)
@@ -136,11 +140,10 @@ def eval(model_config=None):
             postprocess = PostProcess(model_config, val_data)
             if model_config.replace_unk_by_emb:
                 target_raw = postprocess.replace_unk_by_emb(sentence_complex_raw, encoder_embs, decoder_outputs, target)
-            elif model_config.replace_unk_by_cnt:
+            if model_config.replace_unk_by_cnt:
                 target_raw = postprocess.replace_unk_by_cnt(sentence_complex_raw, target)
-            else:
-                target_raw = target
-
+            if model_config.replace_ner:
+                target_raw = postprocess.replace_ner(target, mapper)
             sentence_simple = decode(sentence_simple, val_data.vocab_simple)
             sentence_complex = decode(sentence_complex, val_data.vocab_complex)
             sentence_complex_raw = truncate_sents(sentence_complex_raw)
@@ -158,11 +161,13 @@ def eval(model_config=None):
             for batch_i in range(effective_batch_size):
                 # Compute iBLEU
                 try:
-                    batch_bleu_i = sentence_bleu([target[batch_i]], sentence_simple[batch_i], weights=[1])
+                    batch_bleu_i = sentence_bleu([target[batch_i]], sentence_simple[batch_i])
                     batch_bleu_rs = []
                     for ref_i in range(model_config.num_refs):
                         batch_bleu_rs.append(
-                            sentence_bleu([target[batch_i]], ref[ref_i][batch_i], weights=[1]))
+                            # Note: default sentence_bleu weight unigram, bigram, trigram, quagram equally,
+                            # i.e. [.25, .25, .25, .25]
+                            sentence_bleu([target[batch_i]], ref[ref_i][batch_i]))
                     if len(batch_bleu_rs) > 0:
                         batch_bleu_r = max(batch_bleu_rs)
                         batch_ibleu = batch_bleu_r * 0.9 + batch_bleu_i * 0.1

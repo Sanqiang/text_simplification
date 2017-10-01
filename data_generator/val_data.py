@@ -1,6 +1,7 @@
 from data_generator.vocab import Vocab
 from nltk import word_tokenize
 from util import constant
+from util.map_util import load_mappers
 
 import copy as cp
 
@@ -35,6 +36,9 @@ class ValData:
                                    self.model_config.val_dataset_simple_references +
                                    str(i), self.vocab_simple)[0])
 
+        if self.model_config.replace_ner:
+            self.mapper = load_mappers(self.model_config.val_mapper)
+
         self.size = len(self.data_simple)
         print('Use Val Dataset: \n Simple\t %s. \n Complex\t %s. \n Size\t %d'
               % (self.model_config.val_dataset_simple_folder + self.model_config.val_dataset_simple_file,
@@ -68,8 +72,8 @@ class ValData:
         while True:
             ref_batch = cp.deepcopy([self.data_references[j][i] for j in range(self.model_config.num_refs)])
             yield (cp.deepcopy(self.data_simple[i]), cp.deepcopy(self.data_complex[i]),
-                   cp.deepcopy(self.data_complex_raw[i]), ref_batch)
+                   cp.deepcopy(self.data_complex_raw[i]), self.mapper[i], ref_batch)
 
             i += 1
             if i == len(self.data_simple):
-                yield None, None, None, None
+                yield None, None, None, None, None

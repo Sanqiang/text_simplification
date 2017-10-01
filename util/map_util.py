@@ -22,13 +22,13 @@ def load_mappers(path):
     f = open(path, encoding='utf-8')
     for line in f:
         tmp_mapper = {}
-        samples = line.split('\t')
+        samples = line.strip().split('\t')
         for sample in samples:
             kv = sample.split(kv_sep)
-            assert len(kv) == 2
-            k = kv[0]
-            v = kv[1]
-            tmp_mapper[k] = v
+            if len(kv) == 2:
+                v = kv[0]
+                k = kv[1]
+                tmp_mapper[k] = v
         mappers.append(tmp_mapper)
     return mappers
 

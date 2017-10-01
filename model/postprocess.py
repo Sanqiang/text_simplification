@@ -9,6 +9,16 @@ class PostProcess:
         self.model_config = model_config
         self.data = data
 
+    def replace_ner(self, decoder_targets, mapper):
+        batch_size = np.shape(decoder_targets)[0]
+        ndecoder_targets = cp.deepcopy(decoder_targets)
+        for batch_i in range(batch_size):
+            for len_i in range(len(decoder_targets[batch_i])):
+                word = decoder_targets[batch_i][len_i]
+                if word in mapper[batch_i]:
+                    ndecoder_targets[batch_i][len_i] = mapper[batch_i][word]
+        return ndecoder_targets
+
     def replace_unk_by_emb(self, encoder_words, encoder_embs, decoder_outputs, decoder_targets):
         batch_size = np.shape(decoder_targets)[0]
 
