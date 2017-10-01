@@ -17,7 +17,7 @@ def dump_mappers(mappers, path):
     f.close()
 
 
-def load_mappers(path):
+def load_mappers(path, lower_case=False):
     mappers = []
     f = open(path, encoding='utf-8')
     for line in f:
@@ -28,6 +28,9 @@ def load_mappers(path):
             if len(kv) == 2:
                 v = kv[0]
                 k = kv[1]
+                if lower_case:
+                    v = v.lower()
+                    k = k.lower()
                 tmp_mapper[k] = v
         mappers.append(tmp_mapper)
     return mappers

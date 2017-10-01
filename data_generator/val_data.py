@@ -37,7 +37,7 @@ class ValData:
                                    str(i), self.vocab_simple)[0])
 
         if self.model_config.replace_ner:
-            self.mapper = load_mappers(self.model_config.val_mapper)
+            self.mapper = load_mappers(self.model_config.val_mapper, self.model_config.lower_case)
 
         self.size = len(self.data_simple)
         print('Use Val Dataset: \n Simple\t %s. \n Complex\t %s. \n Size\t %d'
