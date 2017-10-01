@@ -18,7 +18,7 @@ def is_numeric(word):
 
 
 def data_parse(word):
-    if word == '\'\'' or word == '\'' or word == '"':
+    if word == '\'\'' or word == '\'' or word == '"' or word == '`' or word == '``':
         return '#quot#'
     return word
 
