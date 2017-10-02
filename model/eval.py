@@ -15,6 +15,10 @@ import tensorflow as tf
 import math
 import numpy as np
 import time
+from util.arguments import get_args
+
+
+args = get_args()
 
 
 def get_graph_val_data(sentence_simple_input, sentence_complex_input,
@@ -257,6 +261,10 @@ def eval(model_config=None):
 
 
 if __name__ == '__main__':
-    config = WikiDressLargeTestConfig()
+    config = None
+    if args.mode == 'dummy':
+        config = DefaultTestConfig()
+    elif args.mode == 'dress':
+        config = WikiDressLargeTestConfig()
     print(list_config(config))
     eval(config)

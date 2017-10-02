@@ -1,5 +1,4 @@
 from data_generator.train_data import TrainData
-from model.graph import Graph
 from model.transformer import TransformerGraph
 from model.seq2seq import Seq2SeqGraph
 from model.model_config import DefaultConfig, DefaultTrainConfig, WikiDressLargeTrainConfig, list_config
@@ -11,7 +10,10 @@ from model.eval import decode_to_output, decode
 import tensorflow as tf
 import tensorflow.contrib.slim as slim
 import math
-import pprint
+from util.arguments import get_args
+
+
+args = get_args()
 
 
 def get_graph_train_data(data,
@@ -117,6 +119,10 @@ def train(model_config=None):
 
 
 if __name__ == '__main__':
-    config = WikiDressLargeTrainConfig()
+    config = None
+    if args.mode == 'dummy':
+        config = DefaultTrainConfig()
+    elif args.mode == 'dress':
+        config = DefaultTrainConfig()
     print(list_config(config))
     train(config)
