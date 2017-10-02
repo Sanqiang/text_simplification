@@ -15,4 +15,4 @@ module restore
 # module load tensorflow/1.3.0
 
 # Run the job
-srun python model/train.py --framework transformer --use_quality_model True --output_folder uqm
+srun python model/train.py --framework transformer --use_quality_model True --output_folder uqm --warm_start /ihome/hdaqing/saz31/sanqiang/nuqm/model/model.ckpt-78000
