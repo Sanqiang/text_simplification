@@ -2,6 +2,7 @@ import copy as cp
 import subprocess
 from model.model_config import DefaultConfig
 import re
+from util import constant
 
 class MtEval_BLEU:
 
@@ -92,8 +93,11 @@ class MtEval_BLEU:
         txt = txt.replace('<','#lt#')
         txt = txt.replace('>', '#rt#')
         txt = txt.replace('&', '#and#')
-        txt = txt.replace('"', '#quot#')
-        txt = txt.replace('\'', '#apos#')
+        txt = txt.replace('"', constant.SYMBOL_QUOTE)
+        txt = txt.replace('\'\'', constant.SYMBOL_QUOTE)
+        txt = txt.replace('\'', constant.SYMBOL_QUOTE)
+        txt = txt.replace('``', constant.SYMBOL_QUOTE)
+        txt = txt.replace('`', constant.SYMBOL_QUOTE)
         return txt
 
 if __name__ == '__main__':

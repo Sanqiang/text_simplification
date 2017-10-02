@@ -25,8 +25,7 @@ class PostProcess:
         for batch_i in range(batch_size):
             for len_i in range(len(decoder_targets[batch_i])):
                 word = decoder_targets[batch_i][len_i]
-                if word == constant.SYMBOL_QUOTE:
-                    ndecoder_targets[batch_i][len_i] = '``'
+                # Nothing so far
         return ndecoder_targets
 
     def replace_unk_by_emb(self, encoder_words, encoder_embs, decoder_outputs, decoder_targets):
