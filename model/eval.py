@@ -201,7 +201,8 @@ def eval(model_config=None):
         for ref_i in range(model_config.num_refs):
             bleu_or_decode = mteval.get_bleu_from_decoderesult(step, sentence_complexs, refs[ref_i], targets)
             bleu_ors_decode.append(bleu_or_decode)
-        bleu_decode = 0.9 * max(bleu_ors_decode) + 0.1 * bleu_oi_decode
+        bleu_decode_max = max(bleu_ors_decode)
+        bleu_decode = 0.9 * bleu_decode_max + 0.1 * bleu_oi_decode
         print('Current Mteval iBLEU decode: \t%f' % bleu_decode)
 
         # MtEval Result - raw
@@ -212,24 +213,43 @@ def eval(model_config=None):
                 step, targets_raw, path_gt_simple=(model_config.val_dataset_simple_folder +
                                                    model_config.val_dataset_simple_raw_references + str(ref_i)))
             bleu_ors_raw.append(bleu_or_raw)
-        bleu_raw = 0.9 * max(bleu_ors_raw) + 0.1 * bleu_oi_raw
+        bleu_ors_raw_max = max(bleu_ors_raw)
+        bleu_raw = 0.9 * bleu_ors_raw_max + 0.1 * bleu_oi_raw
         print('Current Mteval iBLEU decode: \t%f' % bleu_raw)
 
+        bleu_raw = round(bleu_raw, 4)
+        bleu_oi_raw = round(bleu_oi_raw, 4)
+        bleu_ors_raw_max = round(bleu_ors_raw_max, 4)
+        bleu_decode = round(bleu_decode, 4)
+        bleu_oi_decode = round(bleu_oi_decode, 4)
+        bleu_decode_max = round(bleu_decode_max, 4)
+        ibleu = round(ibleu, 4)
+        perplexity = round(perplexity, 4)
 
         # Output Result
         f = open((model_config.modeldir + '/step' + str(step) +
-                  '-ibleu_raw' + str(bleu_raw) +
-                  '-ibleu_decode' + str(bleu_decode) +
-                  '-ibleu' + str(ibleu)),
+                  '-bleu_raw' + str(bleu_raw) +
+                  '-bleu_raw_oi' + str(bleu_oi_raw) +
+                  '-bleu_raw_or' + str(bleu_ors_raw_max) +
+                  '-bleu_decode' + str(bleu_decode) +
+                  '-bleu_decode_oi' + str(bleu_oi_decode) +
+                  '-bleu_decode_or' + str(bleu_decode_max) +
+                  '-perplexity' + str(perplexity) +
+                  '-bleu_nltk' + str(ibleu)),
                  'w', encoding='utf-8')
         f.write(str(ibleu))
         f.write('\t')
         f.write(str(perplexity))
         f.close()
         f = open((model_config.modeldir + '/step' + str(step) +
-                  '-ibleu_raw' + str(bleu_raw) +
-                  '-ibleu_decode' + str(bleu_decode) +
-                  '-ibleu' + str(ibleu) + '.result'),
+                  '-bleu_raw' + str(bleu_raw) +
+                  '-bleu_raw_oi' + str(bleu_oi_raw) +
+                  '-bleu_raw_or' + str(bleu_ors_raw_max) +
+                  '-bleu_decode' + str(bleu_decode) +
+                  '-bleu_decode_oi' + str(bleu_oi_decode) +
+                  '-bleu_decode_or' + str(bleu_decode_max) +
+                  '-perplexity' + str(perplexity) +
+                  '-bleu_nltk' + str(ibleu) + '.result'),
                  'w', encoding='utf-8')
         f.write('\n'.join(decode_outputs_all))
         f.close()
