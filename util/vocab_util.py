@@ -1,3 +1,5 @@
+from util import constant
+
 
 def is_numeric(word):
     if not word:
@@ -19,7 +21,7 @@ def is_numeric(word):
 
 def data_parse(word):
     if word == '\'\'' or word == '\'' or word == '"' or word == '`' or word == '``':
-        return '#quot#'
+        return constant.SYMBOL_QUOTE
     return word
 
 if __name__ == '__main__':

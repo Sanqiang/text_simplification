@@ -145,6 +145,7 @@ def eval(model_config=None):
                 target_raw = postprocess.replace_unk_by_cnt(sentence_complex_raw, target_raw)
             if model_config.replace_ner:
                 target_raw = postprocess.replace_ner(target_raw, mapper)
+            target_raw = postprocess.replace_others(target_raw)
             sentence_simple = decode(sentence_simple, val_data.vocab_simple)
             sentence_complex = decode(sentence_complex, val_data.vocab_complex)
             sentence_complex_raw = truncate_sents(sentence_complex_raw)

@@ -7,6 +7,7 @@ SYMBOL_UNK = '#unk#'
 SYMBOL_START = '#bos#'
 SYMBOL_END = '#eos#'
 SYMBOL_NUM = '#num#'
+SYMBOL_QUOTE = '#quot#'
 
 REVERED_VOCAB_SIZE = 10
 

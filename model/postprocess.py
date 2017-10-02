@@ -19,6 +19,16 @@ class PostProcess:
                     ndecoder_targets[batch_i][len_i] = mapper[batch_i][word]
         return ndecoder_targets
 
+    def replace_others(self, decoder_targets):
+        batch_size = np.shape(decoder_targets)[0]
+        ndecoder_targets = cp.deepcopy(decoder_targets)
+        for batch_i in range(batch_size):
+            for len_i in range(len(decoder_targets[batch_i])):
+                word = decoder_targets[batch_i][len_i]
+                if word == constant.SYMBOL_QUOTE:
+                    ndecoder_targets[batch_i][len_i] = '``'
+        return ndecoder_targets
+
     def replace_unk_by_emb(self, encoder_words, encoder_embs, decoder_outputs, decoder_targets):
         batch_size = np.shape(decoder_targets)[0]
 
@@ -104,3 +114,8 @@ class PostProcess:
                     ndecoder_targets[batch_i][len_i] = word_cands[np.argmax(word_cands_point)]
 
         return ndecoder_targets
+
+if __name__ == '__main__':
+    sents = ['the term #quot# union council #quot# may be used for cities that are part of their cities .'.split()]
+    sents = PostProcess(None, None).replace_others(sents)
+    print(sents)
