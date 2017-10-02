@@ -217,23 +217,24 @@ def eval(model_config=None):
         bleu_raw = 0.9 * bleu_ors_raw_max + 0.1 * bleu_oi_raw
         print('Current Mteval iBLEU decode: \t%f' % bleu_raw)
 
-        bleu_raw = round(bleu_raw, 4)
-        bleu_oi_raw = round(bleu_oi_raw, 4)
-        bleu_ors_raw_max = round(bleu_ors_raw_max, 4)
-        bleu_decode = round(bleu_decode, 4)
-        bleu_oi_decode = round(bleu_oi_decode, 4)
-        bleu_decode_max = round(bleu_decode_max, 4)
-        ibleu = round(ibleu, 4)
-        perplexity = round(perplexity, 4)
+        decimal_cnt = 5
+        bleu_raw = round(bleu_raw, decimal_cnt)
+        bleu_oi_raw = round(bleu_oi_raw, decimal_cnt)
+        bleu_ors_raw_max = round(bleu_ors_raw_max, decimal_cnt)
+        bleu_decode = round(bleu_decode, decimal_cnt)
+        bleu_oi_decode = round(bleu_oi_decode, decimal_cnt)
+        bleu_decode_max = round(bleu_decode_max, decimal_cnt)
+        ibleu = round(ibleu, decimal_cnt)
+        perplexity = round(perplexity, decimal_cnt)
 
         # Output Result
         f = open((model_config.modeldir + '/step' + str(step) +
-                  '-bleu_raw' + str(bleu_raw) +
-                  '-bleu_raw_oi' + str(bleu_oi_raw) +
-                  '-bleu_raw_or' + str(bleu_ors_raw_max) +
-                  '-bleu_decode' + str(bleu_decode) +
-                  '-bleu_decode_oi' + str(bleu_oi_decode) +
-                  '-bleu_decode_or' + str(bleu_decode_max) +
+                  '-bleuraw' + str(bleu_raw) +
+                  '-bleurawoi' + str(bleu_oi_raw) +
+                  '-bleurawor' + str(bleu_ors_raw_max) +
+                  '-bleudecode' + str(bleu_decode) +
+                  '-bleudecodeoi' + str(bleu_oi_decode) +
+                  '-bleudecodeor' + str(bleu_decode_max) +
                   '-perplexity' + str(perplexity) +
                   '-bleu_nltk' + str(ibleu)),
                  'w', encoding='utf-8')
@@ -242,14 +243,14 @@ def eval(model_config=None):
         f.write(str(perplexity))
         f.close()
         f = open((model_config.modeldir + '/step' + str(step) +
-                  '-bleu_raw' + str(bleu_raw) +
-                  '-bleu_raw_oi' + str(bleu_oi_raw) +
-                  '-bleu_raw_or' + str(bleu_ors_raw_max) +
-                  '-bleu_decode' + str(bleu_decode) +
-                  '-bleu_decode_oi' + str(bleu_oi_decode) +
-                  '-bleu_decode_or' + str(bleu_decode_max) +
+                  '-bleuraw' + str(bleu_raw) +
+                  '-bleurawoi' + str(bleu_oi_raw) +
+                  '-bleurawor' + str(bleu_ors_raw_max) +
+                  '-bleudecode' + str(bleu_decode) +
+                  '-bleudecodeoi' + str(bleu_oi_decode) +
+                  '-bleudecodeor' + str(bleu_decode_max) +
                   '-perplexity' + str(perplexity) +
-                  '-bleu_nltk' + str(ibleu) + '.result'),
+                  '-bleunltk' + str(ibleu) + '.result'),
                  'w', encoding='utf-8')
         f.write('\n'.join(decode_outputs_all))
         f.close()
