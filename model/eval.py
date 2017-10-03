@@ -161,7 +161,7 @@ def eval(model_config=None):
                 ref[ref_i] = decode(ref[ref_i], val_data.vocab_simple)
 
             #Truncate decode results
-            target = truncate_sents(targets)
+            target = truncate_sents(target)
             target_raw = truncate_sents(target_raw)
             sentence_simple = truncate_sents(sentence_simple)
             sentence_complex = truncate_sents(sentence_complex)

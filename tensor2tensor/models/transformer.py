@@ -239,6 +239,7 @@ def transformer_decoder(decoder_input,
     y: a Tensors
   """
   x = decoder_input
+  weights = []
   with tf.variable_scope(name):
     for layer in xrange(hparams.num_decoder_layers or
                         hparams.num_hidden_layers):
@@ -253,7 +254,7 @@ def transformer_decoder(decoder_input,
           x = common_layers.layer_postprocess(x, y, hparams)
         if encoder_output is not None:
           with tf.variable_scope("encdec_attention"):
-            y, weights = common_attention.multihead_attention(
+            y, weight = common_attention.multihead_attention(
                 common_layers.layer_preprocess(
                     x, hparams), encoder_output, encoder_decoder_attention_bias,
                 hparams.attention_key_channels or hparams.hidden_size,
@@ -261,6 +262,7 @@ def transformer_decoder(decoder_input,
                 hparams.hidden_size, hparams.num_heads,
                 hparams.attention_dropout, return_weights=True)
             x = common_layers.layer_postprocess(x, y, hparams)
+            weights.append(weight)
         with tf.variable_scope("ffn"):
           y = transformer_ffn_layer(
               common_layers.layer_preprocess(x, hparams), hparams)
