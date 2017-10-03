@@ -253,13 +253,13 @@ def transformer_decoder(decoder_input,
           x = common_layers.layer_postprocess(x, y, hparams)
         if encoder_output is not None:
           with tf.variable_scope("encdec_attention"):
-            y = common_attention.multihead_attention(
+            y, weights = common_attention.multihead_attention(
                 common_layers.layer_preprocess(
                     x, hparams), encoder_output, encoder_decoder_attention_bias,
                 hparams.attention_key_channels or hparams.hidden_size,
                 hparams.attention_value_channels or hparams.hidden_size,
                 hparams.hidden_size, hparams.num_heads,
-                hparams.attention_dropout)
+                hparams.attention_dropout, return_weights=True)
             x = common_layers.layer_postprocess(x, y, hparams)
         with tf.variable_scope("ffn"):
           y = transformer_ffn_layer(
@@ -268,7 +268,7 @@ def transformer_decoder(decoder_input,
   # if normalization is done in layer_preprocess, then it shuold also be done
   # on the output, since the output can grow very large, being the sum of
   # a whole stack of unnormalized layer outputs.
-  return common_layers.layer_preprocess(x, hparams)
+  return common_layers.layer_preprocess(x, hparams), weights
 
 
 def transformer_ffn_layer(x, hparams, pad_remover=None):

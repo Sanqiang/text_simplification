@@ -1,6 +1,7 @@
 import numpy as np
 from util import constant
 from scipy.spatial.distance import cosine
+from scipy import stats
 import copy as cp
 
 
@@ -28,6 +29,39 @@ class PostProcess:
                 # Nothing so far
         return ndecoder_targets
 
+    def replace_unk_by_attn(self, encoder_words, attn_dists, decoder_targets):
+        batch_size = np.shape(decoder_targets)[0]
+        decoder_targets[0][3] = constant.SYMBOL_UNK
+        decoder_targets[1][3] = constant.SYMBOL_UNK
+
+        ndecoder_targets = []
+        for batch_i in range(batch_size):
+            if len(np.shape(attn_dists)) == 2:
+                ndecoder_target = self.replace_unk_by_attn_onestep(
+                    encoder_words[batch_i], attn_dists[batch_i], decoder_targets[batch_i])
+                ndecoder_targets.append(ndecoder_target)
+            elif len(np.shape(attn_dists)) == 3:
+                num_heads = np.shape(attn_dists)[1]
+                ndecoder_target_cands = []
+                for head_i in range(num_heads):
+                    ndecoder_target_cand = self.replace_unk_by_attn_onestep(
+                        encoder_words[batch_i], attn_dists[batch_i][head_i], decoder_targets[batch_i])
+                    ndecoder_target_cands.append(ndecoder_target_cand)
+                ndecoder_target_cands = np.array(ndecoder_target_cands)
+                # Majority vote for all heads result
+                mv_result = stats.mode(ndecoder_target_cands)
+                ndecoder_targets.append(list(mv_result[0]))
+        return ndecoder_targets
+
+    def replace_unk_by_attn_onestep(self, encoder_word, attn_dist, decoder_target):
+        ndecoder_target = cp.deepcopy(decoder_target)
+        for len_i in range(len(decoder_target)):
+            target = decoder_target[len_i]
+            if target == constant.SYMBOL_UNK:
+                nword = encoder_word[attn_dist[len_i]]
+                ndecoder_target[len_i] = nword
+        return ndecoder_target
+
     def replace_unk_by_emb(self, encoder_words, encoder_embs, decoder_outputs, decoder_targets):
         batch_size = np.shape(decoder_targets)[0]
 
@@ -37,7 +71,8 @@ class PostProcess:
                 target = decoder_targets[batch_i][len_i]
                 if target == constant.SYMBOL_UNK:
                     query = decoder_outputs[batch_i, len_i, :]
-                    word_exclude = set(ndecoder_targets[batch_i])
+                    word_exclude = set()
+                    # word_exclude = set(ndecoder_targets[batch_i])
                     word_exclude.update([
                         constant.SYMBOL_START, constant.SYMBOL_END, constant.SYMBOL_UNK,
                         constant.SYMBOL_PAD, constant.SYMBOL_GO])

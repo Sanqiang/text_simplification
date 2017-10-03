@@ -29,7 +29,7 @@ class DefaultConfig():
 
     # Follow the configuration from https://github.com/XingxingZhang/dress
     optimizer = 'adagrad'
-    learning_rate = 0.1
+    learning_rate = 0.01
     max_grad_staleness = 0.0
     max_grad_norm = 5.0
 
@@ -44,6 +44,7 @@ class DefaultConfig():
     use_quality_model = args.use_quality_model
 
     # post process
+    replace_unk_by_attn = False
     replace_unk_by_emb = True
     replace_unk_by_cnt = False
     replace_ner = True
@@ -91,9 +92,9 @@ class DefaultTrainConfig(DefaultConfig):
 
 
 class DefaultTestConfig(DefaultConfig):
-    beam_search_size = -1
+    beam_search_size = 1
     batch_size = 2
-    # train_with_hyp = True
+    train_with_hyp = True
 
 
 class WikiTurk(DefaultConfig):

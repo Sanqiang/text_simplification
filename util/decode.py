@@ -34,7 +34,7 @@ def decode(target, voc):
     decode_results = []
     for i in range(batch_size):
         decode_result = list(map(voc.describe, target[i]))
-        decode_result = truncate_sent(decode_result)
+        # decode_result = truncate_sent(decode_result)
         decode_results.append(decode_result)
     return decode_results
 

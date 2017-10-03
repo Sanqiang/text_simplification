@@ -120,11 +120,12 @@ def eval(model_config=None):
 
             fetches = {'decoder_target_list': graph.decoder_target_list,
                        'loss': graph.loss,
-                       'global_step': graph.global_step}
+                       'global_step': graph.global_step, 'attn_dists':graph.attn_dists}
             if model_config.replace_unk_by_emb:
                 fetches.update({'encoder_embs': graph.encoder_embs, 'decoder_output_list': graph.decoder_output_list})
             results = sess.run(fetches, input_feed)
-            target, loss, step = results['decoder_target_list'], results['loss'], results['global_step']
+            target, loss, step, attn_dists = (results['decoder_target_list'], results['loss'],
+                                              results['global_step'], results['attn_dists'])
             if model_config.replace_unk_by_emb:
                 encoder_embs, decoder_outputs = results['encoder_embs'], results['decoder_output_list']
             batch_perplexity = math.exp(loss)
@@ -143,8 +144,11 @@ def eval(model_config=None):
             target = decode(target, val_data.vocab_simple)
             postprocess = PostProcess(model_config, val_data)
             target_raw = target
-            if model_config.replace_unk_by_emb:
-                target_raw = postprocess.replace_unk_by_emb(sentence_complex_raw, encoder_embs, decoder_outputs, target_raw)
+            if model_config.replace_unk_by_attn:
+                target_raw = postprocess.replace_unk_by_attn(sentence_complex_raw, attn_dists, target_raw)
+            elif model_config.replace_unk_by_emb:
+                target_raw = postprocess.replace_unk_by_emb(
+                    sentence_complex_raw, encoder_embs, decoder_outputs, target_raw)
             elif model_config.replace_unk_by_cnt:
                 target_raw = postprocess.replace_unk_by_cnt(sentence_complex_raw, target_raw)
             if model_config.replace_ner:
@@ -155,6 +159,15 @@ def eval(model_config=None):
             sentence_complex_raw = truncate_sents(sentence_complex_raw)
             for ref_i in range(model_config.num_refs):
                 ref[ref_i] = decode(ref[ref_i], val_data.vocab_simple)
+
+            #Truncate decode results
+            target = truncate_sents(targets)
+            target_raw = truncate_sents(target_raw)
+            sentence_simple = truncate_sents(sentence_simple)
+            sentence_complex = truncate_sents(sentence_complex)
+            for ref_i in range(model_config.num_refs):
+                ref[ref_i] = truncate_sents(ref[ref_i])
+
             targets.extend(target)
             targets_raw.extend(target_raw)
             sentence_simples.extend(sentence_simple)

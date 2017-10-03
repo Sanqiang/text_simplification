@@ -416,7 +416,8 @@ def dot_product_attention(q,
                           bias,
                           dropout_rate=0.0,
                           image_shapes=None,
-                          name=None):
+                          name=None,
+                          return_weights=False):
   """dot-product attention.
 
   Args:
@@ -445,6 +446,8 @@ def dot_product_attention(q,
         # Summaries don't work well within tf.while_loop()
         "/while/" not in tf.contrib.framework.get_name_scope()):
       attention_image_summary(weights, image_shapes)
+    if return_weights:
+        return tf.matmul(weights, v), weights
     return tf.matmul(weights, v)
 
 
@@ -962,6 +965,7 @@ def multihead_attention(query_antecedent,
                         kv_filter_width=1,
                         q_padding="VALID",
                         kv_padding="VALID",
+                        return_weights=False,
                         name=None):
   """Multihead scaled-dot-product attention with input/output transformations.
 
@@ -1015,7 +1019,7 @@ def multihead_attention(query_antecedent,
     key_depth_per_head = total_key_depth // num_heads
     q *= key_depth_per_head**-0.5
     if attention_type == "dot_product":
-      x = dot_product_attention(q, k, v, bias, dropout_rate, image_shapes)
+      x, weights = dot_product_attention(q, k, v, bias, dropout_rate, image_shapes, return_weights=True)
     elif attention_type == "local_mask_right":
       x = masked_local_attention_1d(q, k, v, block_length=block_length)
     else:
@@ -1024,6 +1028,8 @@ def multihead_attention(query_antecedent,
           q, k, v, block_length=block_length, filter_width=block_width)
     x = combine_heads(x)
     x = common_layers.conv1d(x, output_depth, 1, name="output_transform")
+    if return_weights:
+        return x, weights
     return x
 
 

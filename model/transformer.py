@@ -19,12 +19,12 @@ class TransformerGraph(Graph):
             batch_go = [tf.zeros([self.model_config.batch_size, self.model_config.dimension])]
             target_length = len(decode_input_list) + 1
             decoder_emb_inputs = tf.stack(batch_go + decode_input_list, axis=1)
-            decoder_output = self.decode_inputs_to_outputs(
+            decoder_output, decoder_attn_mask = self.decode_inputs_to_outputs(
                 decoder_emb_inputs, encoder_outputs, encoder_attn_bias)
             decoder_output_list = [
                 tf.squeeze(d, 1)
                 for d in tf.split(decoder_output, target_length, axis=1)]
-            return decoder_output_list
+            return decoder_output_list, decoder_attn_mask
 
         encoder_embed_inputs = tf.stack(
             self.embedding_fn(self.sentence_complex_input_placeholder, self.emb_complex), axis=1)
@@ -51,7 +51,7 @@ class TransformerGraph(Graph):
                 print('Use Generally Process.')
                 decoder_embed_inputs = self.embedding_fn(
                     self.sentence_simple_input_placeholder[:-1], self.emb_simple)
-                decoder_output_list = decode_step(decoder_embed_inputs)
+                decoder_output_list, decoder_attn_mask = decode_step(decoder_embed_inputs)
                 decoder_target_list = self.sentence_simple_input_placeholder
                 decoder_logit_list = [self.output_to_logit(o) for o in decoder_output_list]
             elif self.model_config.train_with_hyp or self.model_config.beam_search_size <= 1:
@@ -61,7 +61,7 @@ class TransformerGraph(Graph):
                     if step > 0:
                         tf.get_variable_scope().reuse_variables()
 
-                    decoder_output_list = decode_step(decoder_embed_inputs)
+                    decoder_output_list, decoder_attn_mask = decode_step(decoder_embed_inputs)
                     last_logits = self.output_to_logit(decoder_output_list[-1])
                     last_outid = tf.cast(tf.argmax(last_logits, 1), tf.int32)
                     if self.is_train:
@@ -75,7 +75,14 @@ class TransformerGraph(Graph):
                 print('Use Beam Search with Beam Search Size %d.' % self.model_config.beam_search_size)
                 return self.transformer_beam_search(encoder_outputs, encoder_attn_bias)
 
+        self.attn_dists = self.aggregate_attn_dists(decoder_attn_mask)
         return decoder_output_list, decoder_logit_list, decoder_target_list
+
+    def aggregate_attn_dists(self, decoder_attn_mask):
+        # decoder_attn_mask_aggregate = tf.reduce_sum(decoder_attn_mask, axis=1)
+        # attn_dists = tf.argmax(decoder_attn_mask, axis=-1)
+        return decoder_attn_mask
+
 
     def transformer_beam_search(self, encoder_outputs, encoder_attn_bias):
         # Use Beam Search in evaluation stage
@@ -93,7 +100,7 @@ class TransformerGraph(Graph):
         def symbol_to_logits_fn(ids):
             embs = tf.nn.embedding_lookup(self.emb_simple, ids[:, 1:])
             embs = tf.pad(embs, [[0, 0], [1, 0], [0, 0]])
-            decoder_outputs = self.decode_inputs_to_outputs(embs, encoder_outputs, encoder_attn_bias)
+            decoder_outputs, _ = self.decode_inputs_to_outputs(embs, encoder_outputs, encoder_attn_bias)
             return self.output_to_logit(decoder_outputs[:, -1, :])
 
         beam_ids, beam_score = beam_search.beam_search(symbol_to_logits_fn,
@@ -123,11 +130,12 @@ class TransformerGraph(Graph):
         decoder_attn_bias = common_attention.attention_bias_lower_triangle(tf.shape(decoder_embed_inputs)[1])
         decoder_embed_inputs = tf.nn.dropout(decoder_embed_inputs,
                                              1.0 - self.hparams.layer_prepostprocess_dropout)
-        return transformer.transformer_decoder(decoder_embed_inputs,
+        decoder, decoder_attn_mask = transformer.transformer_decoder(decoder_embed_inputs,
                                                encoder_outputs,
                                                decoder_attn_bias,
                                                encoder_attn_bias,
                                                self.hparams)
+        return decoder, decoder_attn_mask
 
     def setup_hparams(self):
         self.hparams.num_heads = self.model_config.num_heads
