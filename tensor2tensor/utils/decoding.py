@@ -29,7 +29,6 @@ import six
 from six.moves import input  # pylint: disable=redefined-builtin
 
 from tensor2tensor.data_generators import text_encoder
-from tensor2tensor.utils import data_reader
 from tensor2tensor.utils import devices
 from tensor2tensor.utils import input_fn_builder
 import tensorflow as tf
@@ -47,7 +46,7 @@ def decode_hparams(overrides=""):
       save_images=False,
       problem_idx=0,
       extra_length=50,
-      batch_size=32,
+      batch_size=0,
       beam_size=4,
       alpha=0.6,
       return_beams=False,
@@ -74,19 +73,23 @@ def log_decode_results(inputs,
                              (problem_name, prediction_idx))
     show_and_save_image(inputs / 255., save_path)
   elif inputs_vocab:
-    decoded_inputs = inputs_vocab.decode(_save_until_eos(inputs.flatten()))
+    if identity_output:
+      decoded_inputs = " ".join(map(str, inputs.flatten()))
+    else:
+      decoded_inputs = inputs_vocab.decode(_save_until_eos(inputs.flatten()))
+
     tf.logging.info("Inference results INPUT: %s" % decoded_inputs)
 
   decoded_targets = None
   if identity_output:
-    decoded_outputs = "".join(map(str, outputs.flatten()))
+    decoded_outputs = " ".join(map(str, outputs.flatten()))
     if targets is not None:
-      decoded_targets = "".join(map(str, targets.flatten()))
+      decoded_targets = " ".join(map(str, targets.flatten()))
   else:
-    decoded_outputs = "".join(
+    decoded_outputs = " ".join(
         map(str, targets_vocab.decode(_save_until_eos(outputs.flatten()))))
     if targets is not None:
-      decoded_targets = "".join(
+      decoded_targets = " ".join(
           map(str, targets_vocab.decode(_save_until_eos(targets.flatten()))))
 
   tf.logging.info("Inference results OUTPUT: %s" % decoded_outputs)
@@ -98,22 +101,22 @@ def log_decode_results(inputs,
 def decode_from_dataset(estimator,
                         problem_names,
                         decode_hp,
-                        decode_to_file=None):
+                        decode_to_file=None,
+                        dataset_split=None):
   tf.logging.info("Performing local inference from dataset for %s.",
                   str(problem_names))
   hparams = estimator.params
 
   for problem_idx, problem_name in enumerate(problem_names):
     # Build the inference input function
-    infer_problems_data = data_reader.get_data_filepatterns(
-        problem_name, hparams.data_dir, tf.estimator.ModeKeys.PREDICT)
-
     infer_input_fn = input_fn_builder.build_input_fn(
         mode=tf.estimator.ModeKeys.PREDICT,
         hparams=hparams,
-        data_file_patterns=infer_problems_data,
+        data_dir=hparams.data_dir,
         num_datashards=devices.data_parallelism().n,
-        fixed_problem=problem_idx)
+        fixed_problem=problem_idx,
+        batch_size=decode_hp.batch_size,
+        dataset_split=dataset_split)
 
     # Get the predictions as an iterable
     predictions = estimator.predict(infer_input_fn)
@@ -133,6 +136,7 @@ def decode_from_dataset(estimator,
     inputs_vocab = problem_hparams.vocabulary.get("inputs", None)
     targets_vocab = problem_hparams.vocabulary["targets"]
     for num_predictions, prediction in enumerate(predictions):
+      num_predictions += 1
       inputs = prediction["inputs"]
       targets = prediction["targets"]
       outputs = prediction["outputs"]
@@ -188,6 +192,11 @@ def decode_from_dataset(estimator,
 
 def decode_from_file(estimator, filename, decode_hp, decode_to_file=None):
   """Compute predictions on entries in filename and write them out."""
+  if not decode_hp.batch_size:
+    decode_hp.batch_size = 32
+    tf.logging.info(
+        "decode_hp.batch_size not specified; default=%d" % decode_hp.batch_size)
+
   hparams = estimator.params
   problem_id = decode_hp.problem_idx
   inputs_vocab = hparams.problems[problem_id].vocabulary["inputs"]
@@ -533,8 +542,8 @@ def _interactive_input_tensor_to_features_dict(feature_map, hparams):
       x = tf.tile(x, tf.to_int32([num_samples, 1, 1, 1]))
 
     p_hparams = hparams.problems[problem_choice]
-    return (tf.constant(p_hparams.input_space_id),
-            tf.constant(p_hparams.target_space_id), x)
+    return (tf.constant(p_hparams.input_space_id), tf.constant(
+        p_hparams.target_space_id), x)
 
   input_space_id, target_space_id, x = input_fn_builder.cond_on_index(
       input_fn, feature_map["problem_choice"], len(hparams.problems) - 1)
@@ -569,8 +578,8 @@ def _decode_input_tensor_to_features_dict(feature_map, hparams):
     # Add a third empty dimension dimension
     x = tf.expand_dims(x, axis=[2])
     x = tf.to_int32(x)
-    return (tf.constant(p_hparams.input_space_id),
-            tf.constant(p_hparams.target_space_id), x)
+    return (tf.constant(p_hparams.input_space_id), tf.constant(
+        p_hparams.target_space_id), x)
 
   input_space_id, target_space_id, x = input_fn_builder.cond_on_index(
       input_fn, feature_map["problem_choice"], len(hparams.problems) - 1)

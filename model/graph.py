@@ -59,23 +59,32 @@ class Graph:
             self.b = self.embedding.get_b()
 
         with tf.variable_scope('model'):
-            decoder_output_list, decoder_logit_list, decoder_target_list = self.model_fn()
-            self.decoder_target_list = tf.stack(decoder_target_list, axis=1)
+            output = self.model_fn()
+
+            if self.is_train and output.decoder_target_list is None:
+                # For train or model_fn doesn't provide decoder target list
+                # Get decode target list based on decoder logit list
+                self.decoder_target_list = tf.stack(
+                    [tf.argmax(logit, axis=1) for logit in output.decoder_logit_list],
+                    axis=1)
+
 
             if not self.is_train and self.model_config.replace_unk_by_emb:
+                # Get output list matrix for replacement by embedding
                 self.encoder_embs = tf.stack(
                     self.embedding_fn(self.sentence_complex_input_placeholder, self.emb_complex),
                     axis=1)
-                self.decoder_output_list = tf.stack(decoder_output_list, axis=1)
+                self.decoder_outputs = output.decoder_outputs
 
-            if (not self.is_train and self.model_config.beam_search_size > 1 and
+            if (not self.is_train and self.model_config.beam_search_size > 0 and
                         self.model_config.framework == 'transformer'):
-                # in beam search, decoder_logit_list is beam score
-                self.loss = tf.reduce_mean(decoder_logit_list)
+                # in beam search, it directly provide decoder target list
+                self.decoder_target_list = tf.stack(output.decoder_target_list, axis=1)
+                self.loss = tf.reduce_mean(output.decoder_score)
             else:
                 decode_word_weight = tf.stack(
                     [tf.to_float(tf.not_equal(d, self.data.vocab_simple.encode(constant.SYMBOL_PAD)))
-                     for d in decoder_target_list], axis=1)
+                     for d in output.gt_target_list], axis=1)
 
                 if self.model_config.use_quality_model:
                     metric = Metric(self.model_config, self.data)
@@ -87,12 +96,12 @@ class Graph:
                                                 [tf.float32], stateful=False, name='quality_weight')
                     weight_quality[0].set_shape([self.model_config.batch_size])
                     weight_quality = tf.stack(
-                    [weight_quality[0] for _ in range(self.model_config.max_complex_sentence)], axis=-1)
+                        [weight_quality[0] for _ in range(self.model_config.max_complex_sentence)], axis=-1)
 
                     decode_word_weight = tf.multiply(decode_word_weight, weight_quality)
 
-                self.loss = sequence_loss(tf.stack(decoder_logit_list, axis=1),
-                                          tf.stack(decoder_target_list, axis=1),
+                self.loss = sequence_loss(tf.stack(output.decoder_logit_list, axis=1),
+                                          tf.stack(output.gt_target_list, axis=1),
                                           decode_word_weight)
 
         with tf.variable_scope('optimization'):
@@ -123,3 +132,33 @@ class Graph:
         clipped_grads, _ = tf.clip_by_global_norm(grads, self.model_config.max_grad_norm)
 
         return opt.apply_gradients(zip(clipped_grads, tf.trainable_variables()), global_step=self.global_step)
+
+
+class ModelOutput:
+    def __init__(self, decoder_outputs=None, decoder_logit_list=None, decoder_target_list=None,
+                 decoder_score=None, gt_target_list=None):
+        self._decoder_outputs = decoder_outputs
+        self._decoder_logit_list = decoder_logit_list
+        self._decoder_target_list = decoder_target_list
+        self._decoder_score = decoder_score
+        self._gt_target_list = gt_target_list
+
+    @property
+    def decoder_outputs(self):
+        return self._decoder_outputs
+
+    @property
+    def decoder_logit_list(self):
+        return self._decoder_logit_list
+
+    @property
+    def decoder_target_list(self):
+        return self._decoder_target_list
+
+    @property
+    def decoder_score(self):
+        return self._decoder_score
+
+    @property
+    def gt_target_list(self):
+        return self._gt_target_list

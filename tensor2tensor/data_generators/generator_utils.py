@@ -300,7 +300,7 @@ _DATA_FILE_URLS = [
 
 
 def get_or_generate_vocab_inner(data_dir, vocab_filename, vocab_size,
-                                generator_fn):
+                                generator):
   """Inner implementation for vocab generators.
 
   Args:
@@ -308,7 +308,7 @@ def get_or_generate_vocab_inner(data_dir, vocab_filename, vocab_size,
         then do not save the vocab even if it doesn't exist.
     vocab_filename: relative filename where vocab file is stored
     vocab_size: target size of the vocabulary constructed by SubwordTextEncoder
-    generator_fn: a generator that produces tokens from the vocabulary
+    generator: a generator that produces tokens from the vocabulary
 
   Returns:
     A SubwordTextEncoder vocabulary object.
@@ -325,7 +325,7 @@ def get_or_generate_vocab_inner(data_dir, vocab_filename, vocab_size,
 
   tf.logging.info("Generating vocab file: %s", vocab_filepath)
   token_counts = defaultdict(int)
-  for item in generator_fn():
+  for item in generator:
     for tok in tokenizer.encode(text_encoder.native_to_unicode(item)):
       token_counts[tok] += 1
 
@@ -350,19 +350,18 @@ def get_or_generate_vocab(data_dir,
     for source in sources:
       url = source[0]
       filename = os.path.basename(url)
-      read_type = "r:gz" if "tgz" in filename else "r"
-
       compressed_file = maybe_download(tmp_dir, filename, url)
-
-      with tarfile.open(compressed_file, read_type) as corpus_tar:
-        corpus_tar.extractall(tmp_dir)
 
       for lang_file in source[1]:
         tf.logging.info("Reading file: %s" % lang_file)
         filepath = os.path.join(tmp_dir, lang_file)
+        if not tf.gfile.Exists(filepath):
+          read_type = "r:gz" if filename.endswith("tgz") else "r"
+          with tarfile.open(compressed_file, read_type) as corpus_tar:
+            corpus_tar.extractall(tmp_dir)
 
         # For some datasets a second extraction is necessary.
-        if ".gz" in lang_file:
+        if lang_file.endswith(".gz"):
           new_filepath = os.path.join(tmp_dir, lang_file[:-3])
           if tf.gfile.Exists(new_filepath):
             tf.logging.info(
@@ -382,8 +381,8 @@ def get_or_generate_vocab(data_dir,
             file_byte_budget -= len(line)
             yield line
 
-  return get_or_generate_vocab_inner(
-      data_dir, vocab_filename, vocab_size, generator_fn=generate)
+  return get_or_generate_vocab_inner(data_dir, vocab_filename, vocab_size,
+                                     generate())
 
 
 def get_or_generate_tabbed_vocab(data_dir, tmp_dir, source_filename,
@@ -416,8 +415,8 @@ def get_or_generate_tabbed_vocab(data_dir, tmp_dir, source_filename,
           part = parts[index].strip()
           yield part
 
-  return get_or_generate_vocab_inner(
-      data_dir, vocab_filename, vocab_size, generator_fn=generate)
+  return get_or_generate_vocab_inner(data_dir, vocab_filename, vocab_size,
+                                     generate())
 
 
 def get_or_generate_txt_vocab(data_dir, vocab_filename, vocab_size,
@@ -434,8 +433,8 @@ def get_or_generate_txt_vocab(data_dir, vocab_filename, vocab_size,
           for line in source_file:
             yield line.strip()
 
-  return get_or_generate_vocab_inner(
-      data_dir, vocab_filename, vocab_size, generator_fn=generate)
+  return get_or_generate_vocab_inner(data_dir, vocab_filename, vocab_size,
+                                     generate())
 
 
 def read_records(filename):

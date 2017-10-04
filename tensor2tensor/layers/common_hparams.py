@@ -33,6 +33,9 @@ def basic_params1():
   """A set of basic hyperparameters."""
   return tf.contrib.training.HParams(
       batch_size=4096,  # in tokens per batch per gpu
+      # Fixed batch size turns off bucketing during training mode
+      # and uses batch_size as minibatch size (use small batch_size<=32)
+      use_fixed_batch_size=int(False),
       num_hidden_layers=4,
       kernel_height=3,
       kernel_width=1,
@@ -126,13 +129,13 @@ def basic_params1():
       # The maximum length of "input" sequence.
       # Sequences longer than this value will be truncated. 0 or negative values
       # mean there is no maximum or truncation.
-      # You can change this behavior by overridding preprocess_examples() method
+      # You can change this behavior by overridding preprocess_example() method
       # in your problem class.
       max_input_seq_length=0,
       # The maximum length of "target" sequence.
       # Sequences longer than this value will be truncated. 0 or negative values
       # mean there is no maximum or truncation.
-      # You can change this behavior by overridding preprocess_examples() method
+      # You can change this behavior by overridding preprocess_example() method
       # in your problem class.
       max_target_seq_length=0,
       # This flag allows us to optionally treat a seq-to-seq problem
@@ -152,8 +155,7 @@ def basic_params1():
       #     position in the inputs portion can see the
       #     entire inputs portion.  This removes the challenge of
       #     autoregressively predicting the inputs portion.
-      prepend_mode="none",
-  )
+      prepend_mode="none",)
 
 
 class RangedHParams(object):

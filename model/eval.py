@@ -12,6 +12,7 @@ from model.postprocess import PostProcess
 from nltk.translate.bleu_score import sentence_bleu
 from util.mteval_bleu import MtEval_BLEU
 import tensorflow as tf
+import tensorflow.contrib.slim as slim
 import math
 import numpy as np
 import time
@@ -118,16 +119,23 @@ def eval(model_config=None):
                 graph.sentence_complex_input_placeholder,
                 model_config, it)
 
+            # encdec_atts = []
+            # for i in range(6):
+            #     encdec_att = tf.get_default_graph().get_operation_by_name(
+            #         "body/model/parallel_0/body/decoder/layer_%i/encdec_attention/multihead_attention/dot_product_attention/attention_weights" % i).values()[
+            #         0]
+            #     encdec_atts.append(encdec_att)
+
             fetches = {'decoder_target_list': graph.decoder_target_list,
                        'loss': graph.loss,
-                       'global_step': graph.global_step, 'attn_dists':graph.attn_dists}
+                       'global_step': graph.global_step}
             if model_config.replace_unk_by_emb:
-                fetches.update({'encoder_embs': graph.encoder_embs, 'decoder_output_list': graph.decoder_output_list})
+                fetches.update({'encoder_embs': graph.encoder_embs, 'decoder_outputs': graph.decoder_outputs})
             results = sess.run(fetches, input_feed)
-            target, loss, step, attn_dists = (results['decoder_target_list'], results['loss'],
-                                              results['global_step'], results['attn_dists'])
+            target, loss, step = (results['decoder_target_list'], results['loss'],
+                                              results['global_step'])
             if model_config.replace_unk_by_emb:
-                encoder_embs, decoder_outputs = results['encoder_embs'], results['decoder_output_list']
+                encoder_embs, decoder_outputs = results['encoder_embs'], results['decoder_outputs']
             batch_perplexity = math.exp(loss)
             perplexitys_all.append(batch_perplexity)
 
@@ -145,7 +153,7 @@ def eval(model_config=None):
             postprocess = PostProcess(model_config, val_data)
             target_raw = target
             if model_config.replace_unk_by_attn:
-                target_raw = postprocess.replace_unk_by_attn(sentence_complex_raw, attn_dists, target_raw)
+                target_raw = postprocess.replace_unk_by_attn(sentence_complex_raw, None, target_raw)
             elif model_config.replace_unk_by_emb:
                 target_raw = postprocess.replace_unk_by_emb(
                     sentence_complex_raw, encoder_embs, decoder_outputs, target_raw)

@@ -209,7 +209,7 @@ def embedding(x, vocab_size, dense_size, name=None, reuse=None, multiplier=1.0):
     return tf.reshape(emb_x, [shape[0], shape[1], shape[2], static_shape[4]])
 
 
-def shift_left(x, pad_value=None):
+def shift_right(x, pad_value=None):
   """Shift the second dimension of x right by one."""
   if pad_value is None:
     shifted_targets = tf.pad(x, [[0, 0], [1, 0], [0, 0], [0, 0]])[:, :-1, :, :]
@@ -218,7 +218,7 @@ def shift_left(x, pad_value=None):
   return shifted_targets
 
 
-def shift_left_3d(x, pad_value=None):
+def shift_right_3d(x, pad_value=None):
   """Shift the second dimension of x right by one."""
   if pad_value is None:
     shifted_targets = tf.pad(x, [[0, 0], [1, 0], [0, 0]])[:, :-1, :]
@@ -498,8 +498,15 @@ def apply_norm(x, norm_type, depth, epsilon):
                    "'noam', 'none'.")
 
 
-def layer_prepostprocess(previous_value, x, sequence, dropout_rate, norm_type,
-                         depth, epsilon, name):
+def layer_prepostprocess(previous_value,
+                         x,
+                         sequence,
+                         dropout_rate,
+                         norm_type,
+                         depth,
+                         epsilon,
+                         default_name,
+                         name=None):
   """Apply a sequence of functions to the input or output of a layer.
 
   The sequence is specified as a string which may contain the following
@@ -519,12 +526,13 @@ def layer_prepostprocess(previous_value, x, sequence, dropout_rate, norm_type,
     norm_type: a string (see apply_norm())
     depth: an integer (size of last dimension of x).
     epsilon: a float (parameter for normalization)
+    default_name: a string
     name: a string
 
   Returns:
     a Tensor
   """
-  with tf.variable_scope(name):
+  with tf.variable_scope(name, default_name=default_name):
     if sequence == "none":
       return x
     for c in sequence:
@@ -569,7 +577,7 @@ def layer_preprocess(layer_input, hparams):
       norm_type=hparams.norm_type,
       depth=hparams.hidden_size,
       epsilon=hparams.norm_epsilon,
-      name="layer_prepostprocess")
+      default_name="layer_prepostprocess")
 
 
 def layer_postprocess(layer_input, layer_output, hparams):
@@ -602,7 +610,7 @@ def layer_postprocess(layer_input, layer_output, hparams):
       norm_type=hparams.norm_type,
       depth=hparams.hidden_size,
       epsilon=hparams.norm_epsilon,
-      name="layer_postprocess")
+      default_name="layer_postprocess")
 
 
 def conv_block_internal(conv_fn,
@@ -815,7 +823,7 @@ def decompress_seqcnn(x,
     # Flatten x and embedded targets. Flat targets are factor* larger on axis=1.
     flat_x = tf.reshape(x, [-1, 1, 1, hidden_size])
     flat_targets = tf.reshape(targets_emb, [-1, factor, 1, hidden_size])
-    shifted_targets = shift_left(flat_targets)
+    shifted_targets = shift_right(flat_targets)
     # Run a SeqCNN large-batch to produce factor outputs out of every target.
     flat_x += tf.zeros_like(shifted_targets)  # Broadcast on axis=1.
     flat_outputs = conv_block(

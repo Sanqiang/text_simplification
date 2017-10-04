@@ -50,9 +50,7 @@ def model_fn(model,
              worker_id=0,
              worker_replicas=1,
              eval_run_autoregressive=False,
-             decode_hparams=None,
-             autotune=False,
-             objective=None):
+             decode_hparams=None):
   """Builds the model for all modes.
 
   * TRAIN: Constructs loss and train_op
@@ -72,8 +70,6 @@ def model_fn(model,
     worker_replicas: int, number of workers.
     eval_run_autoregressive: bool, whether to run evaluation autoregressively.
     decode_hparams: HParams for decode settings. Used when mode == PREDICT.
-    autotune: bool, whether this model is being used for autotuning.
-    objective: str, the objective if autotune==True.
 
   Returns:
     tf.estimator.EstimatorSpec
@@ -186,15 +182,23 @@ def model_fn(model,
         "problem_choice": batched_problem_choice,
     }
     _del_dict_nones(predictions)
-    return tf.estimator.EstimatorSpec(mode, predictions=predictions)
+
+    export_out = {"outputs": predictions["outputs"]}
+    if "scores" in predictions:
+      export_out["scores"] = predictions["scores"]
+
+    return tf.estimator.EstimatorSpec(
+        mode,
+        predictions=predictions,
+        export_outputs={
+            "output": tf.estimator.export.PredictOutput(export_out)
+        })
 
   total_loss, logits = model_output
 
   if mode == tf.estimator.ModeKeys.EVAL:
     eval_metrics_fns = metrics.create_evaluation_metrics(
         zip(problem_names, hparams.problem_instances), hparams)
-    _check_autotune_metrics(
-        eval_metrics_fns, autotune=autotune, objective=objective)
 
     eval_metrics = {}
     for metric_name, metric_fn in six.iteritems(eval_metrics_fns):
@@ -209,7 +213,7 @@ def model_fn(model,
   assert mode == tf.estimator.ModeKeys.TRAIN
 
   # Set learning rate
-  learning_rate = hparams.learning_rate * _learning_rate_decay(
+  learning_rate = hparams.learning_rate * learning_rate_decay(
       hparams, num_worker_replicas=worker_replicas, num_train_steps=train_steps)
   learning_rate /= math.sqrt(float(worker_replicas))
 
@@ -284,7 +288,7 @@ def model_fn(model,
   diet_vars = [
       v for v in tf.global_variables() if v.dtype == dtypes.float16_ref
   ]
-  _log_variable_sizes(diet_vars, "Diet Varaibles")
+  _log_variable_sizes(diet_vars, "Diet Variables")
 
   # Optimize
   total_loss = tf.identity(total_loss, name="total_loss")
@@ -391,15 +395,6 @@ def _exp_decay_after(step, rate, from_which_step):
       name="exponential_decay_step_cond")
 
 
-def _check_autotune_metrics(metrics_dict, autotune=False, objective=None):
-  if not autotune:
-    return
-
-  if objective not in metrics_dict:
-    raise ValueError("Tuning objective %s not among evaluation metrics %s" %
-                     (objective, metrics_dict.keys()))
-
-
 def _log_variable_sizes(var_list, tag):
   """Log the sizes and shapes of variables, and the total size.
 
@@ -434,11 +429,11 @@ def _get_variable_initializer(hparams):
     raise ValueError("Unrecognized initializer: %s" % hparams.initializer)
 
 
-def _learning_rate_decay(hparams, num_worker_replicas=1, num_train_steps=1):
+def learning_rate_decay(hparams, num_worker_replicas=1, num_train_steps=1):
   """Inverse-decay learning rate until warmup_steps, then decay."""
   warmup_steps = tf.to_float(
       hparams.learning_rate_warmup_steps * num_worker_replicas)
-  step = tf.to_float(tf.contrib.framework.get_global_step())
+  step = tf.to_float(tf.train.get_or_create_global_step())
   if hparams.learning_rate_decay_scheme == "noam":
     return 5000.0 * hparams.hidden_size**-0.5 * tf.minimum(
         (step + 1) * warmup_steps**-1.5, (step + 1)**-0.5)
@@ -482,6 +477,6 @@ def _learning_rate_decay(hparams, num_worker_replicas=1, num_train_steps=1):
 
 
 def _del_dict_nones(d):
-  for k in d.keys():
+  for k in list(d.keys()):
     if d[k] is None:
       del d[k]

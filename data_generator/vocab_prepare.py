@@ -3,9 +3,14 @@
 from collections import Counter
 
 from data_generator.vocab import Vocab
-from model.model_config import WikiDressLargeDefault, DefaultConfig
-
+from model.model_config import WikiDressLargeDefault, DefaultConfig, list_config
+from util.arguments import get_args
 from nltk import word_tokenize
+
+
+
+args = get_args()
+
 
 class VocabPrepare:
     def __init__(self, data_file, output, model_config, data_file2=None):
@@ -53,20 +58,25 @@ class VocabPrepare:
 
 
 if __name__ == '__main__':
-    model_config = WikiDressLargeDefault()
+    config = None
+    if args.mode == 'dummy':
+        config = DefaultConfig()
+    elif args.mode == 'dress':
+        config = WikiDressLargeDefault()
+    print(list_config(config))
 
-    voc = VocabPrepare(model_config.train_dataset_complex,
-                       model_config.vocab_complex,
-                       model_config)
+    voc = VocabPrepare(config.train_dataset_complex,
+                       config.vocab_complex,
+                       config)
     voc.prepare_vocab()
-    voc = VocabPrepare(model_config.train_dataset_simple,
-                       model_config.vocab_simple,
-                       model_config)
+    voc = VocabPrepare(config.train_dataset_simple,
+                       config.vocab_simple,
+                       config)
     voc.prepare_vocab()
 
-    # voc = VocabPrepare(model_config.train_dataset_complex,
-    #                    model_config.vocab_all,
-    #                    model_config,
-    #                    model_config.train_dataset_simple)
-    # voc.prepare_vocab()
+    voc = VocabPrepare(config.train_dataset_complex,
+                       config.vocab_all,
+                       config,
+                       config.train_dataset_simple)
+    voc.prepare_vocab()
 

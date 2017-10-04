@@ -54,11 +54,11 @@ class DefaultConfig():
 
     # tie_embedding configuration description
     # all:encoder/decoder/output; dec_out: decoder/output; enc_dec: encoder/decoder
-    # allt:encoder/decoder+transform/output+transform;
-    # dec_out: decoder/output+transform;
-    # enc_dec: encoder/decoder+transform
+    # non-implemented/allt:encoder/decoder+transform/output+transform;
+    # non-implemented/dec_outt: decoder/output+transform;
+    # non-implemented/enc_dect: encoder/decoder+transform
     # none: no tied embedding
-    tie_embedding = 'none'
+    tie_embedding = args.tied_embedding
     pretrained_embedding = None
 
     train_dataset_simple = get_path('data/train_dummy_simple_dataset')
@@ -92,9 +92,9 @@ class DefaultTrainConfig(DefaultConfig):
 
 
 class DefaultTestConfig(DefaultConfig):
-    beam_search_size = 1
+    beam_search_size = 4
     batch_size = 2
-    train_with_hyp = True
+    train_with_hyp = False
 
 
 class WikiTurk(DefaultConfig):
@@ -153,7 +153,6 @@ class WikiDressLargeDefault(DefaultConfig):
     model_save_freq = 1000
 
     tokenizer = 'split'
-    tie_embedding = 'none'
     pretrained_embedding = get_path('../text_simplification_data/glove/glove.840B.300d.txt')
     pretrained_embedding_simple = get_path(
         '../text_simplification_data/train/dress/wikilarge/wiki.full.aner.train.dst.vocab.pretrained')

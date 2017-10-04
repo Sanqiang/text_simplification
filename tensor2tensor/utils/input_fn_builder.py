@@ -30,11 +30,13 @@ import tensorflow as tf
 
 def build_input_fn(mode,
                    hparams,
-                   data_file_patterns=None,
+                   data_dir=None,
                    num_datashards=None,
                    fixed_problem=None,
                    worker_replicas=None,
-                   worker_id=None):
+                   worker_id=None,
+                   batch_size=None,
+                   dataset_split=None):
   """Provides input to the graph, either from disk or via a placeholder.
 
   This function produces an input function that will feed data into
@@ -49,11 +51,7 @@ def build_input_fn(mode,
   Args:
     mode: The execution mode, as defined in tf.estimator.ModeKeys.
     hparams: HParams object.
-    data_file_patterns: The list of file patterns to use to read in data. Set to
-      `None` if you want to create a placeholder for the input data. The
-      `problems` flag is a list of problem names joined by the `-` character.
-      The flag's string is then split along the `-` and each problem gets its
-      own example queue.
+    data_dir: directory with input data.
     num_datashards: An integer.
     fixed_problem: An integer indicating the problem to fetch data for, or None
       if the input is to be randomly selected.
@@ -61,6 +59,9 @@ def build_input_fn(mode,
       setting with hparams.problem_choice == distributed.
     worker_id: int, id of this worker replica. Used in multiproblem setting with
       hparams.problem_choice == distributed.
+    batch_size: int, if provided, will use a fixed batch size.
+    dataset_split: tf.estimator.ModeKeys + ["test"], which split of the dataset
+      to use. Defaults to mode.
 
   Returns:
     A function that returns a dictionary of features and the target labels.
@@ -89,15 +90,15 @@ def build_input_fn(mode,
           continue
         problem_instance = hparams.problem_instances[problem_idx]
         p_hparams = hparams.problems[problem_idx]
-        problem_filepatterns = (data_file_patterns and
-                                data_file_patterns[problem_idx])
         feature_map = features_for_problem(
             problem_instance,
             p_hparams,
             hparams,
-            problem_filepatterns,
+            data_dir,
             num_datashards,
             mode,
+            batch_size=batch_size,
+            dataset_split=dataset_split,
             name="problem_%d" % problem_idx)
         problem_batches.append(feature_map)
 
@@ -127,16 +128,18 @@ def build_input_fn(mode,
     feature_map["problem_choice"] = problem_choice
 
     # Set shapes so the ranks are clear.
-    feature_map["inputs"].set_shape([None, None, None, None])
+    if problem_instance.has_inputs:
+      feature_map["inputs"].set_shape([None, None, None, None])
+      feature_map["input_space_id"].set_shape([])
     feature_map["targets"].set_shape([None, None, None, None])
     feature_map["problem_choice"].set_shape([])
-    feature_map["input_space_id"].set_shape([])
     feature_map["target_space_id"].set_shape([])
 
     if mode == tf.estimator.ModeKeys.PREDICT:
       feature_map["infer_targets"] = feature_map["targets"]
       #  Forced shape obfuscation is necessary for inference.
-      feature_map["inputs"]._shape = tf.TensorShape([None, None, None, None])  # pylint: disable=protected-access
+      if problem_instance.has_inputs:
+        feature_map["inputs"]._shape = tf.TensorShape([None, None, None, None])  # pylint: disable=protected-access
       feature_map["targets"]._shape = tf.TensorShape([None, None, None, None])  # pylint: disable=protected-access
 
       # This is because of a bug in the Estimator that short-circuits prediction
@@ -173,23 +176,14 @@ def _problem_choice(choice_mode, mode, problem_count, loss_moving_avgs,
 def cond_on_index(fn, index_tensor, max_idx, cur_idx=0):
   """Call fn(index_tensor) using tf.cond in [cur_id, max_idx]."""
 
-  # Because tf.cond expects fn to return a flat list of Tensors, we flatten the
-  # output of fn. By capturing the original output here in orig_out, we can pack
-  # the flat sequence into the original structure.
-  orig_out = []
-
-  def wrapped_fn():
-    out = fn(cur_idx)
-    orig_out.append(out)
-    return tf.contrib.framework.nest.flatten(out)
-
   if cur_idx == max_idx:
-    flat_out = wrapped_fn()
-  else:
-    flat_out = tf.cond(
-        tf.equal(index_tensor, cur_idx), wrapped_fn,
-        lambda: cond_on_index(fn, index_tensor, max_idx, cur_idx + 1))
-  return tf.contrib.framework.nest.pack_sequence_as(orig_out[0], flat_out)
+    return fn(cur_idx)
+
+  return tf.cond(
+    tf.equal(index_tensor, cur_idx),
+    lambda: fn(cur_idx),
+    lambda: cond_on_index(fn, index_tensor, max_idx, cur_idx + 1)
+  )
 
 
 class DummyQueueRunner(object):
@@ -206,43 +200,45 @@ class DummyQueueRunner(object):
 def features_for_problem(problem_instance,
                          p_hparams,
                          hparams,
-                         data_filepatterns,
+                         data_dir,
                          num_datashards,
                          mode,
+                         batch_size=None,
+                         dataset_split=None,
                          name="problem_inputs"):
   """Feature map for Problem."""
   with tf.name_scope(name):
     with tf.device("/cpu:0"):  # Input reading on CPU
       capacity = (p_hparams.max_expected_batch_size_per_shard * num_datashards)
+      batching_scheme = data_reader.hparams_to_batching_scheme(
+          hparams,
+          shard_multiplier=num_datashards,
+          drop_long_sequences=(mode == tf.estimator.ModeKeys.TRAIN or
+                               hparams.eval_drop_long_sequences),
+          length_multiplier=(p_hparams.batch_size_multiplier))
+      if batch_size:
+        # If batch_size is fixed, use a single input bucket
+        batching_scheme["batch_sizes"] = [batch_size]
+        batching_scheme["boundaries"] = []
+        # Log new batching scheme if updated
+        tf.logging.info("Updated batching_scheme = %s", batching_scheme)
       feature_map = data_reader.input_pipeline(
-          problem_instance, data_filepatterns, capacity, mode, hparams,
-          data_reader.hparams_to_batching_scheme(
-              hparams,
-              shard_multiplier=num_datashards,
-              drop_long_sequences=(mode == tf.estimator.ModeKeys.TRAIN or
-                                   hparams.eval_drop_long_sequences),
-              length_multiplier=(p_hparams.batch_size_multiplier)))
-
-  # Reverse inputs and targets features if the problem was reversed.
-  if problem_instance is not None:
-    problem_instance.maybe_reverse_features(feature_map)
-    problem_instance.maybe_copy_features(feature_map)
-  else:
-    if p_hparams.was_reversed:
-      inputs = feature_map["inputs"]
-      targets = feature_map["targets"]
-      feature_map["inputs"] = targets
-      feature_map["targets"] = inputs
-    # Use the inputs as the targets if the problem is a copy problem.
-    if p_hparams.was_copy:
-      feature_map["targets"] = feature_map["inputs"]
+          problem_instance,
+          data_dir,
+          capacity,
+          mode,
+          hparams,
+          batching_scheme,
+          dataset_split=dataset_split)
 
   # Ensure inputs and targets are proper rank.
-  while len(feature_map["inputs"].get_shape()) != 4:
-    feature_map["inputs"] = tf.expand_dims(feature_map["inputs"], axis=-1)
+  if problem_instance.has_inputs:
+    while len(feature_map["inputs"].get_shape()) != 4:
+      feature_map["inputs"] = tf.expand_dims(feature_map["inputs"], axis=-1)
   while len(feature_map["targets"].get_shape()) != 4:
     feature_map["targets"] = tf.expand_dims(feature_map["targets"], axis=-1)
 
-  feature_map["input_space_id"] = tf.constant(p_hparams.input_space_id)
+  if problem_instance.has_inputs:
+    feature_map["input_space_id"] = tf.constant(p_hparams.input_space_id)
   feature_map["target_space_id"] = tf.constant(p_hparams.target_space_id)
   return feature_map
