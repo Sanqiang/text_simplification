@@ -64,7 +64,7 @@ class PostProcess:
 
     def replace_unk_by_emb(self, encoder_words, encoder_embs, decoder_outputs, decoder_targets):
         batch_size = np.shape(decoder_targets)[0]
-        decoder_targets[0][3] = constant.SYMBOL_UNK
+        # decoder_targets[0][3] = constant.SYMBOL_UNK
 
         ndecoder_targets = cp.deepcopy(decoder_targets)
         for batch_i in range(batch_size):
