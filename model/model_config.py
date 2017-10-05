@@ -255,7 +255,7 @@ class SubTestWikiDress(SubTest):
 class SubValWikiDressBeam4(SubValWikiDress):
     beam_search_size =  4
     output_folder = args.output_folder
-    resultdor = get_path('../' + output_folder + '/result/dresssmall_test_4head')
+    resultdor = get_path('../' + output_folder + '/result/dresssmall_val_4head')
 
 
 class SubTestWikiDressBeam4(SubTestWikiDress):
