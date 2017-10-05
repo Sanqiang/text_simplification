@@ -310,11 +310,11 @@ if __name__ == '__main__':
             model_config = WikiDressLargeDefault()
             ckpt = get_ckpt(model_config.modeldir, model_config.outdir)
 
+            eval(SubValWikiDress(), ckpt)
             eval(SubTestWikiDress(), ckpt)
 
             eval(SubValWikiEightRefConfig(), ckpt)
             eval(SubTestWikiEightRefConfig(), ckpt)
-            eval(SubValWikiDress(), ckpt)
 
             eval(SubValWikiDressBeam4(), ckpt)
             eval(SubTestWikiDressBeam4(), ckpt)
