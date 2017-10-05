@@ -123,6 +123,6 @@ if __name__ == '__main__':
     if args.mode == 'dummy':
         config = DefaultTrainConfig()
     elif args.mode == 'dress':
-        config = DefaultTrainConfig()
+        config = WikiDressLargeTrainConfig()
     print(list_config(config))
     train(config)
