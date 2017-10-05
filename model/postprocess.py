@@ -72,8 +72,8 @@ class PostProcess:
                 target = decoder_targets[batch_i][len_i]
                 if target == constant.SYMBOL_UNK:
                     query = decoder_outputs[batch_i, len_i, :]
-                    word_exclude = set()
-                    # word_exclude = set(ndecoder_targets[batch_i])
+                    # word_exclude = set()
+                    word_exclude = set(ndecoder_targets[batch_i])
                     word_exclude.update([
                         constant.SYMBOL_START, constant.SYMBOL_END, constant.SYMBOL_UNK,
                         constant.SYMBOL_PAD, constant.SYMBOL_GO])
