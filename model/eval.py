@@ -222,6 +222,7 @@ def eval(model_config=None, ckpt=None):
         bleu_decode_max = max(bleu_ors_decode)
         bleu_decode = 0.9 * bleu_decode_max + 0.1 * bleu_oi_decode
     else:
+        bleu_decode_max = bleu_oi_decode
         bleu_decode = bleu_oi_decode
     print('Current Mteval iBLEU decode: \t%f' % bleu_decode)
 
@@ -237,6 +238,7 @@ def eval(model_config=None, ckpt=None):
         bleu_ors_raw_max = max(bleu_ors_raw)
         bleu_raw = 0.9 * bleu_ors_raw_max + 0.1 * bleu_oi_raw
     else:
+        bleu_ors_raw_max = bleu_oi_raw
         bleu_raw = bleu_oi_raw
     print('Current Mteval iBLEU decode: \t%f' % bleu_raw)
 
