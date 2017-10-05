@@ -45,23 +45,23 @@ class TransformerGraph(Graph):
                     decoder_embed_inputs, encoder_outputs, encoder_attn_bias)
                 gt_target_list = self.sentence_simple_input_placeholder
                 decoder_logit_list = [self.output_to_logit(o) for o in decoder_output_list]
-            elif not self.is_train and self.model_config.beam_search_size < 1:
-                # Greedy search
-                print('Use Greedy Search.')
-                for step in range(self.model_config.max_simple_sentence):
-                    if step > 0:
-                        tf.get_variable_scope().reuse_variables()
-
-                    decoder_output_list = self.decode_step(
-                        decoder_embed_inputs, encoder_outputs, encoder_attn_bias)
-                    last_logits = self.output_to_logit(decoder_output_list[-1])
-                    last_outid = tf.cast(tf.argmax(last_logits, 1), tf.int32)
-                    if self.is_train:
-                        decoder_target_list.append(self.sentence_simple_input_placeholder[step])
-                    else:
-                        decoder_target_list.append(last_outid)
-                    decoder_logit_list.append(last_logits)
-                    decoder_embed_inputs += self.embedding_fn([last_outid], self.emb_simple)
+            # elif not self.is_train and self.model_config.beam_search_size < 1:
+            #     # Greedy search
+            #     print('Use Greedy Search.')
+            #     for step in range(self.model_config.max_simple_sentence):
+            #         if step > 0:
+            #             tf.get_variable_scope().reuse_variables()
+            #
+            #         decoder_output_list = self.decode_step(
+            #             decoder_embed_inputs, encoder_outputs, encoder_attn_bias)
+            #         last_logits = self.output_to_logit(decoder_output_list[-1])
+            #         last_outid = tf.cast(tf.argmax(last_logits, 1), tf.int32)
+            #         if self.is_train:
+            #             decoder_target_list.append(self.sentence_simple_input_placeholder[step])
+            #         else:
+            #             decoder_target_list.append(last_outid)
+            #         decoder_logit_list.append(last_logits)
+            #         decoder_embed_inputs += self.embedding_fn([last_outid], self.emb_simple)
             else:
                 # Beam Search
                 print('Use Beam Search with Beam Search Size %d.' % self.model_config.beam_search_size)

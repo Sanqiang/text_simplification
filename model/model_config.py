@@ -167,7 +167,7 @@ class WikiDressLargeTestConfig(WikiDressLargeDefault):
     replace_unk_by_emb = True
 
 
-class SubTest(DefaultConfig):
+class SubTest(WikiDressLargeDefault):
     batch_size = 100
     replace_unk_by_emb = True
     beam_search_size = 1
