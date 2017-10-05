@@ -197,11 +197,11 @@ class SubTestWikiEightRefConfig(SubTest):
     val_dataset_simple_folder = get_path('../text_simplification_data/test/')
     val_dataset_simple_file = 'test.8turkers.tok.simp.processed'
     val_dataset_simple_references = 'test.8turkers.tok.turk.processed.'
-    val_dataset_complex = get_path('../text_simplification_data/val/test.8turkers.tok.norm.processed')
-    val_mapper = get_path('../text_simplification_data/val/test.8turkers.tok.map')
+    val_dataset_complex = get_path('../text_simplification_data/test/test.8turkers.tok.norm.processed')
+    val_mapper = get_path('../text_simplification_data/test/test.8turkers.tok.map')
     val_dataset_simple_raw_file = 'test.8turkers.tok.simp.raw'
     val_dataset_simple_raw_references = 'test.8turkers.tok.turk.raw.'
-    val_dataset_complex_raw = get_path('../text_simplification_data/val/test.8turkers.tok.norm.raw')
+    val_dataset_complex_raw = get_path('../text_simplification_data/test/test.8turkers.tok.norm.raw')
     num_refs = 8
 
 
