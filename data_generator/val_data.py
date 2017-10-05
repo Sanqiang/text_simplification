@@ -38,7 +38,7 @@ class ValData:
 
         if self.model_config.replace_ner:
             self.mapper = load_mappers(self.model_config.val_mapper, self.model_config.lower_case)
-            while len(self.mapper) < len(len(self.data_simple)):
+            while len(self.mapper) < len(self.data_simple):
                 self.mapper.append({})
 
         self.size = len(self.data_simple)
