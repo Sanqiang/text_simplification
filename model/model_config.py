@@ -201,6 +201,11 @@ class SubValWikiEightRefConfig(SubTest):
     val_dataset_complex_raw = get_path('../text_simplification_data/val/tune.8turkers.tok.norm.raw')
     num_refs = 8
 
+class SubValWikiEightRefConfigBeam4(SubValWikiEightRefConfig):
+    beam_search_size =  4
+    output_folder = args.output_folder
+    resultdor = get_path('../' + output_folder + '/result/eightref_val_4head')
+
 
 class SubTestWikiEightRefConfig(SubTest):
     output_folder = args.output_folder
@@ -215,6 +220,12 @@ class SubTestWikiEightRefConfig(SubTest):
     val_dataset_simple_raw_references = 'test.8turkers.tok.turk.raw.'
     val_dataset_complex_raw = get_path('../text_simplification_data/test/test.8turkers.tok.norm.raw')
     num_refs = 8
+
+
+class SubTestWikiEightRefConfigBeam4(SubTestWikiEightRefConfig):
+    beam_search_size =  4
+    output_folder = args.output_folder
+    resultdor = get_path('../' + output_folder + '/result/eightref_test_4head')
 
 
 class SubValWikiDress(SubTest):
