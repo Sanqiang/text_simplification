@@ -243,14 +243,15 @@ def eval(model_config=None):
         print('Current Mteval iBLEU decode: \t%f' % bleu_raw)
 
         decimal_cnt = 5
-        bleu_raw = round(bleu_raw, decimal_cnt)
-        bleu_oi_raw = round(bleu_oi_raw, decimal_cnt)
-        bleu_ors_raw_max = round(bleu_ors_raw_max, decimal_cnt)
-        bleu_decode = round(bleu_decode, decimal_cnt)
-        bleu_oi_decode = round(bleu_oi_decode, decimal_cnt)
-        bleu_decode_max = round(bleu_decode_max, decimal_cnt)
-        ibleu = round(ibleu, decimal_cnt)
-        perplexity = round(perplexity, decimal_cnt)
+        format = "%." + str(decimal_cnt) + "f"
+        bleu_raw = format % bleu_raw
+        bleu_oi_raw = format % bleu_oi_raw
+        bleu_ors_raw_max = format % bleu_ors_raw_max
+        bleu_decode = format % bleu_decode
+        bleu_oi_decode = format % bleu_oi_decode
+        bleu_decode_max = format % bleu_decode_max
+        ibleu = format % ibleu
+        perplexity = format % perplexity
 
         # Output Result
         f = open((model_config.resultdor + '/step' + str(step) +
