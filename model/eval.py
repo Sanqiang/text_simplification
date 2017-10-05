@@ -1,3 +1,8 @@
+# For fix slurm cannot load PYTHONPATH
+import sys
+sys.path.insert(0, '/ihome/hdaqing/saz31/sanqiang/text_simplification')
+
+
 from data_generator.val_data import ValData
 from model.transformer import TransformerGraph
 from model.seq2seq import Seq2SeqGraph
