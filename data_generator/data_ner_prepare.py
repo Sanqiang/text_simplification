@@ -162,6 +162,94 @@ class DataNERPrepareBase:
 
             map_util.dump_mappers(mappers, out_mapper_path)
 
+    def process_dress(self):
+        for stage in ['eval', 'test']:
+            # For wiki dress
+            if stage == 'eval':
+                ori_complex_path = get_path(
+                    '../text_simplification_data/train/dress/wikismall/PWKP_108016.tag.80.aner.ori.valid.src')
+                ori_simple_path = get_path(
+                    '../text_simplification_data/train/dress/wikismall/PWKP_108016.tag.80.aner.ori.valid.dst')
+                out_complex_path = get_path(
+                    '../text_simplification_data/train/dress/wikismall/PWKP_108016.tag.80.aner.ori.valid.src.processed')
+                out_simple_path = get_path(
+                    '../text_simplification_data/train/dress/wikismall/PWKP_108016.tag.80.aner.ori.valid.dst.processed')
+                out_mapper_path = get_path(
+                    '../text_simplification_data/train/dress/wikismall/PWKP_108016.tag.80.aner.ori.valid.map')
+            elif stage == 'test':
+                ori_complex_path = get_path(
+                    '../text_simplification_data/train/dress/wikismall/PWKP_108016.tag.80.aner.ori.test.src')
+                ori_simple_path = get_path(
+                    '../text_simplification_data/train/dress/wikismall/PWKP_108016.tag.80.aner.ori.test.dst')
+                out_complex_path = get_path(
+                    '../text_simplification_data/train/dress/wikismall/PWKP_108016.tag.80.aner.ori.test.src.processed')
+                out_simple_path = get_path(
+                    '../text_simplification_data/train/dress/wikismall/PWKP_108016.tag.80.aner.ori.test.dst.processed')
+                out_mapper_path = get_path(
+                    '../text_simplification_data/train/dress/wikismall/PWKP_108016.tag.80.aner.ori.test.map')
+
+            complex_lines = open(ori_complex_path, encoding='utf-8').readlines()
+            simple_lines = open(ori_simple_path, encoding='utf-8').readlines()
+
+            complex_lines = [complex_line.split() for complex_line in complex_lines]
+            simple_lines = [simple_line.split() for simple_line in simple_lines]
+            complex_line_tags = self.concat_tag_sents(self.st.tag_sents(complex_lines))
+            simple_line_tags = self.concat_tag_sents(self.st.tag_sents(simple_lines))
+
+            ncomplex_lines = []
+            nsimple_lines = []
+            mappers = []
+            for lid in range(len(complex_lines)):
+                print('Process idx %d' % lid)
+                complex_line = complex_lines[lid]
+                simple_line = simple_lines[lid]
+
+                # Get Mapper
+                complex_line_tag = set([(p[0], p[1])
+                                        for p in complex_line_tags[lid] if p[1] in self.replace_tag_set])
+                simple_line_tag = set([(p[0], p[1])
+                                       for p in simple_line_tags[lid] if p[1] in self.replace_tag_set])
+                all_tag = complex_line_tag | simple_line_tag
+
+                mapper_tag = {}
+
+                for tag_type in self.replace_tag_set:
+                    mapper_idx = 1
+                    for tag_pair in all_tag:
+                        if tag_pair[1] == tag_type:
+                            mapper_tag[tag_pair[0]] = tag_pair[1] + '@' + str(mapper_idx)
+                            mapper_idx += 1
+
+                # Update mapper
+                mapper = {}
+                mapper.update(mapper_tag)
+                mappers.append(mapper)
+
+                # Replace based on Mapper
+                ncomplex_line = cp.deepcopy(complex_line)
+                for wid, word in enumerate(complex_line):
+                    if word in mapper:
+                        ncomplex_line[wid] = mapper[word]
+                ncomplex_lines.append(ncomplex_line)
+
+                nsimple_line = cp.deepcopy(simple_line)
+                for wid, word in enumerate(simple_line):
+                    if word in mapper:
+                        nsimple_line[wid] = mapper[word]
+                nsimple_lines.append(nsimple_line)
+
+            f_ncomplex = open(out_complex_path, 'w', encoding='utf-8')
+            f_nsimple = open(out_simple_path, 'w', encoding='utf-8')
+            for ncomplex_line in ncomplex_lines:
+                f_ncomplex.write(' '.join(ncomplex_line))
+                f_ncomplex.write('\n')
+            f_ncomplex.close()
+            for nsimple_line in nsimple_lines:
+                f_nsimple.write(' '.join(nsimple_line))
+                f_nsimple.write('\n')
+
+            map_util.dump_mappers(mappers, out_mapper_path)
+
     def prepare_raw_data(self):
         """Get raw valid and test data."""
         # PWKP_108016 aggregate complex and simple sentneces together with line seperator.
@@ -290,5 +378,6 @@ class DataNERPrepareBase:
 
 if __name__ == '__main__':
     data_ner = DataNERPrepareBase()
+    # data_ner.process_dress()
     data_ner.process()
     # data_ner.prepare_raw_data()

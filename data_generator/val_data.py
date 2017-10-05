@@ -7,7 +7,7 @@ import copy as cp
 
 
 class ValData:
-    def __init__(self, model_config):
+    def __init__(self, model_config, ):
         self.model_config = model_config
         vocab_simple_path = self.model_config.vocab_simple
         vocab_complex_path = self.model_config.vocab_complex

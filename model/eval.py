@@ -253,7 +253,7 @@ def eval(model_config=None):
         perplexity = round(perplexity, decimal_cnt)
 
         # Output Result
-        f = open((model_config.modeldir + '/step' + str(step) +
+        f = open((model_config.resultdor + '/step' + str(step) +
                   '-bleuraw' + str(bleu_raw) +
                   '-bleurawoi' + str(bleu_oi_raw) +
                   '-bleurawor' + str(bleu_ors_raw_max) +
@@ -267,7 +267,7 @@ def eval(model_config=None):
         f.write('\t')
         f.write(str(perplexity))
         f.close()
-        f = open((model_config.modeldir + '/step' + str(step) +
+        f = open((model_config.resultdor + '/step' + str(step) +
                   '-bleuraw' + str(bleu_raw) +
                   '-bleurawoi' + str(bleu_oi_raw) +
                   '-bleurawor' + str(bleu_ors_raw_max) +
@@ -283,9 +283,21 @@ def eval(model_config=None):
 
 if __name__ == '__main__':
     config = None
-    if args.mode == 'dummy':
-        config = DefaultTestConfig()
-    elif args.mode == 'dress':
-        config = WikiDressLargeTestConfig()
-    print(list_config(config))
-    eval(config)
+    if args.mode != 'all':
+        if args.mode == 'dummy':
+            config = DefaultTestConfig()
+        elif args.mode == 'dress':
+            config = WikiDressLargeTestConfig()
+        print(list_config(config))
+        eval(config)
+    else:
+        from model.model_config import SubValWikiEightRefConfig, SubTestWikiEightRefConfig
+        from model.model_config import SubValWikiDress, SubTestWikiDress
+        from model.model_config import SubValWikiDressBeam4, SubTestWikiDressBeam4
+        eval(SubValWikiEightRefConfig())
+        eval(SubTestWikiEightRefConfig())
+        eval(SubValWikiDress())
+        eval(SubTestWikiDress())
+        eval(SubValWikiDressBeam4())
+        eval(SubTestWikiDressBeam4())
+

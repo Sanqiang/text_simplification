@@ -41,6 +41,8 @@ def copy_ckpt_to_modeldir(model_config):
         makedirs(model_config.modeldir)
     if not exists(model_config.outdir):
         makedirs(model_config.outdir)
+    if not exists(model_config.resultdor):
+        makedirs(model_config.resultdor)
 
     files, max_step = find_train_ckpt(model_config.outdir, True)
     _, cur_max_step = find_train_ckpt(model_config.modeldir, False)

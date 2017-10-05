@@ -12,8 +12,11 @@ def dump_mappers(mappers, path):
             tmp = sample_sep.join([tmp, str(k) + kv_sep + str(v)])
         output = line_sep.join([output, tmp])
 
+    #Remove first white space
+    output = output[len(line_sep):]
+
     f = open(path, 'w', encoding='utf-8')
-    f.write(output.strip())
+    f.write(output)
     f.close()
 
 

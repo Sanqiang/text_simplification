@@ -34,7 +34,6 @@ class DefaultConfig():
     max_grad_norm = 5.0
 
     beam_search_size = -1
-    train_with_hyp = False
 
     # Overwrite transformer config
     # timing: use positional encoding
@@ -78,6 +77,7 @@ class DefaultConfig():
     logdir = get_path('../' + output_folder + '/log/')
     outdir = get_path('../' + output_folder + '/output/')
     modeldir = get_path('../' + output_folder + '/model/')
+    resultdor = get_path('../' + output_folder + '/result/')
 
     allow_growth = False
     # per_process_gpu_memory_fraction = 1.0
@@ -88,13 +88,11 @@ class DefaultConfig():
 
 class DefaultTrainConfig(DefaultConfig):
     beam_search_size = 0
-    train_with_hyp = False
 
 
 class DefaultTestConfig(DefaultConfig):
     beam_search_size = 4
     batch_size = 2
-    train_with_hyp = False
 
 
 class WikiTurk(DefaultConfig):
@@ -113,7 +111,6 @@ class WikiTurk(DefaultConfig):
 
 class WikiTurkTrainConfig(WikiTurk):
     beam_search_size = 0
-    train_with_hyp = False
 
 
 class WikiTurkTestConfig(WikiTurk):
@@ -162,14 +159,97 @@ class WikiDressLargeDefault(DefaultConfig):
 
 class WikiDressLargeTrainConfig(WikiDressLargeDefault):
     beam_search_size = 0
-    train_with_hyp = False
 
 
 class WikiDressLargeTestConfig(WikiDressLargeDefault):
     beam_search_size = 1
     batch_size = 86
     replace_unk_by_emb = True
-    train_with_hyp = True
+
+
+class SubTest(DefaultConfig):
+    batch_size = 100
+    replace_unk_by_emb = True
+    beam_search_size = 1
+    output_folder = args.output_folder
+    resultdor = get_path('../' + output_folder + '/result/')
+
+
+class SubValWikiEightRefConfig(SubTest):
+    output_folder = args.output_folder
+    resultdor = get_path('../' + output_folder + '/result/eightref_val')
+
+    val_dataset_simple_folder = get_path('../text_simplification_data/val/')
+    val_dataset_simple_file = 'tune.8turkers.tok.simp.processed'
+    val_dataset_simple_references = 'tune.8turkers.tok.turk.processed.'
+    val_dataset_complex = get_path('../text_simplification_data/val/tune.8turkers.tok.norm.processed')
+    val_mapper = get_path('../text_simplification_data/val/tune.8turkers.tok.map')
+    val_dataset_simple_raw_file = 'tune.8turkers.tok.simp.raw'
+    val_dataset_simple_raw_references = 'tune.8turkers.tok.turk.raw.'
+    val_dataset_complex_raw = get_path('../text_simplification_data/val/tune.8turkers.tok.norm.raw')
+    num_refs = 8
+
+
+class SubTestWikiEightRefConfig(SubTest):
+    output_folder = args.output_folder
+    resultdor = get_path('../' + output_folder + '/result/eightref_test')
+
+    val_dataset_simple_folder = get_path('../text_simplification_data/test/')
+    val_dataset_simple_file = 'test.8turkers.tok.simp.processed'
+    val_dataset_simple_references = 'test.8turkers.tok.turk.processed.'
+    val_dataset_complex = get_path('../text_simplification_data/val/test.8turkers.tok.norm.processed')
+    val_mapper = get_path('../text_simplification_data/val/test.8turkers.tok.map')
+    val_dataset_simple_raw_file = 'test.8turkers.tok.simp.raw'
+    val_dataset_simple_raw_references = 'test.8turkers.tok.turk.raw.'
+    val_dataset_complex_raw = get_path('../text_simplification_data/val/test.8turkers.tok.norm.raw')
+    num_refs = 8
+
+
+class SubValWikiDress(SubTest):
+    output_folder = args.output_folder
+    resultdor = get_path('../' + output_folder + '/result/dresssmall_val')
+
+    val_dataset_simple_folder = get_path(
+        '../text_simplification_data/train/dress/wikismall/')
+    val_dataset_simple_file = 'PWKP_108016.tag.80.aner.ori.valid.dst.processed'
+    val_dataset_complex = get_path(
+        '../text_simplification_data/train/dress/wikismall/PWKP_108016.tag.80.aner.ori.valid.src.processed')
+    val_mapper = get_path(
+        '../text_simplification_data/train/dress/wikismall/PWKP_108016.tag.80.aner.ori.valid.map')
+    val_dataset_simple_raw_file = 'PWKP_108016.tag.80.aner.ori.valid.dst'
+    val_dataset_complex_raw = get_path(
+        '../text_simplification_data/train/dress/wikismall/PWKP_108016.tag.80.aner.ori.valid.src')
+    num_refs = 0
+
+
+class SubTestWikiDress(SubTest):
+    output_folder = args.output_folder
+    resultdor = get_path('../' + output_folder + '/result/dresssmall_test')
+
+    val_dataset_simple_folder = get_path(
+        '../text_simplification_data/train/dress/wikismall/')
+    val_dataset_simple_file = 'PWKP_108016.tag.80.aner.ori.test.dst.processed'
+    val_dataset_complex = get_path(
+        '../text_simplification_data/train/dress/wikismall/PWKP_108016.tag.80.aner.ori.test.src.processed')
+    val_mapper = get_path(
+        '../text_simplification_data/train/dress/wikismall/PWKP_108016.tag.80.aner.ori.test.map')
+    val_dataset_simple_raw_file = 'PWKP_108016.tag.80.aner.ori.test.dst'
+    val_dataset_complex_raw = get_path(
+        '../text_simplification_data/train/dress/wikismall/PWKP_108016.tag.80.aner.ori.test.src')
+    num_refs = 0
+
+
+
+class SubValWikiDressBeam4(SubValWikiDress):
+    beam_search_size =  4
+    output_folder = args.output_folder
+    resultdor = get_path('../' + output_folder + '/result/dresssmall_test_4head')
+
+
+class SubTestWikiDressBeam4(SubTestWikiDress):
+    beam_search_size = 4
+    output_folder = args.output_folder
+    resultdor = get_path('../' + output_folder + '/result/dresssmall_test_4head')
 
 
 def list_config(config):
