@@ -218,8 +218,11 @@ def eval(model_config=None, ckpt=None):
     for ref_i in range(model_config.num_refs):
         bleu_or_decode = mteval.get_bleu_from_decoderesult(step, sentence_complexs, refs[ref_i], targets)
         bleu_ors_decode.append(bleu_or_decode)
-    bleu_decode_max = max(bleu_ors_decode)
-    bleu_decode = 0.9 * bleu_decode_max + 0.1 * bleu_oi_decode
+    if bleu_ors_decode:
+        bleu_decode_max = max(bleu_ors_decode)
+        bleu_decode = 0.9 * bleu_decode_max + 0.1 * bleu_oi_decode
+    else:
+        bleu_decode = bleu_oi_decode
     print('Current Mteval iBLEU decode: \t%f' % bleu_decode)
 
     # MtEval Result - raw
@@ -230,8 +233,11 @@ def eval(model_config=None, ckpt=None):
             step, targets_raw, path_gt_simple=(model_config.val_dataset_simple_folder +
                                                model_config.val_dataset_simple_raw_references + str(ref_i)))
         bleu_ors_raw.append(bleu_or_raw)
-    bleu_ors_raw_max = max(bleu_ors_raw)
-    bleu_raw = 0.9 * bleu_ors_raw_max + 0.1 * bleu_oi_raw
+    if bleu_ors_raw:
+        bleu_ors_raw_max = max(bleu_ors_raw)
+        bleu_raw = 0.9 * bleu_ors_raw_max + 0.1 * bleu_oi_raw
+    else:
+        bleu_raw = bleu_oi_raw
     print('Current Mteval iBLEU decode: \t%f' % bleu_raw)
 
     decimal_cnt = 5
@@ -254,7 +260,7 @@ def eval(model_config=None, ckpt=None):
               '-bleudecodeoi' + str(bleu_oi_decode) +
               '-bleudecodeor' + str(bleu_decode_max) +
               '-perplexity' + str(perplexity) +
-              '-bleu_nltk' + str(ibleu)),
+              '-bleunltk' + str(ibleu)),
              'w', encoding='utf-8')
     f.write(str(ibleu))
     f.write('\t')
