@@ -29,6 +29,8 @@ class TrainData:
         self.data_simple = self.populate_data(data_simple_path, self.vocab_simple)
         self.data_complex = self.populate_data(data_complex_path, self.vocab_complex)
         self.size = len(self.data_simple)
+        assert len(self.data_complex) == self.size
+        assert len(self.data_simple) == self.size
         print('Use Train Dataset: \n Simple\t %s. \n Complex\t %s. \n Size\t %d'
               % (data_simple_path, data_complex_path, self.size))
         self.init_pretrained_embedding()

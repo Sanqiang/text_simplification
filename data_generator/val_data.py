@@ -38,8 +38,15 @@ class ValData:
 
         if self.model_config.replace_ner:
             self.mapper = load_mappers(self.model_config.val_mapper, self.model_config.lower_case)
+            while len(self.mapper) < len(len(self.data_simple)):
+                self.mapper.append({})
 
         self.size = len(self.data_simple)
+        assert len(self.data_complex) == self.size
+        assert len(self.data_complex_raw) == self.size
+        assert len(self.mapper) == self.size
+        for i in range(self.model_config.num_refs):
+            assert len(self.data_references[i]) == self.size
         print('Use Val Dataset: \n Simple\t %s. \n Complex\t %s. \n Size\t %d'
               % (self.model_config.val_dataset_simple_folder + self.model_config.val_dataset_simple_file,
                  self.model_config.val_dataset_complex, self.size))
