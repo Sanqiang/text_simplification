@@ -1,7 +1,7 @@
 from data_generator.val_data import ValData
 from model.transformer import TransformerGraph
 from model.seq2seq import Seq2SeqGraph
-from model.model_config import DefaultConfig, DefaultTestConfig, WikiDressLargeTestConfig, list_config
+from model.model_config import DefaultConfig, DefaultTestConfig, WikiDressLargeTestConfig, DefaultTestConfig2, list_config
 from data_generator.vocab import Vocab
 from util import constant
 from util import session
@@ -12,7 +12,8 @@ from model.postprocess import PostProcess
 from nltk.translate.bleu_score import sentence_bleu
 from util.mteval_bleu import MtEval_BLEU
 import tensorflow as tf
-import tensorflow.contrib.slim as slim
+from os.path import exists
+from os import makedirs
 import math
 import numpy as np
 import time
@@ -76,14 +77,19 @@ def get_graph_val_data(sentence_simple_input, sentence_complex_input,
             tmp_sentence_complex_raw, tmp_mapper, tmp_ref, effective_batch_size, is_end)
 
 
-def eval(model_config=None):
+def eval(model_config=None, ckpt=None):
     model_config = (DefaultConfig()
                     if model_config is None else model_config)
+    if not exists(model_config.resultdor):
+        makedirs(model_config.resultdor)
+    print(model_config)
+
     val_data = ValData(model_config)
     if model_config.framework == 'transformer':
         graph = TransformerGraph(val_data, False, model_config)
     elif model_config.framework == 'seq2seq':
         graph = Seq2SeqGraph(val_data, False, model_config)
+    tf.reset_default_graph()
     graph.create_model()
 
     # while True:
@@ -100,14 +106,7 @@ def eval(model_config=None):
     it = val_data.get_data_iter()
 
     def init_fn(session):
-        while True:
-            try:
-                ckpt = copy_ckpt_to_modeldir(model_config)
-                graph.saver.restore(session, ckpt)
-                break
-            except FileNotFoundError as exp:
-                print(str(exp) + '\nWait for 1 minutes.')
-                time.sleep(60)
+        graph.saver.restore(session, ckpt)
         print('Restore ckpt:%s.' % ckpt)
 
     sv = tf.train.Supervisor(init_fn=init_fn)
@@ -118,13 +117,6 @@ def eval(model_config=None):
             graph.sentence_simple_input_placeholder,
             graph.sentence_complex_input_placeholder,
             model_config, it)
-
-        # encdec_atts = []
-        # for i in range(6):
-        #     encdec_att = tf.get_default_graph().get_operation_by_name(
-        #         "body/model/parallel_0/body/decoder/layer_%i/encdec_attention/multihead_attention/dot_product_attention/attention_weights" % i).values()[
-        #         0]
-        #     encdec_atts.append(encdec_att)
 
         fetches = {'decoder_target_list': graph.decoder_target_list,
                    'loss': graph.loss,
@@ -282,25 +274,38 @@ def eval(model_config=None):
     f.close()
 
 
+def get_ckpt(modeldir, outdir):
+    while True:
+        try:
+            ckpt = copy_ckpt_to_modeldir(modeldir, outdir)
+            break
+        except FileNotFoundError as exp:
+            print(str(exp) + '\nWait for 1 minutes.')
+            time.sleep(60)
+    return ckpt
+
+
 if __name__ == '__main__':
     config = None
-    if args.mode != 'all':
-        if args.mode == 'dummy':
-            config = DefaultTestConfig()
-        elif args.mode == 'dress':
-            config = WikiDressLargeTestConfig()
-        print(list_config(config))
+    if args.mode == 'dummy':
         while True:
-            eval(config)
-    else:
+            model_config = DefaultTestConfig()
+            ckpt = get_ckpt(model_config.modeldir, model_config.outdir)
+            eval(DefaultTestConfig(), ckpt)
+            eval(DefaultTestConfig2(), ckpt)
+    elif args.mode == 'all' or args.mode == 'dress':
+        from model.model_config import WikiDressLargeDefault
         from model.model_config import SubValWikiEightRefConfig, SubTestWikiEightRefConfig
         from model.model_config import SubValWikiDress, SubTestWikiDress
         from model.model_config import SubValWikiDressBeam4, SubTestWikiDressBeam4
         while True:
-            eval(SubValWikiEightRefConfig())
-            eval(SubTestWikiEightRefConfig())
-            eval(SubValWikiDress())
-            eval(SubTestWikiDress())
-            eval(SubValWikiDressBeam4())
-            eval(SubTestWikiDressBeam4())
+            model_config = WikiDressLargeDefault()
+            ckpt = get_ckpt(model_config.modeldir, model_config.outdir)
+
+            eval(SubValWikiEightRefConfig(), ckpt)
+            eval(SubTestWikiEightRefConfig(), ckpt)
+            eval(SubValWikiDress(), ckpt)
+            eval(SubTestWikiDress(), ckpt)
+            eval(SubValWikiDressBeam4(), ckpt)
+            eval(SubTestWikiDressBeam4(), ckpt)
 

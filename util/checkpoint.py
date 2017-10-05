@@ -36,25 +36,23 @@ def get_model_files(steps, path):
     return model_files
 
 
-def copy_ckpt_to_modeldir(model_config):
-    if not exists(model_config.modeldir):
-        makedirs(model_config.modeldir)
-    if not exists(model_config.outdir):
-        makedirs(model_config.outdir)
-    if not exists(model_config.resultdor):
-        makedirs(model_config.resultdor)
+def copy_ckpt_to_modeldir(modeldir, outdir):
+    if not exists(modeldir):
+        makedirs(modeldir)
+    if not exists(outdir):
+        makedirs(outdir)
 
-    files, max_step = find_train_ckpt(model_config.outdir, True)
-    _, cur_max_step = find_train_ckpt(model_config.modeldir, False)
+    files, max_step = find_train_ckpt(outdir, True)
+    _, cur_max_step = find_train_ckpt(modeldir, False)
     if cur_max_step == max_step:
         raise FileNotFoundError('No new ckpt.')
 
     for file in files:
-        source = model_config.outdir + file
-        target = model_config.modeldir + file
+        source = outdir + file
+        target = modeldir + file
         copy2(source, target)
         print('Copy Ckpt from %s \t to \t %s.' % (source, target))
-    return model_config.modeldir + ckpt_prefix + str(max_step)
+    return modeldir + ckpt_prefix + str(max_step)
 
 
 

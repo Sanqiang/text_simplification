@@ -71,6 +71,9 @@ class DefaultConfig():
     val_dataset_complex = get_path('data/valid_dummy_complex_dataset')
     val_dataset_simple_references = 'valid_dummy_simple_dataset.'
     val_mapper = get_path('data/valid_dummy_mapper')
+    val_dataset_simple_raw_file = val_dataset_simple_file
+    val_dataset_simple_raw_references = val_dataset_simple_references
+    val_dataset_complex_raw = val_dataset_complex
     num_refs = 3
 
     output_folder = args.output_folder
@@ -93,6 +96,15 @@ class DefaultTrainConfig(DefaultConfig):
 class DefaultTestConfig(DefaultConfig):
     beam_search_size = 4
     batch_size = 2
+    output_folder = args.output_folder
+    resultdor = get_path('../' + output_folder + '/result/test1')
+
+
+class DefaultTestConfig2(DefaultConfig):
+    beam_search_size = 4
+    batch_size = 1
+    output_folder = args.output_folder
+    resultdor = get_path('../' + output_folder + '/result/test2')
 
 
 class WikiTurk(DefaultConfig):
