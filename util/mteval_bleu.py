@@ -87,7 +87,7 @@ class MtEval_BLEU:
         self.template_cp = cp.deepcopy(self.template)
         self.template_cp = self.template_cp.replace('SET_LABEL', setlabel)
         self.template_cp = self.template_cp.replace('CONTENT', tmp_output)
-        return self.template_cp
+        return self.template_cp.strip()
 
     def html_escape(self, txt):
         txt = txt.replace('<','#lt#')
@@ -98,7 +98,7 @@ class MtEval_BLEU:
         txt = txt.replace('\'', constant.SYMBOL_QUOTE)
         txt = txt.replace('``', constant.SYMBOL_QUOTE)
         txt = txt.replace('`', constant.SYMBOL_QUOTE)
-        return txt
+        return txt.strip()
 
 if __name__ == '__main__':
     bleu = MtEval_BLEU(DefaultConfig())
