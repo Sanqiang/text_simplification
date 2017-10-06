@@ -7,7 +7,6 @@ args = get_args()
 
 def get_path(file_path):
     return os.path.dirname(os.path.abspath(__file__)) + '/../' + file_path
-    # return os.getcwd() + '/' + file_path
 
 
 class DefaultConfig():
@@ -28,7 +27,7 @@ class DefaultConfig():
     tokenizer = 'split' # split: white space split / nltk: nltk tokenizer
 
     # Follow the configuration from https://github.com/XingxingZhang/dress
-    optimizer = 'adagrad'
+    optimizer = args.optimizer
     learning_rate = 0.1
     max_grad_staleness = 0.0
     max_grad_norm = 5.0

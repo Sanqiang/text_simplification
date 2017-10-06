@@ -1,7 +1,7 @@
 from model.embedding import Embedding
 from model.loss import sequence_loss
 from model.metric import Metric
-from model.postprocess import PostProcess
+from model.optimizer import TransformerOptimizer
 from util import constant
 
 import tensorflow as tf
@@ -105,8 +105,8 @@ class Graph:
                                           decode_word_weight)
 
         with tf.variable_scope('optimization'):
-            self.global_step = tf.get_variable('global_step',
-                                               initializer=tf.constant(0, dtype=tf.int64), trainable=False)
+            self.global_step = tf.get_variable(
+                'global_step', initializer=tf.constant(0, dtype=tf.int64), trainable=False)
 
             if self.is_train:
                 self.increment_global_step = tf.assign_add(self.global_step, 1)
@@ -121,6 +121,12 @@ class Graph:
         # Adam need lower learning rate
         elif self.model_config.optimizer == 'adam':
             opt = tf.train.AdamOptimizer(self.model_config.learning_rate)
+        elif self.model_config.optimizer == 'adam_transformer':
+            if not hasattr(self, 'hparams'):
+                # In case not using Transformer model
+                from tensor2tensor.models import transformer
+                self.hparams = transformer.transformer_base()
+            return TransformerOptimizer(self.loss, self.hparams, self.global_step).get_op()
         else:
             raise Exception('Not Implemented Optimizer!')
 
@@ -130,6 +136,7 @@ class Graph:
         grads_and_vars = opt.compute_gradients(self.loss, var_list=tf.trainable_variables())
         grads = [g for (g,v) in grads_and_vars]
         clipped_grads, _ = tf.clip_by_global_norm(grads, self.model_config.max_grad_norm)
+
 
         return opt.apply_gradients(zip(clipped_grads, tf.trainable_variables()), global_step=self.global_step)
 

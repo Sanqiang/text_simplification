@@ -11,6 +11,10 @@ def get_args():
                         help='Path for warm start checkpoint?')
     parser.add_argument('-mode', '--mode', default='dress',
                         help='The Usage Model?')
+    parser.add_argument('-op', '--optimizer', default='adam_transformer',
+                        help='Which optimizer to use?')
+    parser.add_argument('-lr', '--learning_rate', default=0.1, type=float,
+                        help='Value of learning rate?')
 
     # For Graph
     parser.add_argument('-uqm', '--use_quality_model', default=False, type=bool,
