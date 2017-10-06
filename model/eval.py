@@ -312,9 +312,13 @@ if __name__ == '__main__':
         from model.model_config import SubValWikiDress, SubTestWikiDress
         from model.model_config import SubValWikiDressBeam2, SubTestWikiDressBeam2
         from model.model_config import SubValWikiEightRefConfigBeam2, SubTestWikiEightRefConfigBeam2
+        from model.model_config import SubValWikiDressL, SubTestWikiDressL
         while True:
             model_config = WikiDressLargeDefault()
             ckpt = get_ckpt(model_config.modeldir, model_config.outdir)
+
+            eval(SubValWikiDressL(), ckpt)
+            eval(SubTestWikiDressL(), ckpt)
 
             eval(SubValWikiEightRefConfigBeam2(), ckpt)
             eval(SubTestWikiEightRefConfigBeam2(), ckpt)

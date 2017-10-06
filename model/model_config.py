@@ -30,7 +30,7 @@ class DefaultConfig():
     optimizer = args.optimizer
     learning_rate_warmup_steps = 50000
     use_learning_rate_decay = True
-    learning_rate = 0.1
+    learning_rate = args.learning_rate
     max_grad_staleness = 0.0
     max_grad_norm = 2.0
     loss_fn = args.loss_fn
@@ -264,6 +264,39 @@ class SubTestWikiDress(SubTest):
         '../text_simplification_data/train/dress/wikismall/PWKP_108016.tag.80.aner.ori.test.src')
     num_refs = 0
 
+
+class SubValWikiDressL(SubTest):
+    output_folder = args.output_folder
+    resultdor = get_path('../' + output_folder + '/result/dresslarge_val')
+
+    val_dataset_simple_folder = get_path(
+        '../text_simplification_data/train/dress/wikilarge/')
+    val_dataset_simple_file = 'wiki.full.aner.valid.dst.processed'
+    val_dataset_complex = get_path(
+        '../text_simplification_data/train/dress/wikilarge/wiki.full.aner.valid.src.processed')
+    val_mapper = get_path(
+        '../text_simplification_data/train/dress/wikilarge/wiki.full.aner.valid.map')
+    val_dataset_simple_raw_file = 'wiki.full.aner.valid.dst'
+    val_dataset_complex_raw = get_path(
+        '../text_simplification_data/train/dress/wikilarge/wiki.full.aner.valid.src')
+    num_refs = 0
+
+
+class SubTestWikiDressL(SubTest):
+    output_folder = args.output_folder
+    resultdor = get_path('../' + output_folder + '/result/dresslarge_test')
+
+    val_dataset_simple_folder = get_path(
+        '../text_simplification_data/train/dress/wikilarge/')
+    val_dataset_simple_file = 'wiki.full.aner.test.dst.processed'
+    val_dataset_complex = get_path(
+        '../text_simplification_data/train/dress/wikilarge/wiki.full.aner.test.src.processed')
+    val_mapper = get_path(
+        '../text_simplification_data/train/dress/wikilarge/wiki.full.aner.test.map')
+    val_dataset_simple_raw_file = 'wiki.full.aner.test.dst'
+    val_dataset_complex_raw = get_path(
+        '../text_simplification_data/train/dress/wikilarge/wiki.full.aner.test.src')
+    num_refs = 0
 
 
 class SubValWikiDressBeam2(SubValWikiDress):
