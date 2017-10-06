@@ -1,11 +1,12 @@
 """Seq2Seq Computational Graph
    based on https://github.com/abisee/pointer-generator/blob/master/model.py"""
 import tensorflow as tf
-import numpy as np
 
-from util import constant
 from model.graph import Graph
+from model.graph import ModelOutput
+from util import constant
 from util.nn import linear
+
 
 class Seq2SeqGraph(Graph):
     def __init__(self, data, is_train, model_config):
@@ -18,9 +19,6 @@ class Seq2SeqGraph(Graph):
             self.model_config.batch_size, tf.int32, name='simple_input_go')] +
                                  self.sentence_simple_input_placeholder[:-1])
         self.sentence_simple_output = self.sentence_simple_input_placeholder
-
-        if not self.is_train:
-            del self.sentence_simple_input[1:]
 
         self._enc_padding_mask = tf.stack(
             [tf.to_float(tf.not_equal(d, self.data.vocab_simple.encode(constant.SYMBOL_PAD)))
@@ -36,14 +34,7 @@ class Seq2SeqGraph(Graph):
         with tf.variable_scope('decoder'):
             decoder_outputs, logits, self._dec_out_state, self.attn_dists = self._decoder()
 
-        # logits = []
-        # for i, output in enumerate(decoder_outputs):
-        #     if i > 0:
-        #         tf.get_variable_scope().reuse_variables()
-        #     logits.append(tf.nn.xw_plus_b(output, tf.transpose(self.w), self.b))
-        # logits = [tf.nn.softmax(s) for s in logits]
-
-        if not self.is_train and self.model_config.beam_search_size > 1:
+        if not self.is_train and self.model_config.beam_search_size > 0:
             # assert len(logits) == 1
             self.final_dists = logits[-1]
             topk_probs, self._topk_ids = tf.nn.top_k(
@@ -51,55 +42,52 @@ class Seq2SeqGraph(Graph):
             self._topk_log_probs = tf.log(topk_probs)
 
         self.logits = logits
-        if self.is_train:
-            return decoder_outputs, logits, self.sentence_simple_output
-        else:
-            return decoder_outputs, logits, [tf.argmax(logit, axis=1) for logit in logits]
+
+        output = ModelOutput(
+            decoder_outputs=decoder_outputs,
+            decoder_logit_list=logits,
+            gt_target_list=self.sentence_simple_output
+        )
+        return output
 
     def _decoder(self):
-        att_size = self._enc_states.get_shape()[-1].value
+        hidden_size = self._enc_states.get_shape()[-1].value
         cell = tf.contrib.rnn.LSTMCell(
             self.model_config.dimension, state_is_tuple=True, initializer=self.rand_unif_init)
         with tf.variable_scope('attention_decoder'):
             encoder_states = tf.expand_dims(self._enc_states, axis=2)
-            encoder_memories = tf.expand_dims(tf.stack(
-                self.embedding_fn(self.sentence_complex_input_placeholder, self.emb_complex), axis=1), axis=2)
+            # encoder_memories = tf.expand_dims(tf.stack(
+            #     self.embedding_fn(self.sentence_complex_input_placeholder, self.emb_complex), axis=1), axis=2)
 
             # Attention-based feature vector
             W_h = tf.get_variable("W_h",
-                                  [1, 1, att_size, att_size])
+                                  [1, 1, hidden_size, self.model_config.dimension])
             encoder_features = tf.nn.conv2d(
                 encoder_states, W_h, [1, 1, 1, 1], 'SAME')
-            v = tf.get_variable("v", [att_size])
+            v = tf.get_variable("v", [self.model_config.dimension])
 
-            def attention(decoder_state):
+            def attention(query):
                 with tf.variable_scope("attention"):
-                    decoder_features = linear(decoder_state, att_size, True)
+                    decoder_features = linear(query, self.model_config.dimension, True)
                     decoder_features = tf.expand_dims(tf.expand_dims(decoder_features, 1), 1)
 
                     def masked_attention(e):
                         attn_dist = tf.nn.softmax(e)
-                        attn_dist *= self._enc_padding_mask
+                        # attn_dist *= self._enc_padding_mask
                         masked_sums = tf.reduce_sum(attn_dist, axis=1)
                         return attn_dist / tf.reshape(masked_sums, [-1, 1])
 
                     e = tf.reduce_sum(v * tf.tanh(encoder_features + decoder_features), [2, 3])
                     attn_dist = masked_attention(e)
                     context_vector = tf.reduce_sum(
-                        tf.reshape(attn_dist, [self.model_config.batch_size, -1, 1, 1]) * encoder_memories,
+                        tf.reshape(attn_dist, [self.model_config.batch_size, -1, 1, 1]) * encoder_features,
                         [1, 2])  # shape (batch_size, attn_size).
-                    context_vector = tf.reshape(context_vector, [-1, self.model_config.dimension])
-
                 return context_vector, attn_dist
 
             outputs = []
             logits = []
             attn_dists = []
-            self.inp_idxs = []
-            self.out_idxs = []
             state = self._dec_in_state
-            # context_vector = tf.zeros((self.model_config.batch_size, self.model_config.dimension))
-            # if not self.is_train:
             context_vector, _ = attention(state)
             gt_inp_embs = self.embedding_fn(self.sentence_simple_input, self.emb_simple)
             for i in range(self.model_config.max_simple_sentence):
@@ -108,11 +96,8 @@ class Seq2SeqGraph(Graph):
                     if not self.is_train:
                         inp_idx = tf.cast(tf.argmax(logit, axis=1), tf.int32)
                         inp_emb = self.embedding_fn([inp_idx], self.emb_simple)[0]
-                        self.inp_idxs.append(inp_idx)
                 if self.is_train or i == 0:
                     inp_emb = gt_inp_embs[i]
-                    inp_idx = self.sentence_simple_input[i]
-                    self.inp_idxs.append(inp_idx)
 
                 x = linear([inp_emb] + [context_vector], self.model_config.dimension, True)
                 cell_output, state = cell(x, state)
@@ -127,8 +112,6 @@ class Seq2SeqGraph(Graph):
                 with tf.variable_scope("AttnOutputProjection"):
                     output = linear([cell_output] + [context_vector], cell.output_size, True)
                     logit = tf.nn.xw_plus_b(output, tf.transpose(self.w), self.b)
-                    out_idx = tf.cast(tf.argmax(logit, axis=1), tf.int32)
-                    self.out_idxs.append(out_idx)
                 outputs.append(output)
                 logits.append(logit)
             return outputs, logits, state, attn_dists

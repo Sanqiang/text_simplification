@@ -61,7 +61,7 @@ class Graph:
         with tf.variable_scope('model'):
             output = self.model_fn()
 
-            if self.is_train and output.decoder_target_list is None:
+            if output.decoder_target_list is None:
                 # For train or model_fn doesn't provide decoder target list
                 # Get decode target list based on decoder logit list
                 self.decoder_target_list = tf.stack(
