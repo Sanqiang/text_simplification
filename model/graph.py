@@ -138,12 +138,25 @@ class Graph:
         print('Graph Built.')
 
     def create_train_op(self):
+
+        def learning_rate_decay(model_config, step):
+            warmup_steps = tf.to_float(model_config.learning_rate_warmup_steps)
+            step = tf.to_float(step)
+            return tf.cond(step < warmup_steps,
+                           lambda: self.model_config.learning_rate,
+                           lambda: self.model_config.learning_rate / (2 ** ((step - warmup_steps) // 50000))
+                           )
+
         if self.model_config.optimizer == 'adagrad':
-            opt = tf.train.AdagradOptimizer(self.model_config.learning_rate)
+            if self.model_config.use_learning_rate_decay:
+                opt = tf.train.AdagradOptimizer(learning_rate_decay(
+                    self.model_config, self.global_step))
+            else:
+                opt = tf.train.AdagradOptimizer(self.model_config.learning_rate)
         # Adam need lower learning rate
         elif self.model_config.optimizer == 'adam':
             opt = tf.train.AdamOptimizer(self.model_config.learning_rate)
-        elif self.model_config.optimizer == 'adam_transformer_simple':
+        elif self.model_config.optimizer == 'lazy_adam':
             if not hasattr(self, 'hparams'):
                 # In case not using Transformer model
                 from tensor2tensor.models import transformer

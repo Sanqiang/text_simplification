@@ -28,6 +28,8 @@ class DefaultConfig():
 
     # Follow the configuration from https://github.com/XingxingZhang/dress
     optimizer = args.optimizer
+    learning_rate_warmup_steps = 100000
+    use_learning_rate_decay = True
     learning_rate = 0.1
     max_grad_staleness = 0.0
     max_grad_norm = 5.0

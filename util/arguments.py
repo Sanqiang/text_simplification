@@ -11,7 +11,7 @@ def get_args():
                         help='Path for warm start checkpoint?')
     parser.add_argument('-mode', '--mode', default='dress',
                         help='The Usage Model?')
-    parser.add_argument('-op', '--optimizer', default='adam_transformer_simple',
+    parser.add_argument('-op', '--optimizer', default='adagrad',
                         help='Which optimizer to use?')
     parser.add_argument('-lr', '--learning_rate', default=0.1, type=float,
                         help='Value of learning rate?')
@@ -30,7 +30,6 @@ def get_args():
     # For Transformer
     parser.add_argument('-pos', '--hparams_pos', default='timing',
                         help='Whether to use positional encoding?')
-
 
 
     args = parser.parse_args()

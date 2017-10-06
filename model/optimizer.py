@@ -57,6 +57,7 @@ class _ConditionalOptimizer(tf.train.Optimizer):
     return self._opt.apply_gradients(
         gradients, global_step=global_step, name=name)
 
+
 def learning_rate_decay(hparams, global_step, num_worker_replicas=1, num_train_steps=1):
   """Inverse-decay learning rate until warmup_steps, then decay."""
   warmup_steps = tf.to_float(
