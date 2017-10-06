@@ -29,8 +29,8 @@ def load_mappers(path, lower_case=False):
         for sample in samples:
             kv = sample.split(kv_sep)
             if len(kv) == 2:
-                v = kv[0].replace('_', ' ')
-                k = kv[1].replace('_', ' ')
+                v = kv[0]
+                k = kv[1]
                 if lower_case:
                     v = v.lower()
                     k = k.lower()

@@ -91,8 +91,8 @@ class DataNERPrepareBase:
             mappers = []
             for lid in range(len(complex_lines)):
                 print('Process idx %d' % lid)
-                complex_line = complex_lines[lid]
-                simple_line = simple_lines[lid]
+                complex_line = [p[0] for p in complex_line_tags[lid]]
+                simple_line = [p[0] for p in simple_line_tags[lid]]
 
                 # Get Mapper
                 complex_line_tag = set([(p[0], p[1])
@@ -347,7 +347,7 @@ class DataNERPrepareBase:
                     tag = "NUMBER"
 
                 if tag == last_tag and tag in self.concat_tag_set:
-                    ntag_sent[-1][0] += '_' + word
+                    ntag_sent[-1][0] += ' ' + word
                 else:
                     ntag_sent.append([word, tag])
                 last_tag = tag
