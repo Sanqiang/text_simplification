@@ -176,12 +176,12 @@ class WikiDressLargeTrainConfig(WikiDressLargeDefault):
 
 class WikiDressLargeTestConfig(WikiDressLargeDefault):
     beam_search_size = 1
-    batch_size = 64
+    batch_size = 32
     replace_unk_by_emb = True
 
 
 class SubTest(WikiDressLargeDefault):
-    batch_size = 100
+    batch_size = 128
     replace_unk_by_emb = True
     beam_search_size = 1
     output_folder = args.output_folder
