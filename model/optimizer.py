@@ -21,7 +21,6 @@ class TransformerOptimizer:
             clip_gradients=hparams.clip_grad_norm or None,
             gradient_noise_scale=hparams.grad_noise_scale or None,
             optimizer=opt,
-            colocate_gradients_with_ops=False,
         )
 
     def get_op(self):
