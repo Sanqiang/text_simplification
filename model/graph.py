@@ -143,6 +143,16 @@ class Graph:
         # Adam need lower learning rate
         elif self.model_config.optimizer == 'adam':
             opt = tf.train.AdamOptimizer(self.model_config.learning_rate)
+        elif self.model_config.optimizer == 'adam_transformer_simple':
+            if not hasattr(self, 'hparams'):
+                # In case not using Transformer model
+                from tensor2tensor.models import transformer
+                self.hparams = transformer.transformer_base()
+            opt = tf.contrib.opt.LazyAdamOptimizer(
+                self.hparams.learning_rate / 500.0,
+                beta1=self.hparams.optimizer_adam_beta1,
+                beta2=self.hparams.optimizer_adam_beta2,
+                epsilon=self.hparams.optimizer_adam_epsilon)
         elif self.model_config.optimizer == 'adam_transformer':
             if not hasattr(self, 'hparams'):
                 # In case not using Transformer model
@@ -158,7 +168,6 @@ class Graph:
         grads_and_vars = opt.compute_gradients(self.loss, var_list=tf.trainable_variables())
         grads = [g for (g,v) in grads_and_vars]
         clipped_grads, _ = tf.clip_by_global_norm(grads, self.model_config.max_grad_norm)
-
 
         return opt.apply_gradients(zip(clipped_grads, tf.trainable_variables()), global_step=self.global_step)
 
