@@ -3,7 +3,7 @@
 #SBATCH --cluster=gpu
 #SBATCH --partition=gtx1080
 #SBATCH --job-name=vl_pl
-#SBATCH --output=vl_pl.out
+#SBATCH --output=vl.out
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
 #SBATCH --cpus-per-task=1

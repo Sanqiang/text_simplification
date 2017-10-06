@@ -110,29 +110,6 @@ class DefaultTestConfig2(DefaultConfig):
     resultdor = get_path('../' + output_folder + '/result/test2')
 
 
-class WikiTurk(DefaultConfig):
-    train_dataset_simple = get_path('../text_simplification_data/train/sentence-aligned.v2/simple.aligned')
-    train_dataset_complex = get_path('../text_simplification_data/train/sentence-aligned.v2/normal.aligned')
-    vocab_simple = get_path('../text_simplification_data/train/sentence-aligned.v2/simple.voc')
-    vocab_complex = get_path('../text_simplification_data/train/sentence-aligned.v2/normal.voc')
-    vocab_all = get_path('../text_simplification_data/train/sentence-aligned.v2/all.voc')
-
-    val_dataset_simple_folder = get_path('../text_simplification_data/val/')
-    val_dataset_simple_file = 'tune.8turkers.tok.simp'
-    val_dataset_simple_references = 'tune.8turkers.tok.turk.'
-    val_dataset_complex = get_path('../text_simplification_data/val/tune.8turkers.tok.norm')
-    num_refs = 8
-
-
-class WikiTurkTrainConfig(WikiTurk):
-    beam_search_size = 0
-
-
-class WikiTurkTestConfig(WikiTurk):
-    beam_search_size = 0
-    use_gpu = False
-
-
 class WikiDressLargeDefault(DefaultConfig):
     train_dataset_simple = get_path('../text_simplification_data/train/dress/wikilarge/wiki.full.aner.train.dst')
     train_dataset_complex = get_path('../text_simplification_data/train/dress/wikilarge/wiki.full.aner.train.src')
@@ -160,7 +137,7 @@ class WikiDressLargeDefault(DefaultConfig):
     num_heads = 5
     max_complex_sentence = 85
     max_simple_sentence = 85
-    min_count = 5
+    min_count = args.min_count
     batch_size = 32
     model_save_freq = 1000
 

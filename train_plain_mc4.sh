@@ -2,8 +2,8 @@
 #SBATCH --cluster=gpu
 #SBATCH --gres=gpu:1
 #SBATCH --partition=gtx1080
-#SBATCH --job-name=tr_pl
-#SBATCH --output=tr_pl.out
+#SBATCH --job-name=tr_pl4
+#SBATCH --output=tr_pl4.out
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
 #SBATCH --cpus-per-task=1
@@ -15,4 +15,4 @@ module restore
 # module load tensorflow/1.3.0
 
 # Run the job
-srun python model/train.py --framework transformer --output_folder plain --tied_embedding enc_dec --optimizer adagrad
+srun python model/train.py --framework transformer --output_folder plain --tied_embedding enc_dec --optimizer adagrad --min_count 4

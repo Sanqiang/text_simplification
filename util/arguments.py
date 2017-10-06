@@ -16,6 +16,10 @@ def get_args():
     parser.add_argument('-lr', '--learning_rate', default=0.1, type=float,
                         help='Value of learning rate?')
 
+    # For Data
+    parser.add_argument('-mc', '--min_count', default=5, type=int,
+                        help='Truncate the vocabulary less than equal to the count?')
+
     # For Graph
     parser.add_argument('-emb', '--tied_embedding', default='none',
                         help='Version of tied embedding?')
@@ -25,7 +29,6 @@ def get_args():
                         help='Number of samples used in Softmax?')
     parser.add_argument('-uqm', '--use_quality_model', default=False, type=bool,
                         help='Whether to use quality model?')
-
 
     # For Transformer
     parser.add_argument('-pos', '--hparams_pos', default='timing',
