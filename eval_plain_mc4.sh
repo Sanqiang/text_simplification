@@ -17,4 +17,4 @@ module restore
 export PERL5LIB="/ihome/hdaqing/saz31/perl_lib"
 
 # Run the job
-srun python model/eval.py --framework transformer --output_folder plain --tied_embedding enc_dec --mode all --min_count 4
+srun python model/eval.py --framework transformer --output_folder plain4 --tied_embedding enc_dec --mode all --min_count 4
