@@ -15,4 +15,4 @@ module restore
 # module load tensorflow/1.3.0
 
 # Run the job
-srun python model/train.py --framework transformer --output_folder plain --tied_embedding enc_dec --optimizer adagrad --min_count 4
+srun python model/train.py --framework transformer --output_folder plain4 --tied_embedding enc_dec --optimizer adagrad --min_count 4
