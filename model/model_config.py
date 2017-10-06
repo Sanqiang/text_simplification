@@ -159,7 +159,7 @@ class WikiDressLargeDefault(DefaultConfig):
     max_complex_sentence = 85
     max_simple_sentence = 85
     min_count = 5
-    batch_size = 64
+    batch_size = 32
     model_save_freq = 1000
 
     tokenizer = 'split'
