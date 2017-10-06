@@ -93,6 +93,10 @@ class DataNERPrepareBase:
                 print('Process idx %d' % lid)
                 complex_line = [p[0] for p in complex_line_tags[lid]]
                 simple_line = [p[0] for p in simple_line_tags[lid]]
+                refer_lines = [[] for _ in range(8)]
+                for rid in range(8):
+                    refer_lines[rid] = [p[0] for p in refer_lines_arr_tags[rid][lid]]
+
 
                 # Get Mapper
                 complex_line_tag = set([(p[0], p[1])
@@ -132,8 +136,8 @@ class DataNERPrepareBase:
                 nsimple_lines.append(nsimple_line)
 
                 for rid in range(8):
-                    tmp = cp.deepcopy(refer_lines_arr[rid][lid])
-                    for wid, word in enumerate(refer_lines_arr[rid][lid]):
+                    tmp = cp.deepcopy(refer_lines[rid])
+                    for wid, word in enumerate(refer_lines[rid]):
                         if word in mapper:
                             tmp[wid] = mapper[word]
                     nrefer_lines[rid].append(tmp)
@@ -201,8 +205,8 @@ class DataNERPrepareBase:
             mappers = []
             for lid in range(len(complex_lines)):
                 print('Process idx %d' % lid)
-                complex_line = complex_lines[lid]
-                simple_line = simple_lines[lid]
+                complex_line = [p[0] for p in complex_line_tags[lid]]
+                simple_line = [p[0] for p in simple_line_tags[lid]]
 
                 # Get Mapper
                 complex_line_tag = set([(p[0], p[1])
@@ -378,6 +382,6 @@ class DataNERPrepareBase:
 
 if __name__ == '__main__':
     data_ner = DataNERPrepareBase()
-    # data_ner.process_dress()
     data_ner.process()
+    data_ner.process_dress()
     # data_ner.prepare_raw_data()
