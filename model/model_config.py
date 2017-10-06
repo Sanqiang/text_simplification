@@ -176,7 +176,7 @@ class WikiDressLargeTrainConfig(WikiDressLargeDefault):
 
 class WikiDressLargeTestConfig(WikiDressLargeDefault):
     beam_search_size = 1
-    batch_size = 86
+    batch_size = 64
     replace_unk_by_emb = True
 
 
@@ -202,10 +202,10 @@ class SubValWikiEightRefConfig(SubTest):
     val_dataset_complex_raw = get_path('../text_simplification_data/val/tune.8turkers.tok.norm.raw')
     num_refs = 8
 
-class SubValWikiEightRefConfigBeam4(SubValWikiEightRefConfig):
-    beam_search_size =  4
+class SubValWikiEightRefConfigBeam2(SubValWikiEightRefConfig):
+    beam_search_size =  2
     output_folder = args.output_folder
-    resultdor = get_path('../' + output_folder + '/result/eightref_val_4head')
+    resultdor = get_path('../' + output_folder + '/result/eightref_val_2head')
 
 
 class SubTestWikiEightRefConfig(SubTest):
@@ -223,10 +223,10 @@ class SubTestWikiEightRefConfig(SubTest):
     num_refs = 8
 
 
-class SubTestWikiEightRefConfigBeam4(SubTestWikiEightRefConfig):
-    beam_search_size =  4
+class SubTestWikiEightRefConfigBeam2(SubTestWikiEightRefConfig):
+    beam_search_size =  2
     output_folder = args.output_folder
-    resultdor = get_path('../' + output_folder + '/result/eightref_test_4head')
+    resultdor = get_path('../' + output_folder + '/result/eightref_test_2head')
 
 
 class SubValWikiDress(SubTest):
@@ -264,16 +264,16 @@ class SubTestWikiDress(SubTest):
 
 
 
-class SubValWikiDressBeam4(SubValWikiDress):
-    beam_search_size =  4
+class SubValWikiDressBeam2(SubValWikiDress):
+    beam_search_size =  2
     output_folder = args.output_folder
-    resultdor = get_path('../' + output_folder + '/result/dresssmall_val_4head')
+    resultdor = get_path('../' + output_folder + '/result/dresssmall_val_2head')
 
 
-class SubTestWikiDressBeam4(SubTestWikiDress):
-    beam_search_size = 4
+class SubTestWikiDressBeam2(SubTestWikiDress):
+    beam_search_size = 2
     output_folder = args.output_folder
-    resultdor = get_path('../' + output_folder + '/result/dresssmall_test_4head')
+    resultdor = get_path('../' + output_folder + '/result/dresssmall_test_2head')
 
 
 def list_config(config):
