@@ -100,9 +100,31 @@ class Graph:
 
                     decode_word_weight = tf.multiply(decode_word_weight, weight_quality)
 
-                self.loss = sequence_loss(tf.stack(output.decoder_logit_list, axis=1),
-                                          tf.stack(output.gt_target_list, axis=1),
-                                          decode_word_weight)
+                loss_fn = None
+                # if self.model_config.loss_fn == 'sampled_softmax':
+                #     def _sampled_softmax(labels, inputs):
+                #         labels = tf.reshape(labels, [-1, 1])
+                #         # We need to compute the sampled_softmax_loss using 32bit floats to
+                #         # avoid numerical instabilities.
+                #         local_w_t = tf.cast(self.w, tf.float32)
+                #         local_b = tf.cast(self.b, tf.float32)
+                #         local_inputs = tf.cast(inputs, tf.float32)
+                #         return tf.nn.sampled_softmax_loss(
+                #                 weights=local_w_t,
+                #                 biases=local_b,
+                #                 labels=labels,
+                #                 inputs=local_inputs,
+                #                 num_sampled=10,
+                #                 num_classes=len(self.data.vocab_simple.i2w))
+                #
+                #     loss_fn = _sampled_softmax
+
+
+                self.loss = sequence_loss(logits=tf.stack(output.decoder_logit_list, axis=1),
+                                          targets=tf.stack(output.gt_target_list, axis=1),
+                                          weights=decode_word_weight,
+                                          softmax_loss_function=loss_fn)
+
 
         with tf.variable_scope('optimization'):
             self.global_step = tf.get_variable(

@@ -31,6 +31,8 @@ class DefaultConfig():
     learning_rate = 0.1
     max_grad_staleness = 0.0
     max_grad_norm = 5.0
+    loss_fn = args.loss_fn
+    num_samples = args.number_samples
 
     beam_search_size = -1
 

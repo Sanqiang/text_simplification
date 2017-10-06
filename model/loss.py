@@ -72,7 +72,7 @@ def sequence_loss(logits,
       crossent = nn_ops.sparse_softmax_cross_entropy_with_logits(
           labels=targets, logits=logits_flat)
     else:
-      crossent = softmax_loss_function(labels=targets, logits=logits_flat)
+      crossent = softmax_loss_function(labels=targets, inputs=logits_flat)
     crossent *= array_ops.reshape(weights, [-1])
     if average_across_timesteps and average_across_batch:
       crossent = math_ops.reduce_sum(crossent)
