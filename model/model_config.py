@@ -248,14 +248,14 @@ class SubValWikiDressL(SubTest):
 
     val_dataset_simple_folder = get_path(
         '../text_simplification_data/train/dress/wikilarge/')
-    val_dataset_simple_file = 'wiki.full.aner.valid.dst.processed'
+    val_dataset_simple_file = 'wiki.full.aner.ori.valid.dst.processed'
     val_dataset_complex = get_path(
-        '../text_simplification_data/train/dress/wikilarge/wiki.full.aner.valid.src.processed')
+        '../text_simplification_data/train/dress/wikilarge/wiki.full.aner.ori.valid.src.processed')
     val_mapper = get_path(
-        '../text_simplification_data/train/dress/wikilarge/wiki.full.aner.valid.map')
-    val_dataset_simple_raw_file = 'wiki.full.aner.valid.dst'
+        '../text_simplification_data/train/dress/wikilarge/wiki.full.aner.ori.valid.map')
+    val_dataset_simple_raw_file = 'wiki.full.aner.ori.valid.dst'
     val_dataset_complex_raw = get_path(
-        '../text_simplification_data/train/dress/wikilarge/wiki.full.aner.valid.src')
+        '../text_simplification_data/train/dress/wikilarge/wiki.full.aner.ori.valid.src')
     num_refs = 0
 
 
@@ -265,14 +265,14 @@ class SubTestWikiDressL(SubTest):
 
     val_dataset_simple_folder = get_path(
         '../text_simplification_data/train/dress/wikilarge/')
-    val_dataset_simple_file = 'wiki.full.aner.test.dst.processed'
+    val_dataset_simple_file = 'wiki.full.aner.ori.test.dst.processed'
     val_dataset_complex = get_path(
-        '../text_simplification_data/train/dress/wikilarge/wiki.full.aner.test.src.processed')
+        '../text_simplification_data/train/dress/wikilarge/wiki.full.aner.ori.test.src.processed')
     val_mapper = get_path(
-        '../text_simplification_data/train/dress/wikilarge/wiki.full.aner.test.map')
-    val_dataset_simple_raw_file = 'wiki.full.aner.test.dst'
+        '../text_simplification_data/train/dress/wikilarge/wiki.full.aner.ori.test.map')
+    val_dataset_simple_raw_file = 'wiki.full.aner.ori.test.dst'
     val_dataset_complex_raw = get_path(
-        '../text_simplification_data/train/dress/wikilarge/wiki.full.aner.test.src')
+        '../text_simplification_data/train/dress/wikilarge/wiki.full.aner.ori.test.src')
     num_refs = 0
 
 

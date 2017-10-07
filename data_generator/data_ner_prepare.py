@@ -167,7 +167,7 @@ class DataNERPrepareBase:
             map_util.dump_mappers(mappers, out_mapper_path)
 
     def process_dress(self):
-        for stage in ['eval', 'test', 'evall', 'testl']:
+        for stage in ['evall', 'testl', 'eval', 'test']:
             # For wiki dress
             if stage == 'eval':
                 ori_complex_path = get_path(
@@ -193,26 +193,26 @@ class DataNERPrepareBase:
                     '../text_simplification_data/train/dress/wikismall/PWKP_108016.tag.80.aner.ori.test.map')
             elif stage == 'evall':
                 ori_complex_path = get_path(
-                    '../text_simplification_data/train/dress/wikilarge/wiki.full.aner.valid.src')
+                    '../text_simplification_data/train/dress/wikilarge/wiki.full.aner.ori.valid.src')
                 ori_simple_path = get_path(
-                    '../text_simplification_data/train/dress/wikilarge/wiki.full.aner.valid.dst')
+                    '../text_simplification_data/train/dress/wikilarge/wiki.full.aner.ori.valid.dst')
                 out_complex_path = get_path(
-                    '../text_simplification_data/train/dress/wikilarge/wiki.full.aner.valid.src.processed')
+                    '../text_simplification_data/train/dress/wikilarge/wiki.full.aner.ori.valid.src.processed')
                 out_simple_path = get_path(
-                    '../text_simplification_data/train/dress/wikilarge/wiki.full.aner.valid.dst.processed')
+                    '../text_simplification_data/train/dress/wikilarge/wiki.full.aner.ori.valid.dst.processed')
                 out_mapper_path = get_path(
-                    '../text_simplification_data/train/dress/wikilarge/wiki.full.aner.valid.map')
+                    '../text_simplification_data/train/dress/wikilarge/wiki.full.aner.ori.valid.map')
             elif stage == 'testl':
                 ori_complex_path = get_path(
-                    '../text_simplification_data/train/dress/wikilarge/wiki.full.aner.test.src')
+                    '../text_simplification_data/train/dress/wikilarge/wiki.full.aner.ori.test.src')
                 ori_simple_path = get_path(
-                    '../text_simplification_data/train/dress/wikilarge/wiki.full.aner.test.dst')
+                    '../text_simplification_data/train/dress/wikilarge/wiki.full.aner.ori.test.dst')
                 out_complex_path = get_path(
-                    '../text_simplification_data/train/dress/wikilarge/wiki.full.aner.test.src.processed')
+                    '../text_simplification_data/train/dress/wikilarge/wiki.full.aner.ori.test.src.processed')
                 out_simple_path = get_path(
-                    '../text_simplification_data/train/dress/wikilarge/wiki.full.aner.test.dst.processed')
+                    '../text_simplification_data/train/dress/wikilarge/wiki.full.aner.ori.test.dst.processed')
                 out_mapper_path = get_path(
-                    '../text_simplification_data/train/dress/wikilarge/wiki.full.aner.test.map')
+                    '../text_simplification_data/train/dress/wikilarge/wiki.full.aner.ori.test.map')
 
 
 
