@@ -72,14 +72,17 @@ class MtEval_BLEU:
         sents = []
         for sent in open(path, encoding='utf-8'):
             if lower_case:
-                sent = sent.lower()
-            sents.append(sent)
+                sent = sent.lower().strip()
+            sents.append([sent])
         return self.result2xml(sents, setlabel, join_split='')
 
-    def result2xml(self, decode_result, setlabel, join_split=' '):
+    def result2xml(self, decode_result, setlabel, join_split=' ', add_special_eos=True):
         tmp_output = ''
         for batch_i in range(len(decode_result)):
-            tmp_line = join_split.join(decode_result[batch_i])
+            if add_special_eos:
+                tmp_line = join_split.join(decode_result[batch_i] + [constant.SYMBOL_DRESS_EOS])
+            else:
+                tmp_line = join_split.join(decode_result[batch_i])
             tmp_line = '<p><seg id="%d"> %s </seg></p>' % (
             1 + batch_i, self.html_escape(tmp_line))
             tmp_output = '\n'.join([tmp_line, tmp_output])

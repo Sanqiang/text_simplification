@@ -9,5 +9,7 @@ SYMBOL_END = '#eos#'
 SYMBOL_NUM = '#num#'
 SYMBOL_QUOTE = '#quot#'
 
+SYMBOL_DRESS_EOS = '###eos###'
+
 REVERED_VOCAB_SIZE = 10
 
