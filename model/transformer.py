@@ -151,6 +151,7 @@ class TransformerGraph(Graph):
         self.hparams.num_heads = self.model_config.num_heads
         self.hparams.pos = self.model_config.hparams_pos
         self.hparams.hidden_size = self.model_config.dimension
+        self.hparams.layer_prepostprocess_dropout = self.model_config.layer_prepostprocess_dropout
         if self.is_train:
             self.hparams.add_hparam('mode', tf.estimator.ModeKeys.TRAIN)
         else:

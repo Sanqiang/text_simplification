@@ -33,8 +33,11 @@ class DefaultConfig():
     learning_rate = args.learning_rate
     max_grad_staleness = 0.0
     max_grad_norm = 2.0
+    layer_prepostprocess_dropout = args.layer_prepostprocess_dropout
+
     loss_fn = args.loss_fn
     num_samples = args.number_samples
+
 
     beam_search_size = -1
 

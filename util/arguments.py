@@ -15,6 +15,8 @@ def get_args():
                         help='Which optimizer to use?')
     parser.add_argument('-lr', '--learning_rate', default=0.1, type=float,
                         help='Value of learning rate?')
+    parser.add_argument('-layer_drop', '--layer_prepostprocess_dropout', default=0.0, type=float,
+                        help='Dropout rate for data input?')
 
     # For Data
     parser.add_argument('-mc', '--min_count', default=5, type=int,
