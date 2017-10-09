@@ -184,8 +184,8 @@ class SubValWikiEightRefConfig(SubTest):
     val_dataset_complex_raw = get_path('../text_simplification_data/val/tune.8turkers.tok.norm.raw')
     num_refs = 8
 
-class SubValWikiEightRefConfigBeam2(SubValWikiEightRefConfig):
-    beam_search_size = 2
+class SubValWikiEightRefConfigBeam4(SubValWikiEightRefConfig):
+    beam_search_size = 4
     output_folder = args.output_folder
     resultdor = get_path('../' + output_folder + '/result/eightref_val_2head')
 
@@ -205,8 +205,8 @@ class SubTestWikiEightRefConfig(SubTest):
     num_refs = 8
 
 
-class SubTestWikiEightRefConfigBeam2(SubTestWikiEightRefConfig):
-    beam_search_size = 2
+class SubTestWikiEightRefConfigBeam4(SubTestWikiEightRefConfig):
+    beam_search_size = 4
     output_folder = args.output_folder
     resultdor = get_path('../' + output_folder + '/result/eightref_test_2head')
 
@@ -279,25 +279,25 @@ class SubTestWikiDressL(SubTest):
     num_refs = 0
 
 
-class SubValWikiDressBeam2(SubValWikiDress):
-    beam_search_size = 2
+class SubValWikiDressBeam4(SubValWikiDress):
+    beam_search_size = 4
     output_folder = args.output_folder
     resultdor = get_path('../' + output_folder + '/result/dresssmall_val_2head')
 
 
-class SubTestWikiDressBeam2(SubTestWikiDress):
-    beam_search_size = 2
+class SubTestWikiDressBeam4(SubTestWikiDress):
+    beam_search_size = 4
     output_folder = args.output_folder
     resultdor = get_path('../' + output_folder + '/result/dresssmall_test_2head')
 
 
-class SubValWikiDressLBeam2(SubValWikiDressL):
-    beam_search_size = 2
+class SubValWikiDressLBeam4(SubValWikiDressL):
+    beam_search_size = 4
     output_folder = args.output_folder
     resultdor = get_path('../' + output_folder + '/result/dresslarge_val_2head')
 
-class SubTestWikiDressLBeam2(SubTestWikiDressL):
-    beam_search_size = 2
+class SubTestWikiDressLBeam4(SubTestWikiDressL):
+    beam_search_size = 4
     output_folder = args.output_folder
     resultdor = get_path('../' + output_folder + '/result/dresslarge_test_2head')
 

@@ -310,22 +310,22 @@ if __name__ == '__main__':
         from model.model_config import WikiDressLargeDefault
         from model.model_config import SubValWikiEightRefConfig, SubTestWikiEightRefConfig
         from model.model_config import SubValWikiDress, SubTestWikiDress
-        from model.model_config import SubValWikiDressBeam2, SubTestWikiDressBeam2
-        from model.model_config import SubValWikiEightRefConfigBeam2, SubTestWikiEightRefConfigBeam2
+        from model.model_config import SubValWikiDressBeam4, SubTestWikiDressBeam4
+        from model.model_config import SubValWikiEightRefConfigBeam4, SubTestWikiEightRefConfigBeam4
         from model.model_config import SubValWikiDressL, SubTestWikiDressL
-        from model.model_config import SubValWikiDressLBeam2, SubTestWikiDressLBeam2
+        from model.model_config import SubValWikiDressLBeam4, SubTestWikiDressLBeam4
         while True:
             model_config = WikiDressLargeDefault()
             ckpt = get_ckpt(model_config.modeldir, model_config.outdir)
 
-            eval(SubValWikiDressLBeam2(), ckpt)
-            eval(SubTestWikiDressLBeam2(), ckpt)
+            eval(SubValWikiDressLBeam4(), ckpt)
+            eval(SubTestWikiDressLBeam4(), ckpt)
 
             eval(SubValWikiDressL(), ckpt)
             eval(SubTestWikiDressL(), ckpt)
 
-            eval(SubValWikiEightRefConfigBeam2(), ckpt)
-            eval(SubTestWikiEightRefConfigBeam2(), ckpt)
+            eval(SubValWikiEightRefConfigBeam4(), ckpt)
+            eval(SubTestWikiEightRefConfigBeam4(), ckpt)
 
             eval(SubValWikiDress(), ckpt)
             eval(SubTestWikiDress(), ckpt)
@@ -333,6 +333,6 @@ if __name__ == '__main__':
             eval(SubValWikiEightRefConfig(), ckpt)
             eval(SubTestWikiEightRefConfig(), ckpt)
 
-            eval(SubValWikiDressBeam2(), ckpt)
-            eval(SubTestWikiDressBeam2(), ckpt)
+            eval(SubValWikiDressBeam4(), ckpt)
+            eval(SubTestWikiDressBeam4(), ckpt)
 
