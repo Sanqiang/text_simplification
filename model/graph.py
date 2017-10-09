@@ -162,7 +162,7 @@ class Graph:
                 from tensor2tensor.models import transformer
                 self.hparams = transformer.transformer_base()
             opt = tf.contrib.opt.LazyAdamOptimizer(
-                self.hparams.learning_rate / 500.0,
+                self.hparams.learning_rate / 100.0,
                 beta1=self.hparams.optimizer_adam_beta1,
                 beta2=self.hparams.optimizer_adam_beta2,
                 epsilon=self.hparams.optimizer_adam_epsilon)

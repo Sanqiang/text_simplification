@@ -80,7 +80,6 @@ def train(model_config=None):
             ignore_missing_vars=True, reshape_variables=False)
 
     def init_fn(session):
-        print('init')
         if model_config.pretrained_embedding is not None:
             input_feed = {graph.embed_simple_placeholder: data.pretrained_emb_simple,
                           graph.embed_complex_placeholder: data.pretrained_emb_complex}
