@@ -14,4 +14,4 @@ module restore
 export PERL5LIB="/ihome/hdaqing/saz31/perl_lib"
 
 # Run the job
-srun python model/eval.py -fr transformer -out dr --mode all
+srun python ../model/eval.py -fr transformer -out dr --mode all

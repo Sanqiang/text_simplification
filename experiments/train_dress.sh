@@ -12,4 +12,4 @@
 module restore
 
 # Run the job
-srun python model/train.py -fr transformer -out dr -layer_drop 0.2 -op adam -lr 0.001 --mode dress
+srun python ../model/train.py -fr transformer -out dr -layer_drop 0.2 -op adam -lr 0.001 --mode dress
