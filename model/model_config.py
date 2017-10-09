@@ -146,6 +146,10 @@ class WikiDressLargeDefault(DefaultConfig):
 
     tokenizer = 'split'
     pretrained_embedding = get_path('../text_simplification_data/glove/glove.840B.300d.txt')
+    pretrained_embedding_simple = get_path(
+        '../text_simplification_data/train/dress/wikilarge/wiki.full.aner.train.dst.vocab.pretrained')
+    pretrained_embedding_complex = get_path(
+        '../text_simplification_data/train/dress/wikilarge/wiki.full.aner.train.src.vocab.pretrained')
 
 
 class WikiDressLargeTrainConfig(WikiDressLargeDefault):
