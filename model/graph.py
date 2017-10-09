@@ -172,6 +172,10 @@ class Graph:
                 from tensor2tensor.models import transformer
                 self.hparams = transformer.transformer_base()
             return TransformerOptimizer(self.loss, self.hparams, self.global_step).get_op()
+        elif self.model_config.optimizer == 'adadelta':
+            opt = tf.train.AdadeltaOptimizer(self.model_config.learning_rate)
+        elif self.model_config.optimizer == 'adagraddao':
+            opt = tf.train.AdagradDAOptimizer(self.model_config.learning_rate, self.global_step)
         else:
             raise Exception('Not Implemented Optimizer!')
 
