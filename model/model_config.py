@@ -94,6 +94,7 @@ class DefaultConfig():
 
     use_mteval = True
     mteval_script = get_path('script/mteval-v13a.pl')
+    mteval_mul_script = get_path('script/multi-bleu.perl')
 
 
 class DefaultTrainConfig(DefaultConfig):

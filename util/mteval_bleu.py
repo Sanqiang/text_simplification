@@ -18,13 +18,16 @@ class MtEval_BLEU:
                     '</SET_LABEL>\n' +
                     '</mteval>\n')
 
-    def get_result(self, path_ref, path_src, path_tar):
+    """Get Result for script/mteval-v13a.pl."""
+
+    def get_result_singleref(self, path_ref, path_src, path_tar):
         mteval_result = subprocess.check_output(['perl', self.model_config.mteval_script,
                                  '-r', path_ref,
                                  '-s', path_src,
                                  '-t', path_tar])
         m = re.search(b'BLEU score = (.+) for', mteval_result)
         return float(m.group(1))
+
 
     def get_bleu_from_decoderesult(self, step, sentence_complexs, sentence_simples, targets):
         path_ref = self.model_config.resultdor + '/mteval_reference_%s.xml' % step
@@ -43,7 +46,7 @@ class MtEval_BLEU:
         mteval_reference.close()
         mteval_target.close()
 
-        return self.get_result(path_ref, path_src, path_tar)
+        return self.get_result_singleref(path_ref, path_src, path_tar)
 
     def get_bleu_from_rawresult(self, step, targets, path_gt_simple=None):
         if path_gt_simple is None:
@@ -66,13 +69,14 @@ class MtEval_BLEU:
         mteval_reference.close()
         mteval_target.close()
 
-        return self.get_result(path_ref, path_src, path_tar)
+        return self.get_result_singleref(path_ref, path_src, path_tar)
 
     def txt2xml(self, path, setlabel, lower_case=False):
         sents = []
         for sent in open(path, encoding='utf-8'):
             if lower_case:
-                sent = sent.lower().strip()
+                sent = sent.lower()
+            sent = sent.strip()
             sents.append([sent])
         return self.result2xml(sents, setlabel, join_split='')
 
@@ -99,6 +103,40 @@ class MtEval_BLEU:
         txt = txt.replace('``', constant.SYMBOL_QUOTE)
         txt = txt.replace('`', constant.SYMBOL_QUOTE)
         return txt.strip()
+
+    """Get Result for script/multi-bleu.perl."""
+
+    def get_bleu_from_decoderesult_multirefs(self, step, path_ref, targets, lowercase=False):
+        path_tar = self.model_config.resultdor + '/multibleu_target_%s.txt' % step
+        f = open(path_tar, 'w', encoding='utf-8')
+        f.write(self.result2txt(targets, lowercase=lowercase))
+        f.close()
+
+        return self.get_result_multiref(path_ref, path_tar, lowercase=lowercase)
+
+    def result2txt(self, sents, lowercase=False, join_split=' '):
+        nsents = []
+        for sent in sents:
+            sent = join_split.join(sent)
+            if lowercase:
+                sent = sent.lower()
+            sent = sent.strip()
+            nsents.append(sent)
+
+        nsents = '\n'.join(nsents)
+        return nsents
+
+    def get_result_multiref(self, path_ref, path_tar, lowercase):
+        args = ' '.join([self.model_config.mteval_mul_script, path_ref, '<', path_tar])
+        if lowercase:
+            args = ' '.join([self.model_config.mteval_mul_script, '-lc', path_ref, '<', path_tar])
+
+        pipe = subprocess.Popen(args, stdin=subprocess.PIPE, stdout=subprocess.PIPE, shell=True)
+        mteval_result = pipe.communicate()
+
+        m = re.search(b'BLEU = ([\d+\.]+)', mteval_result[0])
+        return float(m.group(1))
+
 
 if __name__ == '__main__':
     bleu = MtEval_BLEU(DefaultConfig())

@@ -14,10 +14,11 @@ class PostProcess:
         batch_size = np.shape(decoder_targets)[0]
         ndecoder_targets = cp.deepcopy(decoder_targets)
         for batch_i in range(batch_size):
-            for len_i in range(len(decoder_targets[batch_i])):
-                word = decoder_targets[batch_i][len_i]
-                if word in mapper[batch_i]:
-                    ndecoder_targets[batch_i][len_i] = mapper[batch_i][word]
+            if decoder_targets[batch_i] is not None:
+                for len_i in range(len(decoder_targets[batch_i])):
+                    word = decoder_targets[batch_i][len_i]
+                    if word in mapper[batch_i]:
+                        ndecoder_targets[batch_i][len_i] = mapper[batch_i][word]
         return ndecoder_targets
 
     def replace_others(self, decoder_targets):
@@ -64,7 +65,7 @@ class PostProcess:
 
     def replace_unk_by_emb(self, encoder_words, encoder_embs, decoder_outputs, decoder_targets):
         batch_size = np.shape(decoder_targets)[0]
-        decoder_targets[0][3] = constant.SYMBOL_UNK
+        # decoder_targets[0][3] = constant.SYMBOL_UNK
 
         ndecoder_targets = cp.deepcopy(decoder_targets)
         for batch_i in range(batch_size):
