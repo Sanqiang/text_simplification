@@ -74,12 +74,6 @@ class TrainData:
 
         print('Use Pretrained Embedding\t%s.' % self.model_config.pretrained_embedding)
 
-        # if (os.path.exists(self.model_config.pretrained_embedding_complex + '.npy') and
-        #         os.path.exists(self.model_config.pretrained_embedding_simple + '.npy')):
-        #     self.pretrained_emb_complex = np.load(self.model_config.pretrained_embedding_complex + '.npy')
-        #     self.pretrained_emb_simple = np.load(self.model_config.pretrained_embedding_simple + '.npy')
-
-
         if not hasattr(self, 'glove'):
             self.glove = {}
             for line in open(self.model_config.pretrained_embedding, encoding='utf-8'):
