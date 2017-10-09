@@ -80,8 +80,7 @@ def train(model_config=None):
             ignore_missing_vars=True, reshape_variables=False)
 
     def init_fn(session):
-        sess.run(tf.initialize_all_variables())
-        
+        session.run(tf.global_variables_initializer())
         if model_config.pretrained_embedding is not None:
             input_feed = {graph.embed_simple_placeholder: data.pretrained_emb_simple,
                           graph.embed_complex_placeholder: data.pretrained_emb_complex}
