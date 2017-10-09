@@ -15,6 +15,7 @@ from model.eval import decode_to_output, decode
 import tensorflow as tf
 import tensorflow.contrib.slim as slim
 import math
+import numpy as np
 from util.arguments import get_args
 
 
@@ -100,6 +101,7 @@ def train(model_config=None):
                              init_fn=init_fn,
                              save_model_secs=model_config.save_model_secs)
     sess = sv.PrepareSession(config=session.get_session_config(model_config))
+    perplexitys = []
     while True:
         input_feed, sentence_simple, sentence_complex = get_graph_train_data(
             data,
@@ -110,9 +112,12 @@ def train(model_config=None):
         fetches = [graph.train_op, graph.loss, graph.global_step, graph.decoder_target_list]
         _, loss, step, result = sess.run(fetches, input_feed)
         perplexity = math.exp(loss)
+        perplexitys.append(perplexity)
 
         if step % model_config.model_print_freq:
-            print('Perplexity:\t%f at step %d.' % (perplexity, step))
+            print('Perplexity:\t%f at step %d.' % (np.mean(perplexity), step))
+            perplexitys.clear()
+
 
         if step % model_config.model_save_freq == 0:
 
