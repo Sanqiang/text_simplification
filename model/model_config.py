@@ -183,7 +183,7 @@ class SubValWikiEightRefConfig(SubTest):
 class SubValWikiEightRefConfigBeam4(SubValWikiEightRefConfig):
     beam_search_size = 4
     output_folder = args.output_folder
-    resultdor = get_path('../' + output_folder + '/result/eightref_val_2head')
+    resultdor = get_path('../' + output_folder + '/result/eightref_val_bm')
 
 
 class SubTestWikiEightRefConfig(SubTest):
@@ -204,7 +204,7 @@ class SubTestWikiEightRefConfig(SubTest):
 class SubTestWikiEightRefConfigBeam4(SubTestWikiEightRefConfig):
     beam_search_size = 4
     output_folder = args.output_folder
-    resultdor = get_path('../' + output_folder + '/result/eightref_test_2head')
+    resultdor = get_path('../' + output_folder + '/result/eightref_test_bm')
 
 
 class SubValWikiDress(SubTest):
@@ -278,24 +278,24 @@ class SubTestWikiDressL(SubTest):
 class SubValWikiDressBeam4(SubValWikiDress):
     beam_search_size = 4
     output_folder = args.output_folder
-    resultdor = get_path('../' + output_folder + '/result/dresssmall_val_2head')
+    resultdor = get_path('../' + output_folder + '/result/dresssmall_val_bm')
 
 
 class SubTestWikiDressBeam4(SubTestWikiDress):
     beam_search_size = 4
     output_folder = args.output_folder
-    resultdor = get_path('../' + output_folder + '/result/dresssmall_test_2head')
+    resultdor = get_path('../' + output_folder + '/result/dresssmall_test_bm')
 
 
 class SubValWikiDressLBeam4(SubValWikiDressL):
     beam_search_size = 4
     output_folder = args.output_folder
-    resultdor = get_path('../' + output_folder + '/result/dresslarge_val_2head')
+    resultdor = get_path('../' + output_folder + '/result/dresslarge_val_bm')
 
 class SubTestWikiDressLBeam4(SubTestWikiDressL):
     beam_search_size = 4
     output_folder = args.output_folder
-    resultdor = get_path('../' + output_folder + '/result/dresslarge_test_2head')
+    resultdor = get_path('../' + output_folder + '/result/dresslarge_test_bm')
 
 
 def list_config(config):
