@@ -111,9 +111,11 @@ def train(model_config=None):
         _, loss, step, result = sess.run(fetches, input_feed)
         perplexity = math.exp(loss)
 
+        if step % model_config.model_print_freq:
+            print('Perplexity:\t%f at step %d.' % (perplexity, step))
 
         if step % model_config.model_save_freq == 0:
-            print('Perplexity:\t%f at step %d.' % (perplexity, step))
+
             graph.saver.save(sess, model_config.outdir + '/model.ckpt-%d' % step)
             f = open(model_config.outdir + '/output_model.ckpt-%d' % step, 'w', encoding='utf-8')
             result = decode(result, data.vocab_simple)
