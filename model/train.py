@@ -114,7 +114,7 @@ def train(model_config=None):
         perplexity = math.exp(loss)
         perplexitys.append(perplexity)
 
-        if step % model_config.model_print_freq:
+        if step % model_config.model_print_freq == 0:
             print('Perplexity:\t%f at step %d.' % (np.mean(perplexity), step))
             perplexitys.clear()
 
