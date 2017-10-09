@@ -193,7 +193,7 @@ def eval(model_config=None, ckpt=None):
                         # i.e. [.25, .25, .25, .25]
                         sentence_bleu([ref[ref_i][batch_i]], target[batch_i]))
                 if len(batch_bleu_rs) > 0:
-                    batch_bleu_r = max(batch_bleu_rs)
+                    batch_bleu_r = np.meam(batch_bleu_rs)
                     batch_ibleu = batch_bleu_r * 0.9 + batch_bleu_i * 0.1
                 else:
                     batch_ibleu = batch_bleu_i
@@ -224,10 +224,10 @@ def eval(model_config=None, ckpt=None):
         bleu_or_decode = mteval.get_bleu_from_decoderesult(step, sentence_complexs, refs[ref_i], targets)
         bleu_ors_decode.append(bleu_or_decode)
     if bleu_ors_decode:
-        bleu_decode_max = max(bleu_ors_decode)
-        bleu_decode = 0.9 * bleu_decode_max + 0.1 * bleu_oi_decode
+        bleu_decode_mean = np.mean(bleu_ors_decode)
+        bleu_decode = 0.9 * bleu_decode_mean + 0.1 * bleu_oi_decode
     else:
-        bleu_decode_max = bleu_oi_decode
+        bleu_decode_mean = bleu_oi_decode
         bleu_decode = bleu_oi_decode
     print('Current Mteval iBLEU decode: \t%f' % bleu_decode)
 
@@ -240,10 +240,10 @@ def eval(model_config=None, ckpt=None):
                                                model_config.val_dataset_simple_raw_references + str(ref_i)))
         bleu_ors_raw.append(bleu_or_raw)
     if bleu_ors_raw:
-        bleu_ors_raw_max = max(bleu_ors_raw)
-        bleu_raw = 0.9 * bleu_ors_raw_max + 0.1 * bleu_oi_raw
+        bleu_ors_raw_mean = np.mean(bleu_ors_raw)
+        bleu_raw = 0.9 * bleu_ors_raw_mean + 0.1 * bleu_oi_raw
     else:
-        bleu_ors_raw_max = bleu_oi_raw
+        bleu_ors_raw_mean = bleu_oi_raw
         bleu_raw = bleu_oi_raw
     print('Current Mteval iBLEU decode: \t%f' % bleu_raw)
 
@@ -251,10 +251,10 @@ def eval(model_config=None, ckpt=None):
     format = "%." + str(decimal_cnt) + "f"
     bleu_raw = format % bleu_raw
     bleu_oi_raw = format % bleu_oi_raw
-    bleu_ors_raw_max = format % bleu_ors_raw_max
+    bleu_ors_raw_mean = format % bleu_ors_raw_mean
     bleu_decode = format % bleu_decode
     bleu_oi_decode = format % bleu_oi_decode
-    bleu_decode_max = format % bleu_decode_max
+    bleu_decode_mean = format % bleu_decode_mean
     ibleu = format % ibleu
     perplexity = format % perplexity
 
@@ -262,10 +262,10 @@ def eval(model_config=None, ckpt=None):
     f = open((model_config.resultdor + '/step' + str(step) +
               '-bleuraw' + str(bleu_raw) +
               '-bleurawoi' + str(bleu_oi_raw) +
-              '-bleurawor' + str(bleu_ors_raw_max) +
+              '-bleurawor' + str(bleu_ors_raw_mean) +
               '-bleudecode' + str(bleu_decode) +
               '-bleudecodeoi' + str(bleu_oi_decode) +
-              '-bleudecodeor' + str(bleu_decode_max) +
+              '-bleudecodeor' + str(bleu_decode_mean) +
               '-perplexity' + str(perplexity) +
               '-bleunltk' + str(ibleu)),
              'w', encoding='utf-8')
@@ -276,10 +276,10 @@ def eval(model_config=None, ckpt=None):
     f = open((model_config.resultdor + '/step' + str(step) +
               '-bleuraw' + str(bleu_raw) +
               '-bleurawoi' + str(bleu_oi_raw) +
-              '-bleurawor' + str(bleu_ors_raw_max) +
+              '-bleurawor' + str(bleu_ors_raw_mean) +
               '-bleudecode' + str(bleu_decode) +
               '-bleudecodeoi' + str(bleu_oi_decode) +
-              '-bleudecodeor' + str(bleu_decode_max) +
+              '-bleudecodeor' + str(bleu_decode_mean) +
               '-perplexity' + str(perplexity) +
               '-bleunltk' + str(ibleu) + '.result'),
              'w', encoding='utf-8')

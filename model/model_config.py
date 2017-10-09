@@ -23,7 +23,7 @@ class DefaultConfig():
     save_model_secs = 60
 
     min_count = 0
-    lower_case = True
+    lower_case = False
     tokenizer = 'split' # split: white space split / nltk: nltk tokenizer
 
     # Follow the configuration from https://github.com/XingxingZhang/dress
