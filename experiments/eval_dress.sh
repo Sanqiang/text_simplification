@@ -2,8 +2,8 @@
 #SBATCH --gres=gpu:1
 #SBATCH --cluster=gpu
 #SBATCH --partition=gtx1080
-#SBATCH --job-name=vl_pl4a
-#SBATCH --output=vl_pl4a.out
+#SBATCH --job-name=vdr
+#SBATCH --output=vdr.out
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
 #SBATCH --cpus-per-task=1
