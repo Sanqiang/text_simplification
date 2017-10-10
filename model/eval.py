@@ -103,7 +103,6 @@ def eval(model_config=None, ckpt=None):
     ibleus_all = []
     perplexitys_all = []
     saris_all = []
-    fkgls_all = []
     decode_outputs_all = []
     targets = []
     targets_raw = []
@@ -213,10 +212,11 @@ def eval(model_config=None, ckpt=None):
             saris_all.append(batch_sari)
 
             # Compute FKGL
-            batch_fkgl = get_fkgl(' '.join(target_raw[batch_i]))
+            target_text = ' '.join(target_raw[batch_i])
+            batch_fkgl = 0
+            if len(target_text) > 0:
+                batch_fkgl = get_fkgl(' '.join(target_raw[batch_i]))
             fkgls.append(batch_fkgl)
-            fkgls_all.append(batch_fkgl)
-
 
         target_output = decode_to_output(target, sentence_simple, sentence_complex,
                                          effective_batch_size, ibleus, target_raw, sentence_complex_raw,
@@ -229,7 +229,9 @@ def eval(model_config=None, ckpt=None):
     ibleu = np.mean(ibleus_all)
     perplexity = np.mean(perplexitys_all)
     sari = np.mean(saris_all)
-    fkgl = np.mean(fkgls_all)
+    # Compute FKGL in Corpus level
+    fkgl = get_fkgl(
+        '\n'.join([' '.join(target_raw) for target_raw in targets_raw]))
     print('Current iBLEU: \t%f' % ibleu)
     print('Current SARI: \t%f' % sari)
     print('Current FKGL: \t%f' % fkgl)
