@@ -267,9 +267,11 @@ def eval(model_config=None, ckpt=None):
         bleu_raw = bleu_oi_raw
     print('Current Mteval iBLEU raw: \t%f' % bleu_raw)
 
-    bleu_joshua = mteval.get_bleu_from_joshua(
-        step, model_config.val_dataset_simple_folder + model_config.val_dataset_simple_raw_references[:-5],
-        targets_raw)
+    bleu_joshua = bleu_oi_raw
+    if model_config.num_refs > 0:
+        bleu_joshua = mteval.get_bleu_from_joshua(
+            step, model_config.val_dataset_simple_folder + model_config.val_dataset_simple_raw_references[:-5],
+            targets_raw)
 
     decimal_cnt = 5
     format = "%." + str(decimal_cnt) + "f"
