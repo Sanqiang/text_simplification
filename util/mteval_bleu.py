@@ -135,7 +135,7 @@ class MtEval_BLEU:
         mteval_result = pipe.communicate()
 
         m = re.search(b'BLEU = ([\d+\.]+)', mteval_result[0])
-        return float(m.group(1))
+        return float(m.group(1)) / 100.0
 
 
 if __name__ == '__main__':
