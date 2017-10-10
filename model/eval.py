@@ -348,20 +348,20 @@ if __name__ == '__main__':
             model_config = WikiDressLargeDefault()
             ckpt = get_ckpt(model_config.modeldir, model_config.outdir)
 
-            eval(SubValWikiDressLBeam4(), ckpt)
-            eval(SubTestWikiDressLBeam4(), ckpt)
-
             eval(SubValWikiDressL(), ckpt)
             eval(SubTestWikiDressL(), ckpt)
-
-            eval(SubValWikiEightRefConfigBeam4(), ckpt)
-            eval(SubTestWikiEightRefConfigBeam4(), ckpt)
 
             eval(SubValWikiDress(), ckpt)
             eval(SubTestWikiDress(), ckpt)
 
             eval(SubValWikiEightRefConfig(), ckpt)
             eval(SubTestWikiEightRefConfig(), ckpt)
+
+            eval(SubValWikiDressLBeam4(), ckpt)
+            eval(SubTestWikiDressLBeam4(), ckpt)
+
+            eval(SubValWikiEightRefConfigBeam4(), ckpt)
+            eval(SubTestWikiEightRefConfigBeam4(), ckpt)
 
             eval(SubValWikiDressBeam4(), ckpt)
             eval(SubTestWikiDressBeam4(), ckpt)
