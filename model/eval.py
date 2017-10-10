@@ -239,19 +239,20 @@ def eval(model_config=None, ckpt=None):
     print('Current eval done!')
     # MtEval Result
     mteval = MtEval_BLEU(model_config)
+
     # MtEval Result - Decode
-    bleu_oi_decode = mteval.get_bleu_from_decoderesult(step, sentence_complexs, sentence_simples, targets)
-    bleu_or_decode = bleu_oi_decode
-    if model_config.num_refs > 0:
-        path_ref = model_config.val_dataset_simple_folder + model_config.val_dataset_simple_references
-        #Decode evaluation must be lowercase because the processed files are all lowercased
-        bleu_or_decode = mteval.get_bleu_from_decoderesult_multirefs(step, path_ref, targets,
-                                                                     lowercase=True)
-    if model_config.num_refs > 0:
-        bleu_decode = 0.9 * bleu_or_decode + 0.1 * bleu_oi_decode
-    else:
-        bleu_decode = bleu_oi_decode
-    print('Current Mteval iBLEU decode: \t%f' % bleu_decode)
+    # bleu_oi_decode = mteval.get_bleu_from_decoderesult(step, sentence_complexs, sentence_simples, targets)
+    # bleu_or_decode = bleu_oi_decode
+    # if model_config.num_refs > 0:
+    #     path_ref = model_config.val_dataset_simple_folder + model_config.val_dataset_simple_references
+    #     #Decode evaluation must be lowercase because the processed files are all lowercased
+    #     bleu_or_decode = mteval.get_bleu_from_decoderesult_multirefs(step, path_ref, targets,
+    #                                                                  lowercase=True)
+    # if model_config.num_refs > 0:
+    #     bleu_decode = 0.9 * bleu_or_decode + 0.1 * bleu_oi_decode
+    # else:
+    #     bleu_decode = bleu_oi_decode
+    # print('Current Mteval iBLEU decode: \t%f' % bleu_decode)
 
     # MtEval Result - raw
     bleu_oi_raw = mteval.get_bleu_from_rawresult(step, targets_raw)
@@ -271,9 +272,9 @@ def eval(model_config=None, ckpt=None):
     bleu_raw = format % bleu_raw
     bleu_oi_raw = format % bleu_oi_raw
     bleu_or_raw = format % bleu_or_raw
-    bleu_decode = format % bleu_decode
-    bleu_oi_decode = format % bleu_oi_decode
-    bleu_or_decode = format % bleu_or_decode
+    # bleu_decode = format % bleu_decode
+    # bleu_oi_decode = format % bleu_oi_decode
+    # bleu_or_decode = format % bleu_or_decode
     ibleu = format % ibleu
     sari = format % sari
     fkgl = format % fkgl
@@ -282,9 +283,9 @@ def eval(model_config=None, ckpt=None):
     content = '\n'.join(['bleu_raw\t' + str(bleu_raw),
                          'bleu_oi_raw\t' + str(bleu_oi_raw),
                          'bleu_or_raw\t' + str(bleu_or_raw),
-                         'bleu_decode\t' + str(bleu_decode),
-                         'bleu_oi_decode\t' + str(bleu_oi_decode),
-                         'bleu_or_decode\t' + str(bleu_or_decode),
+                         # 'bleu_decode\t' + str(bleu_decode),
+                         # 'bleu_oi_decode\t' + str(bleu_oi_decode),
+                         # 'bleu_or_decode\t' + str(bleu_or_decode),
                          'ibleu\t' + str(ibleu),
                          'sari\t' + str(sari),
                          'fkgl\t' + str(fkgl)
