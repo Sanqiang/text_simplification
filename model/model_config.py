@@ -76,7 +76,7 @@ class DefaultConfig():
     val_dataset_simple_folder = get_path('data/')
     val_dataset_simple_file = 'valid_dummy_simple_dataset'
     val_dataset_complex = get_path('data/valid_dummy_complex_dataset')
-    val_dataset_simple_references = 'valid_dummy_simple_dataset.'
+    val_dataset_simple_references = 'valid_dummy_simple_dataset.raw.'
     val_mapper = get_path('data/valid_dummy_mapper')
     val_dataset_simple_raw_file = val_dataset_simple_file
     val_dataset_simple_raw_references = val_dataset_simple_references
@@ -95,6 +95,8 @@ class DefaultConfig():
     use_mteval = True
     mteval_script = get_path('script/mteval-v13a.pl')
     mteval_mul_script = get_path('script/multi-bleu.perl')
+    joshua_class = get_path('script/ppdb-simplification-release-joshua5.0/joshua/class')
+    joshua_script = get_path('script/ppdb-simplification-release-joshua5.0/joshua/bin/bleu')
 
 
 class DefaultTrainConfig(DefaultConfig):

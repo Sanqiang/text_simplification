@@ -267,6 +267,10 @@ def eval(model_config=None, ckpt=None):
         bleu_raw = bleu_oi_raw
     print('Current Mteval iBLEU raw: \t%f' % bleu_raw)
 
+    bleu_joshua = mteval.get_bleu_from_joshua(
+        step, model_config.val_dataset_simple_folder + model_config.val_dataset_simple_raw_references[:-5],
+        targets_raw)
+
     decimal_cnt = 5
     format = "%." + str(decimal_cnt) + "f"
     bleu_raw = format % bleu_raw
@@ -276,6 +280,7 @@ def eval(model_config=None, ckpt=None):
     # bleu_oi_decode = format % bleu_oi_decode
     # bleu_or_decode = format % bleu_or_decode
     ibleu = format % ibleu
+    bleu_joshua = format % bleu_joshua
     sari = format % sari
     fkgl = format % fkgl
     perplexity = format % perplexity
@@ -287,6 +292,7 @@ def eval(model_config=None, ckpt=None):
                          # 'bleu_oi_decode\t' + str(bleu_oi_decode),
                          # 'bleu_or_decode\t' + str(bleu_or_decode),
                          'ibleu\t' + str(ibleu),
+                         'bleu_joshua\t' + str(bleu_joshua),
                          'sari\t' + str(sari),
                          'fkgl\t' + str(fkgl)
                          ])
@@ -296,6 +302,7 @@ def eval(model_config=None, ckpt=None):
               '-bleuraw' + str(bleu_raw) +
               '-bleurawoi' + str(bleu_oi_raw) +
               '-bleurawor' + str(bleu_or_raw) +
+              '-bleuj' + str(bleu_joshua) +
               '-perplexity' + str(perplexity) +
               '-bleunltk' + str(ibleu) +
               '-sari' + str(sari) +
@@ -308,6 +315,7 @@ def eval(model_config=None, ckpt=None):
               '-bleuraw' + str(bleu_raw) +
               '-bleurawoi' + str(bleu_oi_raw) +
               '-bleurawor' + str(bleu_or_raw) +
+              '-bleuj' + str(bleu_joshua) +
               '-perplexity' + str(perplexity) +
               '-bleunltk' + str(ibleu) +
               '-sari' + str(sari) +

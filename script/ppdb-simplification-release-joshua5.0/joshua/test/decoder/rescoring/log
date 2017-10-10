@@ -1,0 +1,56 @@
+Parameters read from configuration file:
+    rescore-forest: true
+    rescoreforest = 'true'
+    rescore-forest-weight: 100.000000
+    rescoreforestweight = '100'
+    lm = 'kenlm 5 false false 100 ../constrained/lm.gz'
+    tm = 'thrax pt 12 grammar.gz'
+    tm = 'thrax glue -1 glue-grammar'
+    markoovs = 'true'
+    defaultnonterminal = 'X'
+    goalsymbol = 'GOAL'
+    poplimit = '100'
+    useuniquenbest = 'true'
+    topn = '2'
+    featurefunction = 'WordPenalty'
+    featurefunction = 'OOVPenalty'
+Parameters overridden from the command line:
+    threads = '1'
+    c = 'joshua.config'
+Reading grammar from file grammar.gz...
+...done.
+MemoryBasedBatchGrammar: Read 13 rules with 7 distinct source sides from 'grammar.gz'
+Reading grammar from file glue-grammar...
+...done.
+MemoryBasedBatchGrammar: Read 3 rules with 3 distinct source sides from 'glue-grammar'
+Memory used 5.4 MB
+Grammar loading took: 0 seconds.
+lm line: kenlm 5 false false 100 ../constrained/lm.gz
+Loading the LM will be faster if you build a binary file.
+Reading ../constrained/lm.gz
+----5---10---15---20---25---30---35---40---45---50---55---60---65---70---75---80---85---90---95--100
+****************************************************************************************************
+Stateful object with state index 0
+FEATURE: tm_glue (weight 1.000)
+FEATURE: tm_pt (weight 1.000)
+FEATURE: lm_0, order 5 (weight 1.237)
+FEATURE: WordPenalty (weight -1.000)
+FEATURE: OOVPenalty (weight -100.000)
+Grammar sorting happening lazily on-demand.
+Model loading took 0 seconds
+Memory used 5.4 MB
+Translating sentence #0 [thread 9]: 'el nino tomo la cucaracha'
+Sentence 0 Chart: ADDED 346 MERGED 8 DOT-ITEMS ADDED: 45
+Sentence id=0; BestlogP=-19.240
+translation of sentence 0 took 0.174 seconds [thread 9]
+Memory used after sentence 0 is 16.1 MB
+[0] 2-best extraction took 0.723 seconds
+Translating sentence #1 [thread 9]: 'el nino tomo la cucaracha'
+Sentence 1 Chart: ADDED 346 MERGED 8 DOT-ITEMS ADDED: 45
+Sentence id=1; BestlogP=-19.240
+translation of sentence 1 took 0.074 seconds [thread 9]
+Memory used after sentence 1 is 32.3 MB
+[1] 2-best extraction took 0.198 seconds
+Decoding completed.
+Memory used 37.7 MB
+Total running time: 1 seconds

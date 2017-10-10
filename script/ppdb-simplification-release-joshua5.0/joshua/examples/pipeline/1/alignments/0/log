@@ -1,0 +1,111 @@
+main() {
+  Execution directory: alignments/0
+  Preparing Training Data {
+    ERROR: No files found at source /dev/null
+    ERROR: No files found at source /dev/null
+  }
+  954 training, 0 test
+  Training models: 2 stages {
+    Training stage 1: MODEL1 and MODEL1 jointly for 5 iterations {
+      Initializing forward model
+      Initializing reverse model
+      Joint Train: 954 sentences, jointly {
+        Iteration 1/5 {
+          Sentence 1/954
+          Sentence 2/954
+          Sentence 3/954
+          Sentence 250/954
+          Log-likelihood 1 = -76238.501
+          Log-likelihood 2 = -61939.619
+          ... 950 lines omitted ...
+        }
+        Iteration 2/5 {
+          Sentence 1/954
+          Sentence 2/954
+          Sentence 3/954
+          Log-likelihood 1 = -89198.316
+          Log-likelihood 2 = -72569.541
+          ... 951 lines omitted ...
+        }
+        Iteration 3/5 {
+          Sentence 1/954
+          Sentence 2/954
+          Sentence 3/954
+          Log-likelihood 1 = -71069.970
+          Log-likelihood 2 = -56817.975
+          ... 951 lines omitted ...
+        }
+        ... 2 lines omitted ...
+      } [2.9s, cum. 4.6s]
+      ... 2 lines omitted ...
+    } [8.4s, cum. 8.4s]
+    Training stage 2: HMM and HMM jointly for 5 iterations {
+      Joint Train: 954 sentences, jointly {
+        Iteration 1/5 {
+          Sentence 1/954
+          Sentence 2/954
+          Sentence 3/954
+          Sentence 42/954
+          Sentence 420/954
+          Log-likelihood 1 = -82311.376
+          Log-likelihood 2 = -61916.020
+          ... 949 lines omitted ...
+        } [5.3s, cum. 5.3s]
+        Iteration 2/5 {
+          Sentence 1/954
+          Sentence 2/954
+          Sentence 3/954
+          Sentence 717/954
+          Log-likelihood 1 = -80846.954
+          Log-likelihood 2 = -58111.946
+          ... 950 lines omitted ...
+        } [4.9s, cum. 10s]
+        Iteration 3/5 {
+          Sentence 1/954
+          Sentence 2/954
+          Sentence 3/954
+          Sentence 591/954
+          Log-likelihood 1 = -81181.595
+          Log-likelihood 2 = -57487.937
+          ... 950 lines omitted ...
+        } [5.2s, cum. 15s]
+        Iteration 4/5 {
+          Sentence 1/954
+          Sentence 2/954
+          Sentence 3/954
+          Sentence 419/954
+          Log-likelihood 1 = -81442.697
+          Log-likelihood 2 = -56871.923
+          ... 950 lines omitted ...
+        } [7.6s, cum. 23s]
+        Iteration 5/5 {
+          Sentence 1/954
+          Sentence 2/954
+          Sentence 3/954
+          Sentence 511/954
+          Log-likelihood 1 = -81729.144
+          Log-likelihood 2 = -56490.986
+          ... 950 lines omitted ...
+        } [6.5s, cum. 29s]
+      } [29s, cum. 29s]
+      saveParams(alignments/0/stage2.1.params) {
+        Text
+        Binary
+      }
+      saveParams(alignments/0/stage2.2.params) {
+        Text
+        Binary
+      }
+    } [31s, cum. 39s]
+  } [39s, cum. 40s]
+  Aligning training using aligner SoftUnion(HMM:normal,HMM:reversed)@0.500 {
+    Writing alignments to alignments/0/training {
+      Sentence 0
+      Sentence 1
+      Sentence 2
+      Sentence 277
+      ... 950 lines omitted ...
+    } [3.6s, cum. 3.6s]
+  } [3.6s, cum. 43s]
+  Execution directory: alignments/0
+} [43s]

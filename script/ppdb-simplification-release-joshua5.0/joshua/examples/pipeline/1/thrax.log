@@ -1,0 +1,524 @@
+Running in mode: translation
+[SCHED] planned job for class edu.jhu.thrax.hadoop.jobs.VocabularyJob
+[SCHED] planned job for class edu.jhu.thrax.hadoop.jobs.ExtractionJob
+[SCHED] planned job for class edu.jhu.thrax.hadoop.features.mapred.TargetPhraseGivenSourceFeature
+[SCHED] planned job for class edu.jhu.thrax.hadoop.features.mapred.SourcePhraseGivenTargetFeature
+[SCHED] planned job for class edu.jhu.thrax.hadoop.jobs.TargetWordGivenSourceWordProbabilityJob
+[SCHED] planned job for class edu.jhu.thrax.hadoop.jobs.SourceWordGivenTargetWordProbabilityJob
+[SCHED] planned job for class edu.jhu.thrax.hadoop.features.annotation.AnnotationFeatureJob
+[SCHED] planned job for class edu.jhu.thrax.hadoop.jobs.OutputJob
+[SCHED] class edu.jhu.thrax.hadoop.jobs.OutputJob in state WAITING
+[SCHED] class edu.jhu.thrax.hadoop.features.mapred.SourcePhraseGivenTargetFeature in state WAITING
+[SCHED] class edu.jhu.thrax.hadoop.jobs.ExtractionJob in state WAITING
+[SCHED] class edu.jhu.thrax.hadoop.jobs.VocabularyJob in state WAITING
+[SCHED] class edu.jhu.thrax.hadoop.jobs.VocabularyJob in state READY
+[SCHED] class edu.jhu.thrax.hadoop.features.annotation.AnnotationFeatureJob in state WAITING
+[SCHED] class edu.jhu.thrax.hadoop.jobs.TargetWordGivenSourceWordProbabilityJob in state WAITING
+[SCHED] class edu.jhu.thrax.hadoop.jobs.VocabularyJob in state WAITING
+[SCHED] class edu.jhu.thrax.hadoop.jobs.VocabularyJob in state READY
+[SCHED] class edu.jhu.thrax.hadoop.jobs.ExtractionJob in state WAITING
+[SCHED] class edu.jhu.thrax.hadoop.jobs.VocabularyJob in state WAITING
+[SCHED] class edu.jhu.thrax.hadoop.jobs.VocabularyJob in state READY
+[SCHED] class edu.jhu.thrax.hadoop.jobs.SourceWordGivenTargetWordProbabilityJob in state WAITING
+[SCHED] class edu.jhu.thrax.hadoop.jobs.VocabularyJob in state WAITING
+[SCHED] class edu.jhu.thrax.hadoop.jobs.VocabularyJob in state READY
+[SCHED] class edu.jhu.thrax.hadoop.features.mapred.TargetPhraseGivenSourceFeature in state WAITING
+[SCHED] class edu.jhu.thrax.hadoop.jobs.ExtractionJob in state WAITING
+[SCHED] class edu.jhu.thrax.hadoop.jobs.VocabularyJob in state WAITING
+[SCHED] class edu.jhu.thrax.hadoop.jobs.VocabularyJob in state READY
+[SCHED] class edu.jhu.thrax.hadoop.jobs.VocabularyJob in state RUNNING
+Java HotSpot(TM) 64-Bit Server VM warning: You have loaded library /mnt/castor/seas_home/x/xwe/software/hadoop-2.2.0/lib/native/libhadoop.so.1.0.0 which might have disabled stack guard. The VM will try to fix the stack guard now.
+It's highly recommended that you fix the library with 'execstack -c <libfile>', or link it with '-z noexecstack'.
+14/03/18 22:49:36 WARN util.NativeCodeLoader: Unable to load native-hadoop library for your platform... using builtin-java classes where applicable
+14/03/18 22:49:37 INFO Configuration.deprecation: session.id is deprecated. Instead, use dfs.metrics.session-id
+14/03/18 22:49:37 INFO jvm.JvmMetrics: Initializing JVM Metrics with processName=JobTracker, sessionId=
+14/03/18 22:49:38 INFO input.FileInputFormat: Total input paths to process : 1
+14/03/18 22:49:38 INFO mapreduce.JobSubmitter: number of splits:1
+14/03/18 22:49:38 INFO Configuration.deprecation: user.name is deprecated. Instead, use mapreduce.job.user.name
+14/03/18 22:49:38 INFO Configuration.deprecation: mapred.jar is deprecated. Instead, use mapreduce.job.jar
+14/03/18 22:49:38 INFO Configuration.deprecation: mapred.reduce.tasks is deprecated. Instead, use mapreduce.job.reduces
+14/03/18 22:49:38 INFO Configuration.deprecation: mapred.output.value.class is deprecated. Instead, use mapreduce.job.output.value.class
+14/03/18 22:49:38 INFO Configuration.deprecation: mapred.output.key.comparator.class is deprecated. Instead, use mapreduce.job.output.key.comparator.class
+14/03/18 22:49:38 INFO Configuration.deprecation: mapred.mapoutput.value.class is deprecated. Instead, use mapreduce.map.output.value.class
+14/03/18 22:49:38 INFO Configuration.deprecation: mapreduce.combine.class is deprecated. Instead, use mapreduce.job.combine.class
+14/03/18 22:49:38 INFO Configuration.deprecation: mapreduce.map.class is deprecated. Instead, use mapreduce.job.map.class
+14/03/18 22:49:38 INFO Configuration.deprecation: mapred.job.name is deprecated. Instead, use mapreduce.job.name
+14/03/18 22:49:38 INFO Configuration.deprecation: mapreduce.reduce.class is deprecated. Instead, use mapreduce.job.reduce.class
+14/03/18 22:49:38 INFO Configuration.deprecation: mapred.input.dir is deprecated. Instead, use mapreduce.input.fileinputformat.inputdir
+14/03/18 22:49:38 INFO Configuration.deprecation: mapred.output.dir is deprecated. Instead, use mapreduce.output.fileoutputformat.outputdir
+14/03/18 22:49:38 INFO Configuration.deprecation: mapred.max.split.size is deprecated. Instead, use mapreduce.input.fileinputformat.split.maxsize
+14/03/18 22:49:38 INFO Configuration.deprecation: mapreduce.outputformat.class is deprecated. Instead, use mapreduce.job.outputformat.class
+14/03/18 22:49:38 INFO Configuration.deprecation: mapred.map.tasks is deprecated. Instead, use mapreduce.job.maps
+14/03/18 22:49:38 INFO Configuration.deprecation: mapred.output.key.class is deprecated. Instead, use mapreduce.job.output.key.class
+14/03/18 22:49:38 INFO Configuration.deprecation: mapred.mapoutput.key.class is deprecated. Instead, use mapreduce.map.output.key.class
+14/03/18 22:49:38 INFO Configuration.deprecation: mapred.working.dir is deprecated. Instead, use mapreduce.job.working.dir
+14/03/18 22:49:38 INFO mapreduce.JobSubmitter: Submitting tokens for job: job_local2074974254_0001
+14/03/18 22:49:38 WARN conf.Configuration: file:/tmp/hadoop-xwe/mapred/staging/xwe2074974254/.staging/job_local2074974254_0001/job.xml:an attempt to override final parameter: mapreduce.job.end-notification.max.retry.interval;  Ignoring.
+14/03/18 22:49:38 WARN conf.Configuration: file:/tmp/hadoop-xwe/mapred/staging/xwe2074974254/.staging/job_local2074974254_0001/job.xml:an attempt to override final parameter: mapreduce.job.end-notification.max.attempts;  Ignoring.
+14/03/18 22:49:38 WARN conf.Configuration: file:/tmp/hadoop-xwe/mapred/local/localRunner/xwe/job_local2074974254_0001/job_local2074974254_0001.xml:an attempt to override final parameter: mapreduce.job.end-notification.max.retry.interval;  Ignoring.
+14/03/18 22:49:38 WARN conf.Configuration: file:/tmp/hadoop-xwe/mapred/local/localRunner/xwe/job_local2074974254_0001/job_local2074974254_0001.xml:an attempt to override final parameter: mapreduce.job.end-notification.max.attempts;  Ignoring.
+14/03/18 22:49:38 INFO mapreduce.Job: The url to track the job: http://localhost:8080/
+14/03/18 22:49:38 INFO mapred.LocalJobRunner: OutputCommitter set in config null
+14/03/18 22:49:38 INFO mapred.LocalJobRunner: OutputCommitter is org.apache.hadoop.mapreduce.lib.output.FileOutputCommitter
+14/03/18 22:49:39 INFO mapred.LocalJobRunner: Waiting for map tasks
+14/03/18 22:49:39 INFO mapred.LocalJobRunner: Starting task: attempt_local2074974254_0001_m_000000_0
+14/03/18 22:49:39 INFO mapred.Task:  Using ResourceCalculatorProcessTree : [ ]
+14/03/18 22:49:39 INFO mapred.MapTask: Processing split: file:/mnt/castor/seas_home/x/xwe/software/joshua/examples/pipeline/1/pipeline-ur-en-hiero-_mnt_castor_seas_home_x_xwe_software_joshua_examples_pipeline_1/input-file:0+302513
+14/03/18 22:49:39 INFO mapred.MapTask: Map output collector class = org.apache.hadoop.mapred.MapTask$MapOutputBuffer
+14/03/18 22:49:39 INFO mapred.MapTask: (EQUATOR) 0 kvi 26214396(104857584)
+14/03/18 22:49:39 INFO mapred.MapTask: mapreduce.task.io.sort.mb: 100
+14/03/18 22:49:39 INFO mapred.MapTask: soft limit at 83886080
+14/03/18 22:49:39 INFO mapred.MapTask: bufstart = 0; bufvoid = 104857600
+14/03/18 22:49:39 INFO mapred.MapTask: kvstart = 26214396; length = 6553600
+14/03/18 22:49:39 INFO mapred.LocalJobRunner: 
+14/03/18 22:49:39 INFO mapred.MapTask: Starting flush of map output
+14/03/18 22:49:39 INFO mapred.MapTask: Spilling map output
+14/03/18 22:49:39 INFO mapred.MapTask: bufstart = 0; bufend = 219549; bufvoid = 104857600
+14/03/18 22:49:39 INFO mapred.MapTask: kvstart = 26214396(104857584); kvend = 26086076(104344304); length = 128321/6553600
+14/03/18 22:49:40 INFO mapred.MapTask: Finished spill 0
+14/03/18 22:49:40 INFO mapred.Task: Task:attempt_local2074974254_0001_m_000000_0 is done. And is in the process of committing
+14/03/18 22:49:40 INFO mapred.LocalJobRunner: map
+14/03/18 22:49:40 INFO mapred.Task: Task 'attempt_local2074974254_0001_m_000000_0' done.
+14/03/18 22:49:40 INFO mapred.LocalJobRunner: Finishing task: attempt_local2074974254_0001_m_000000_0
+14/03/18 22:49:40 INFO mapred.LocalJobRunner: Map task executor complete.
+14/03/18 22:49:40 INFO mapred.Task:  Using ResourceCalculatorProcessTree : [ ]
+14/03/18 22:49:40 INFO mapred.Merger: Merging 1 sorted segments
+14/03/18 22:49:40 INFO mapred.Merger: Down to the last merge-pass, with 1 segments left of total size: 84485 bytes
+14/03/18 22:49:40 INFO mapred.LocalJobRunner: 
+14/03/18 22:49:40 INFO Configuration.deprecation: mapred.skip.on is deprecated. Instead, use mapreduce.job.skiprecords
+14/03/18 22:49:41 INFO mapred.Task: Task:attempt_local2074974254_0001_r_000000_0 is done. And is in the process of committing
+14/03/18 22:49:41 INFO mapred.LocalJobRunner: 
+14/03/18 22:49:41 INFO mapred.Task: Task attempt_local2074974254_0001_r_000000_0 is allowed to commit now
+14/03/18 22:49:41 INFO output.FileOutputCommitter: Saved output of task 'attempt_local2074974254_0001_r_000000_0' to file:/mnt/castor/seas_home/x/xwe/software/joshua/examples/pipeline/1/pipeline-ur-en-hiero-_mnt_castor_seas_home_x_xwe_software_joshua_examples_pipeline_1/vocabulary/_temporary/0/task_local2074974254_0001_r_000000
+14/03/18 22:49:41 INFO mapred.LocalJobRunner: reduce > reduce
+14/03/18 22:49:41 INFO mapred.Task: Task 'attempt_local2074974254_0001_r_000000_0' done.
+[SCHED] class edu.jhu.thrax.hadoop.jobs.VocabularyJob in state SUCCESS
+[SCHED] class edu.jhu.thrax.hadoop.jobs.TargetWordGivenSourceWordProbabilityJob in state READY
+[SCHED] class edu.jhu.thrax.hadoop.jobs.ExtractionJob in state READY
+[SCHED] class edu.jhu.thrax.hadoop.jobs.SourceWordGivenTargetWordProbabilityJob in state READY
+[SCHED] class edu.jhu.thrax.hadoop.jobs.TargetWordGivenSourceWordProbabilityJob in state RUNNING
+[SCHED] class edu.jhu.thrax.hadoop.jobs.ExtractionJob in state RUNNING
+[SCHED] class edu.jhu.thrax.hadoop.jobs.SourceWordGivenTargetWordProbabilityJob in state RUNNING
+14/03/18 22:49:44 INFO jvm.JvmMetrics: Cannot initialize JVM Metrics with processName=JobTracker, sessionId= - already initialized
+14/03/18 22:49:44 INFO jvm.JvmMetrics: Cannot initialize JVM Metrics with processName=JobTracker, sessionId= - already initialized
+14/03/18 22:49:44 INFO jvm.JvmMetrics: Cannot initialize JVM Metrics with processName=JobTracker, sessionId= - already initialized
+14/03/18 22:49:44 INFO input.FileInputFormat: Total input paths to process : 1
+14/03/18 22:49:44 INFO input.FileInputFormat: Total input paths to process : 1
+14/03/18 22:49:44 INFO input.FileInputFormat: Total input paths to process : 1
+14/03/18 22:49:44 INFO mapreduce.JobSubmitter: number of splits:1
+14/03/18 22:49:44 INFO mapreduce.JobSubmitter: number of splits:1
+14/03/18 22:49:44 INFO mapreduce.JobSubmitter: number of splits:1
+14/03/18 22:49:44 INFO Configuration.deprecation: user.name is deprecated. Instead, use mapreduce.job.user.name
+14/03/18 22:49:44 INFO Configuration.deprecation: mapred.jar is deprecated. Instead, use mapreduce.job.jar
+14/03/18 22:49:44 INFO Configuration.deprecation: mapreduce.partitioner.class is deprecated. Instead, use mapreduce.job.partitioner.class
+14/03/18 22:49:44 INFO Configuration.deprecation: mapred.output.value.class is deprecated. Instead, use mapreduce.job.output.value.class
+14/03/18 22:49:44 INFO Configuration.deprecation: mapred.mapoutput.value.class is deprecated. Instead, use mapreduce.map.output.value.class
+14/03/18 22:49:44 INFO Configuration.deprecation: mapreduce.combine.class is deprecated. Instead, use mapreduce.job.combine.class
+14/03/18 22:49:44 INFO Configuration.deprecation: mapreduce.map.class is deprecated. Instead, use mapreduce.job.map.class
+14/03/18 22:49:44 INFO Configuration.deprecation: mapred.job.name is deprecated. Instead, use mapreduce.job.name
+14/03/18 22:49:44 INFO Configuration.deprecation: mapreduce.reduce.class is deprecated. Instead, use mapreduce.job.reduce.class
+14/03/18 22:49:44 INFO Configuration.deprecation: mapred.input.dir is deprecated. Instead, use mapreduce.input.fileinputformat.inputdir
+14/03/18 22:49:44 INFO Configuration.deprecation: mapred.output.dir is deprecated. Instead, use mapreduce.output.fileoutputformat.outputdir
+14/03/18 22:49:44 INFO Configuration.deprecation: mapred.max.split.size is deprecated. Instead, use mapreduce.input.fileinputformat.split.maxsize
+14/03/18 22:49:44 INFO Configuration.deprecation: mapreduce.outputformat.class is deprecated. Instead, use mapreduce.job.outputformat.class
+14/03/18 22:49:44 INFO Configuration.deprecation: mapred.map.tasks is deprecated. Instead, use mapreduce.job.maps
+14/03/18 22:49:44 INFO Configuration.deprecation: mapred.reduce.tasks is deprecated. Instead, use mapreduce.job.reduces
+14/03/18 22:49:44 INFO Configuration.deprecation: mapred.output.key.class is deprecated. Instead, use mapreduce.job.output.key.class
+14/03/18 22:49:44 INFO Configuration.deprecation: mapred.output.key.comparator.class is deprecated. Instead, use mapreduce.job.output.key.comparator.class
+14/03/18 22:49:44 INFO Configuration.deprecation: mapred.mapoutput.key.class is deprecated. Instead, use mapreduce.map.output.key.class
+14/03/18 22:49:44 INFO Configuration.deprecation: mapred.working.dir is deprecated. Instead, use mapreduce.job.working.dir
+14/03/18 22:49:44 INFO mapreduce.JobSubmitter: Submitting tokens for job: job_local1403604418_0002
+14/03/18 22:49:44 INFO mapreduce.JobSubmitter: Submitting tokens for job: job_local807898386_0003
+14/03/18 22:49:44 INFO mapreduce.JobSubmitter: Submitting tokens for job: job_local747892413_0004
+14/03/18 22:49:44 WARN conf.Configuration: file:/tmp/hadoop-xwe/mapred/staging/xwe1403604418/.staging/job_local1403604418_0002/job.xml:an attempt to override final parameter: mapreduce.job.end-notification.max.retry.interval;  Ignoring.
+14/03/18 22:49:44 WARN conf.Configuration: file:/tmp/hadoop-xwe/mapred/staging/xwe1403604418/.staging/job_local1403604418_0002/job.xml:an attempt to override final parameter: mapreduce.job.end-notification.max.attempts;  Ignoring.
+14/03/18 22:49:44 WARN conf.Configuration: file:/tmp/hadoop-xwe/mapred/staging/xwe807898386/.staging/job_local807898386_0003/job.xml:an attempt to override final parameter: mapreduce.job.end-notification.max.retry.interval;  Ignoring.
+14/03/18 22:49:44 WARN conf.Configuration: file:/tmp/hadoop-xwe/mapred/staging/xwe807898386/.staging/job_local807898386_0003/job.xml:an attempt to override final parameter: mapreduce.job.end-notification.max.attempts;  Ignoring.
+14/03/18 22:49:44 WARN conf.Configuration: file:/tmp/hadoop-xwe/mapred/staging/xwe747892413/.staging/job_local747892413_0004/job.xml:an attempt to override final parameter: mapreduce.job.end-notification.max.retry.interval;  Ignoring.
+14/03/18 22:49:44 WARN conf.Configuration: file:/tmp/hadoop-xwe/mapred/staging/xwe747892413/.staging/job_local747892413_0004/job.xml:an attempt to override final parameter: mapreduce.job.end-notification.max.attempts;  Ignoring.
+14/03/18 22:49:44 WARN conf.Configuration: file:/tmp/hadoop-xwe/mapred/local/localRunner/xwe/job_local747892413_0004/job_local747892413_0004.xml:an attempt to override final parameter: mapreduce.job.end-notification.max.retry.interval;  Ignoring.
+14/03/18 22:49:44 WARN conf.Configuration: file:/tmp/hadoop-xwe/mapred/local/localRunner/xwe/job_local747892413_0004/job_local747892413_0004.xml:an attempt to override final parameter: mapreduce.job.end-notification.max.attempts;  Ignoring.
+14/03/18 22:49:44 INFO mapreduce.Job: The url to track the job: http://localhost:8080/
+14/03/18 22:49:44 INFO mapred.LocalJobRunner: OutputCommitter set in config null
+14/03/18 22:49:44 INFO mapred.LocalJobRunner: OutputCommitter is org.apache.hadoop.mapreduce.lib.output.FileOutputCommitter
+14/03/18 22:49:44 WARN conf.Configuration: file:/tmp/hadoop-xwe/mapred/local/localRunner/xwe/job_local1403604418_0002/job_local1403604418_0002.xml:an attempt to override final parameter: mapreduce.job.end-notification.max.retry.interval;  Ignoring.
+14/03/18 22:49:44 WARN conf.Configuration: file:/tmp/hadoop-xwe/mapred/local/localRunner/xwe/job_local1403604418_0002/job_local1403604418_0002.xml:an attempt to override final parameter: mapreduce.job.end-notification.max.attempts;  Ignoring.
+14/03/18 22:49:44 WARN conf.Configuration: file:/tmp/hadoop-xwe/mapred/local/localRunner/xwe/job_local807898386_0003/job_local807898386_0003.xml:an attempt to override final parameter: mapreduce.job.end-notification.max.retry.interval;  Ignoring.
+14/03/18 22:49:44 WARN conf.Configuration: file:/tmp/hadoop-xwe/mapred/local/localRunner/xwe/job_local807898386_0003/job_local807898386_0003.xml:an attempt to override final parameter: mapreduce.job.end-notification.max.attempts;  Ignoring.
+14/03/18 22:49:44 INFO mapreduce.Job: The url to track the job: http://localhost:8080/
+14/03/18 22:49:44 INFO mapred.LocalJobRunner: OutputCommitter set in config null
+14/03/18 22:49:44 INFO mapred.LocalJobRunner: OutputCommitter is org.apache.hadoop.mapreduce.lib.output.FileOutputCommitter
+14/03/18 22:49:44 INFO mapreduce.Job: The url to track the job: http://localhost:8080/
+14/03/18 22:49:44 INFO mapred.LocalJobRunner: OutputCommitter set in config null
+14/03/18 22:49:44 INFO mapred.LocalJobRunner: OutputCommitter is org.apache.hadoop.mapreduce.lib.output.FileOutputCommitter
+14/03/18 22:49:44 INFO mapred.LocalJobRunner: Waiting for map tasks
+14/03/18 22:49:44 INFO mapred.LocalJobRunner: Starting task: attempt_local747892413_0004_m_000000_0
+14/03/18 22:49:44 INFO mapred.LocalJobRunner: Waiting for map tasks
+14/03/18 22:49:44 INFO mapred.LocalJobRunner: Starting task: attempt_local1403604418_0002_m_000000_0
+14/03/18 22:49:44 INFO mapred.Task:  Using ResourceCalculatorProcessTree : [ ]
+14/03/18 22:49:44 INFO mapred.LocalJobRunner: Waiting for map tasks
+14/03/18 22:49:44 INFO mapred.LocalJobRunner: Starting task: attempt_local807898386_0003_m_000000_0
+14/03/18 22:49:44 INFO mapred.Task:  Using ResourceCalculatorProcessTree : [ ]
+14/03/18 22:49:44 INFO mapred.MapTask: Processing split: file:/mnt/castor/seas_home/x/xwe/software/joshua/examples/pipeline/1/pipeline-ur-en-hiero-_mnt_castor_seas_home_x_xwe_software_joshua_examples_pipeline_1/input-file:0+302513
+14/03/18 22:49:44 INFO mapred.MapTask: Processing split: file:/mnt/castor/seas_home/x/xwe/software/joshua/examples/pipeline/1/pipeline-ur-en-hiero-_mnt_castor_seas_home_x_xwe_software_joshua_examples_pipeline_1/input-file:0+302513
+14/03/18 22:49:44 INFO mapred.Task:  Using ResourceCalculatorProcessTree : [ ]
+14/03/18 22:49:44 INFO mapred.MapTask: Map output collector class = org.apache.hadoop.mapred.MapTask$MapOutputBuffer
+14/03/18 22:49:44 INFO mapred.MapTask: Map output collector class = org.apache.hadoop.mapred.MapTask$MapOutputBuffer
+14/03/18 22:49:44 INFO mapred.MapTask: Processing split: file:/mnt/castor/seas_home/x/xwe/software/joshua/examples/pipeline/1/pipeline-ur-en-hiero-_mnt_castor_seas_home_x_xwe_software_joshua_examples_pipeline_1/input-file:0+302513
+14/03/18 22:49:44 INFO mapred.MapTask: Map output collector class = org.apache.hadoop.mapred.MapTask$MapOutputBuffer
+14/03/18 22:49:44 INFO mapred.MapTask: (EQUATOR) 0 kvi 26214396(104857584)
+14/03/18 22:49:44 INFO mapred.MapTask: (EQUATOR) 0 kvi 26214396(104857584)
+14/03/18 22:49:44 INFO mapred.MapTask: mapreduce.task.io.sort.mb: 100
+14/03/18 22:49:44 INFO mapred.MapTask: mapreduce.task.io.sort.mb: 100
+14/03/18 22:49:44 INFO mapred.MapTask: soft limit at 83886080
+14/03/18 22:49:44 INFO mapred.MapTask: soft limit at 83886080
+14/03/18 22:49:44 INFO mapred.MapTask: bufstart = 0; bufvoid = 104857600
+14/03/18 22:49:44 INFO mapred.MapTask: bufstart = 0; bufvoid = 104857600
+14/03/18 22:49:44 INFO mapred.MapTask: kvstart = 26214396; length = 6553600
+14/03/18 22:49:44 INFO mapred.MapTask: kvstart = 26214396; length = 6553600
+14/03/18 22:49:44 INFO mapred.MapTask: (EQUATOR) 0 kvi 26214396(104857584)
+14/03/18 22:49:44 INFO mapred.MapTask: mapreduce.task.io.sort.mb: 100
+14/03/18 22:49:44 INFO mapred.MapTask: soft limit at 83886080
+14/03/18 22:49:44 INFO mapred.MapTask: bufstart = 0; bufvoid = 104857600
+14/03/18 22:49:44 INFO mapred.MapTask: kvstart = 26214396; length = 6553600
+14/03/18 22:49:45 INFO mapred.LocalJobRunner: 
+14/03/18 22:49:45 INFO mapred.MapTask: Starting flush of map output
+14/03/18 22:49:45 INFO mapred.MapTask: Spilling map output
+14/03/18 22:49:45 INFO mapred.MapTask: bufstart = 0; bufend = 349320; bufvoid = 104857600
+14/03/18 22:49:45 INFO mapred.MapTask: kvstart = 26214396(104857584); kvend = 26097960(104391840); length = 116437/6553600
+14/03/18 22:49:45 INFO mapred.LocalJobRunner: 
+14/03/18 22:49:45 INFO mapred.MapTask: Starting flush of map output
+14/03/18 22:49:45 INFO mapred.MapTask: Spilling map output
+14/03/18 22:49:45 INFO mapred.MapTask: bufstart = 0; bufend = 358140; bufvoid = 104857600
+14/03/18 22:49:45 INFO mapred.MapTask: kvstart = 26214396(104857584); kvend = 26095020(104380080); length = 119377/6553600
+14/03/18 22:49:45 INFO mapred.MapTask: Finished spill 0
+14/03/18 22:49:45 INFO mapred.MapTask: Finished spill 0
+14/03/18 22:49:45 INFO mapred.Task: Task:attempt_local747892413_0004_m_000000_0 is done. And is in the process of committing
+14/03/18 22:49:45 INFO mapred.Task: Task:attempt_local1403604418_0002_m_000000_0 is done. And is in the process of committing
+14/03/18 22:49:45 INFO mapred.LocalJobRunner: map
+14/03/18 22:49:45 INFO mapred.Task: Task 'attempt_local747892413_0004_m_000000_0' done.
+14/03/18 22:49:45 INFO mapred.LocalJobRunner: Finishing task: attempt_local747892413_0004_m_000000_0
+14/03/18 22:49:45 INFO mapred.LocalJobRunner: Map task executor complete.
+14/03/18 22:49:45 INFO mapred.LocalJobRunner: map
+14/03/18 22:49:45 INFO mapred.Task: Task 'attempt_local1403604418_0002_m_000000_0' done.
+14/03/18 22:49:45 INFO mapred.LocalJobRunner: Finishing task: attempt_local1403604418_0002_m_000000_0
+14/03/18 22:49:45 INFO mapred.LocalJobRunner: Map task executor complete.
+14/03/18 22:49:45 INFO mapred.Task:  Using ResourceCalculatorProcessTree : [ ]
+14/03/18 22:49:45 INFO mapred.Task:  Using ResourceCalculatorProcessTree : [ ]
+14/03/18 22:49:45 INFO mapred.Merger: Merging 1 sorted segments
+14/03/18 22:49:45 INFO mapred.Merger: Down to the last merge-pass, with 1 segments left of total size: 154160 bytes
+14/03/18 22:49:45 INFO mapred.Merger: Merging 1 sorted segments
+14/03/18 22:49:45 INFO mapred.LocalJobRunner: 
+14/03/18 22:49:45 INFO mapred.Merger: Down to the last merge-pass, with 1 segments left of total size: 153432 bytes
+14/03/18 22:49:45 INFO mapred.LocalJobRunner: 
+14/03/18 22:49:46 INFO mapred.Task: Task:attempt_local747892413_0004_r_000000_0 is done. And is in the process of committing
+14/03/18 22:49:46 INFO mapred.LocalJobRunner: 
+14/03/18 22:49:46 INFO mapred.Task: Task attempt_local747892413_0004_r_000000_0 is allowed to commit now
+14/03/18 22:49:46 INFO mapred.Task: Task:attempt_local1403604418_0002_r_000000_0 is done. And is in the process of committing
+14/03/18 22:49:46 INFO output.FileOutputCommitter: Saved output of task 'attempt_local747892413_0004_r_000000_0' to file:/mnt/castor/seas_home/x/xwe/software/joshua/examples/pipeline/1/pipeline-ur-en-hiero-_mnt_castor_seas_home_x_xwe_software_joshua_examples_pipeline_1/lexprobs_tgs/_temporary/0/task_local747892413_0004_r_000000
+14/03/18 22:49:46 INFO mapred.LocalJobRunner: reduce > reduce
+14/03/18 22:49:46 INFO mapred.Task: Task 'attempt_local747892413_0004_r_000000_0' done.
+14/03/18 22:49:46 INFO mapred.LocalJobRunner: 
+14/03/18 22:49:46 INFO mapred.Task: Task attempt_local1403604418_0002_r_000000_0 is allowed to commit now
+14/03/18 22:49:46 INFO output.FileOutputCommitter: Saved output of task 'attempt_local1403604418_0002_r_000000_0' to file:/mnt/castor/seas_home/x/xwe/software/joshua/examples/pipeline/1/pipeline-ur-en-hiero-_mnt_castor_seas_home_x_xwe_software_joshua_examples_pipeline_1/lexprobs_sgt/_temporary/0/task_local1403604418_0002_r_000000
+14/03/18 22:49:46 INFO mapred.LocalJobRunner: reduce > reduce
+14/03/18 22:49:46 INFO mapred.Task: Task 'attempt_local1403604418_0002_r_000000_0' done.
+14/03/18 22:49:49 INFO mapred.LocalJobRunner: 
+14/03/18 22:49:49 INFO mapred.MapTask: Starting flush of map output
+14/03/18 22:49:49 INFO mapred.MapTask: Spilling map output
+14/03/18 22:49:49 INFO mapred.MapTask: bufstart = 0; bufend = 3960834; bufvoid = 104857600
+14/03/18 22:49:49 INFO mapred.MapTask: kvstart = 26214396(104857584); kvend = 25797388(103189552); length = 417009/6553600
+[SCHED] class edu.jhu.thrax.hadoop.jobs.TargetWordGivenSourceWordProbabilityJob in state SUCCESS
+[SCHED] class edu.jhu.thrax.hadoop.jobs.SourceWordGivenTargetWordProbabilityJob in state SUCCESS
+14/03/18 22:49:50 INFO mapred.MapTask: Finished spill 0
+14/03/18 22:49:50 INFO mapred.Task: Task:attempt_local807898386_0003_m_000000_0 is done. And is in the process of committing
+14/03/18 22:49:50 INFO mapred.LocalJobRunner: map
+14/03/18 22:49:50 INFO mapred.Task: Task 'attempt_local807898386_0003_m_000000_0' done.
+14/03/18 22:49:50 INFO mapred.LocalJobRunner: Finishing task: attempt_local807898386_0003_m_000000_0
+14/03/18 22:49:50 INFO mapred.LocalJobRunner: Map task executor complete.
+14/03/18 22:49:50 INFO mapred.Task:  Using ResourceCalculatorProcessTree : [ ]
+14/03/18 22:49:50 INFO mapred.Merger: Merging 1 sorted segments
+14/03/18 22:49:50 INFO mapred.Merger: Down to the last merge-pass, with 1 segments left of total size: 2418629 bytes
+14/03/18 22:49:50 INFO mapred.LocalJobRunner: 
+14/03/18 22:49:50 INFO mapred.Task: Task:attempt_local807898386_0003_r_000000_0 is done. And is in the process of committing
+14/03/18 22:49:50 INFO mapred.LocalJobRunner: 
+14/03/18 22:49:50 INFO mapred.Task: Task attempt_local807898386_0003_r_000000_0 is allowed to commit now
+14/03/18 22:49:50 INFO output.FileOutputCommitter: Saved output of task 'attempt_local807898386_0003_r_000000_0' to file:/mnt/castor/seas_home/x/xwe/software/joshua/examples/pipeline/1/pipeline-ur-en-hiero-_mnt_castor_seas_home_x_xwe_software_joshua_examples_pipeline_1/rules/_temporary/0/task_local807898386_0003_r_000000
+14/03/18 22:49:50 INFO mapred.LocalJobRunner: reduce > reduce
+14/03/18 22:49:50 INFO mapred.Task: Task 'attempt_local807898386_0003_r_000000_0' done.
+[SCHED] class edu.jhu.thrax.hadoop.jobs.ExtractionJob in state SUCCESS
+[SCHED] class edu.jhu.thrax.hadoop.features.mapred.SourcePhraseGivenTargetFeature in state READY
+[SCHED] class edu.jhu.thrax.hadoop.features.annotation.AnnotationFeatureJob in state READY
+[SCHED] class edu.jhu.thrax.hadoop.features.mapred.TargetPhraseGivenSourceFeature in state READY
+[SCHED] class edu.jhu.thrax.hadoop.features.mapred.SourcePhraseGivenTargetFeature in state RUNNING
+[SCHED] class edu.jhu.thrax.hadoop.features.annotation.AnnotationFeatureJob in state RUNNING
+[SCHED] class edu.jhu.thrax.hadoop.features.mapred.TargetPhraseGivenSourceFeature in state RUNNING
+14/03/18 22:49:54 INFO jvm.JvmMetrics: Cannot initialize JVM Metrics with processName=JobTracker, sessionId= - already initialized
+14/03/18 22:49:54 INFO jvm.JvmMetrics: Cannot initialize JVM Metrics with processName=JobTracker, sessionId= - already initialized
+14/03/18 22:49:54 INFO jvm.JvmMetrics: Cannot initialize JVM Metrics with processName=JobTracker, sessionId= - already initialized
+14/03/18 22:49:54 INFO input.FileInputFormat: Total input paths to process : 1
+14/03/18 22:49:54 INFO input.FileInputFormat: Total input paths to process : 1
+14/03/18 22:49:54 INFO input.FileInputFormat: Total input paths to process : 1
+14/03/18 22:49:54 INFO mapreduce.JobSubmitter: number of splits:1
+14/03/18 22:49:54 INFO mapreduce.JobSubmitter: number of splits:1
+14/03/18 22:49:54 INFO mapreduce.JobSubmitter: number of splits:1
+14/03/18 22:49:54 INFO Configuration.deprecation: user.name is deprecated. Instead, use mapreduce.job.user.name
+14/03/18 22:49:54 INFO Configuration.deprecation: mapred.jar is deprecated. Instead, use mapreduce.job.jar
+14/03/18 22:49:54 INFO Configuration.deprecation: mapred.reduce.tasks is deprecated. Instead, use mapreduce.job.reduces
+14/03/18 22:49:54 INFO Configuration.deprecation: mapreduce.partitioner.class is deprecated. Instead, use mapreduce.job.partitioner.class
+14/03/18 22:49:54 INFO Configuration.deprecation: mapred.output.value.class is deprecated. Instead, use mapreduce.job.output.value.class
+14/03/18 22:49:54 INFO Configuration.deprecation: mapred.mapoutput.value.class is deprecated. Instead, use mapreduce.map.output.value.class
+14/03/18 22:49:54 INFO Configuration.deprecation: mapreduce.map.class is deprecated. Instead, use mapreduce.job.map.class
+14/03/18 22:49:54 INFO Configuration.deprecation: mapred.job.name is deprecated. Instead, use mapreduce.job.name
+14/03/18 22:49:54 INFO Configuration.deprecation: mapreduce.reduce.class is deprecated. Instead, use mapreduce.job.reduce.class
+14/03/18 22:49:54 INFO Configuration.deprecation: mapreduce.inputformat.class is deprecated. Instead, use mapreduce.job.inputformat.class
+14/03/18 22:49:54 INFO Configuration.deprecation: mapred.input.dir is deprecated. Instead, use mapreduce.input.fileinputformat.inputdir
+14/03/18 22:49:54 INFO Configuration.deprecation: mapred.output.dir is deprecated. Instead, use mapreduce.output.fileoutputformat.outputdir
+14/03/18 22:49:54 INFO Configuration.deprecation: mapreduce.outputformat.class is deprecated. Instead, use mapreduce.job.outputformat.class
+14/03/18 22:49:54 INFO Configuration.deprecation: mapred.map.tasks is deprecated. Instead, use mapreduce.job.maps
+14/03/18 22:49:54 INFO Configuration.deprecation: mapred.output.key.class is deprecated. Instead, use mapreduce.job.output.key.class
+14/03/18 22:49:54 INFO Configuration.deprecation: mapred.mapoutput.key.class is deprecated. Instead, use mapreduce.map.output.key.class
+14/03/18 22:49:54 INFO Configuration.deprecation: mapred.working.dir is deprecated. Instead, use mapreduce.job.working.dir
+14/03/18 22:49:54 INFO Configuration.deprecation: mapred.output.key.comparator.class is deprecated. Instead, use mapreduce.job.output.key.comparator.class
+14/03/18 22:49:54 INFO Configuration.deprecation: mapreduce.combine.class is deprecated. Instead, use mapreduce.job.combine.class
+14/03/18 22:49:54 INFO mapreduce.JobSubmitter: Submitting tokens for job: job_local1655295522_0005
+14/03/18 22:49:54 INFO mapreduce.JobSubmitter: Submitting tokens for job: job_local676721768_0007
+14/03/18 22:49:54 INFO mapreduce.JobSubmitter: Submitting tokens for job: job_local2117652406_0006
+14/03/18 22:49:54 WARN conf.Configuration: file:/tmp/hadoop-xwe/mapred/staging/xwe1655295522/.staging/job_local1655295522_0005/job.xml:an attempt to override final parameter: mapreduce.job.end-notification.max.retry.interval;  Ignoring.
+14/03/18 22:49:54 WARN conf.Configuration: file:/tmp/hadoop-xwe/mapred/staging/xwe1655295522/.staging/job_local1655295522_0005/job.xml:an attempt to override final parameter: mapreduce.job.end-notification.max.attempts;  Ignoring.
+14/03/18 22:49:54 WARN conf.Configuration: file:/tmp/hadoop-xwe/mapred/staging/xwe676721768/.staging/job_local676721768_0007/job.xml:an attempt to override final parameter: mapreduce.job.end-notification.max.retry.interval;  Ignoring.
+14/03/18 22:49:54 WARN conf.Configuration: file:/tmp/hadoop-xwe/mapred/staging/xwe2117652406/.staging/job_local2117652406_0006/job.xml:an attempt to override final parameter: mapreduce.job.end-notification.max.retry.interval;  Ignoring.
+14/03/18 22:49:54 WARN conf.Configuration: file:/tmp/hadoop-xwe/mapred/staging/xwe676721768/.staging/job_local676721768_0007/job.xml:an attempt to override final parameter: mapreduce.job.end-notification.max.attempts;  Ignoring.
+14/03/18 22:49:54 WARN conf.Configuration: file:/tmp/hadoop-xwe/mapred/staging/xwe2117652406/.staging/job_local2117652406_0006/job.xml:an attempt to override final parameter: mapreduce.job.end-notification.max.attempts;  Ignoring.
+14/03/18 22:49:54 WARN conf.Configuration: file:/tmp/hadoop-xwe/mapred/local/localRunner/xwe/job_local1655295522_0005/job_local1655295522_0005.xml:an attempt to override final parameter: mapreduce.job.end-notification.max.retry.interval;  Ignoring.
+14/03/18 22:49:54 WARN conf.Configuration: file:/tmp/hadoop-xwe/mapred/local/localRunner/xwe/job_local1655295522_0005/job_local1655295522_0005.xml:an attempt to override final parameter: mapreduce.job.end-notification.max.attempts;  Ignoring.
+14/03/18 22:49:54 INFO mapreduce.Job: The url to track the job: http://localhost:8080/
+14/03/18 22:49:54 INFO mapred.LocalJobRunner: OutputCommitter set in config null
+14/03/18 22:49:54 INFO mapred.LocalJobRunner: OutputCommitter is org.apache.hadoop.mapreduce.lib.output.FileOutputCommitter
+14/03/18 22:49:54 WARN conf.Configuration: file:/tmp/hadoop-xwe/mapred/local/localRunner/xwe/job_local676721768_0007/job_local676721768_0007.xml:an attempt to override final parameter: mapreduce.job.end-notification.max.retry.interval;  Ignoring.
+14/03/18 22:49:54 WARN conf.Configuration: file:/tmp/hadoop-xwe/mapred/local/localRunner/xwe/job_local676721768_0007/job_local676721768_0007.xml:an attempt to override final parameter: mapreduce.job.end-notification.max.attempts;  Ignoring.
+14/03/18 22:49:54 WARN conf.Configuration: file:/tmp/hadoop-xwe/mapred/local/localRunner/xwe/job_local2117652406_0006/job_local2117652406_0006.xml:an attempt to override final parameter: mapreduce.job.end-notification.max.retry.interval;  Ignoring.
+14/03/18 22:49:54 WARN conf.Configuration: file:/tmp/hadoop-xwe/mapred/local/localRunner/xwe/job_local2117652406_0006/job_local2117652406_0006.xml:an attempt to override final parameter: mapreduce.job.end-notification.max.attempts;  Ignoring.
+14/03/18 22:49:54 INFO mapreduce.Job: The url to track the job: http://localhost:8080/
+14/03/18 22:49:54 INFO mapred.LocalJobRunner: OutputCommitter set in config null
+14/03/18 22:49:54 INFO mapreduce.Job: The url to track the job: http://localhost:8080/
+14/03/18 22:49:54 INFO mapred.LocalJobRunner: OutputCommitter is org.apache.hadoop.mapreduce.lib.output.FileOutputCommitter
+14/03/18 22:49:54 INFO mapred.LocalJobRunner: OutputCommitter set in config null
+14/03/18 22:49:54 INFO mapred.LocalJobRunner: OutputCommitter is org.apache.hadoop.mapreduce.lib.output.FileOutputCommitter
+14/03/18 22:49:54 INFO mapred.LocalJobRunner: Waiting for map tasks
+14/03/18 22:49:54 INFO mapred.LocalJobRunner: Starting task: attempt_local1655295522_0005_m_000000_0
+14/03/18 22:49:54 INFO mapred.LocalJobRunner: Waiting for map tasks
+14/03/18 22:49:54 INFO mapred.LocalJobRunner: Starting task: attempt_local2117652406_0006_m_000000_0
+14/03/18 22:49:54 INFO mapred.LocalJobRunner: Waiting for map tasks
+14/03/18 22:49:54 INFO mapred.LocalJobRunner: Starting task: attempt_local676721768_0007_m_000000_0
+14/03/18 22:49:54 INFO mapred.Task:  Using ResourceCalculatorProcessTree : [ ]
+14/03/18 22:49:54 INFO mapred.Task:  Using ResourceCalculatorProcessTree : [ ]
+14/03/18 22:49:54 INFO mapred.Task:  Using ResourceCalculatorProcessTree : [ ]
+14/03/18 22:49:54 INFO mapred.MapTask: Processing split: file:/mnt/castor/seas_home/x/xwe/software/joshua/examples/pipeline/1/pipeline-ur-en-hiero-_mnt_castor_seas_home_x_xwe_software_joshua_examples_pipeline_1/rules/part-r-00000:0+2782338
+14/03/18 22:49:54 INFO mapred.MapTask: Map output collector class = org.apache.hadoop.mapred.MapTask$MapOutputBuffer
+14/03/18 22:49:54 INFO mapred.MapTask: Processing split: file:/mnt/castor/seas_home/x/xwe/software/joshua/examples/pipeline/1/pipeline-ur-en-hiero-_mnt_castor_seas_home_x_xwe_software_joshua_examples_pipeline_1/rules/part-r-00000:0+2782338
+14/03/18 22:49:54 INFO mapred.MapTask: Processing split: file:/mnt/castor/seas_home/x/xwe/software/joshua/examples/pipeline/1/pipeline-ur-en-hiero-_mnt_castor_seas_home_x_xwe_software_joshua_examples_pipeline_1/rules/part-r-00000:0+2782338
+14/03/18 22:49:54 INFO mapred.MapTask: Map output collector class = org.apache.hadoop.mapred.MapTask$MapOutputBuffer
+14/03/18 22:49:54 INFO mapred.MapTask: Map output collector class = org.apache.hadoop.mapred.MapTask$MapOutputBuffer
+14/03/18 22:49:54 INFO mapred.MapTask: (EQUATOR) 0 kvi 26214396(104857584)
+14/03/18 22:49:54 INFO mapred.MapTask: mapreduce.task.io.sort.mb: 100
+14/03/18 22:49:54 INFO mapred.MapTask: soft limit at 83886080
+14/03/18 22:49:54 INFO mapred.MapTask: bufstart = 0; bufvoid = 104857600
+14/03/18 22:49:54 INFO mapred.MapTask: kvstart = 26214396; length = 6553600
+14/03/18 22:49:54 INFO mapred.MapTask: (EQUATOR) 0 kvi 26214396(104857584)
+14/03/18 22:49:54 INFO mapred.MapTask: mapreduce.task.io.sort.mb: 100
+14/03/18 22:49:54 INFO mapred.MapTask: soft limit at 83886080
+14/03/18 22:49:54 INFO mapred.MapTask: bufstart = 0; bufvoid = 104857600
+14/03/18 22:49:54 INFO mapred.MapTask: kvstart = 26214396; length = 6553600
+14/03/18 22:49:54 INFO mapred.MapTask: (EQUATOR) 0 kvi 26214396(104857584)
+14/03/18 22:49:54 INFO mapred.MapTask: mapreduce.task.io.sort.mb: 100
+14/03/18 22:49:54 INFO mapred.MapTask: soft limit at 83886080
+14/03/18 22:49:54 INFO mapred.MapTask: bufstart = 0; bufvoid = 104857600
+14/03/18 22:49:54 INFO mapred.MapTask: kvstart = 26214396; length = 6553600
+14/03/18 22:49:55 INFO mapred.LocalJobRunner: 
+14/03/18 22:49:55 INFO mapred.MapTask: Starting flush of map output
+14/03/18 22:49:55 INFO mapred.MapTask: Spilling map output
+14/03/18 22:49:55 INFO mapred.MapTask: bufstart = 0; bufend = 2304622; bufvoid = 104857600
+14/03/18 22:49:55 INFO mapred.MapTask: kvstart = 26214396(104857584); kvend = 25989188(103956752); length = 225209/6553600
+14/03/18 22:49:55 INFO mapred.LocalJobRunner: 
+14/03/18 22:49:55 INFO mapred.MapTask: Starting flush of map output
+14/03/18 22:49:55 INFO mapred.MapTask: Spilling map output
+14/03/18 22:49:55 INFO mapred.MapTask: bufstart = 0; bufend = 5512432; bufvoid = 104857600
+14/03/18 22:49:55 INFO mapred.MapTask: kvstart = 26214396(104857584); kvend = 25538764(102155056); length = 675633/6553600
+14/03/18 22:49:55 INFO mapred.LocalJobRunner: 
+14/03/18 22:49:55 INFO mapred.MapTask: Starting flush of map output
+14/03/18 22:49:55 INFO mapred.MapTask: Spilling map output
+14/03/18 22:49:55 INFO mapred.MapTask: bufstart = 0; bufend = 5545672; bufvoid = 104857600
+14/03/18 22:49:55 INFO mapred.MapTask: kvstart = 26214396(104857584); kvend = 25538764(102155056); length = 675633/6553600
+14/03/18 22:49:55 INFO mapred.MapTask: Finished spill 0
+14/03/18 22:49:55 INFO mapred.Task: Task:attempt_local1655295522_0005_m_000000_0 is done. And is in the process of committing
+14/03/18 22:49:55 INFO mapred.LocalJobRunner: map
+14/03/18 22:49:55 INFO mapred.Task: Task 'attempt_local1655295522_0005_m_000000_0' done.
+14/03/18 22:49:55 INFO mapred.LocalJobRunner: Finishing task: attempt_local1655295522_0005_m_000000_0
+14/03/18 22:49:55 INFO mapred.LocalJobRunner: Map task executor complete.
+14/03/18 22:49:55 INFO mapred.Task:  Using ResourceCalculatorProcessTree : [ ]
+14/03/18 22:49:55 INFO mapred.Merger: Merging 1 sorted segments
+14/03/18 22:49:55 INFO mapred.Merger: Down to the last merge-pass, with 1 segments left of total size: 2417216 bytes
+14/03/18 22:49:55 INFO mapred.LocalJobRunner: 
+[1000]
+[2000]
+[3000]
+[4000]
+[1000]
+[2000]
+[3000]
+14/03/18 22:49:57 INFO mapred.MapTask: Finished spill 0
+14/03/18 22:49:57 INFO mapred.Task: Task:attempt_local676721768_0007_m_000000_0 is done. And is in the process of committing
+14/03/18 22:49:57 INFO mapred.MapTask: Finished spill 0
+14/03/18 22:49:57 INFO mapred.Task: Task:attempt_local2117652406_0006_m_000000_0 is done. And is in the process of committing
+14/03/18 22:49:58 INFO mapred.Task: Task:attempt_local1655295522_0005_r_000000_0 is done. And is in the process of committing
+14/03/18 22:49:58 INFO mapred.LocalJobRunner: map
+14/03/18 22:49:58 INFO mapred.Task: Task 'attempt_local2117652406_0006_m_000000_0' done.
+14/03/18 22:49:58 INFO mapred.LocalJobRunner: 
+14/03/18 22:49:58 INFO mapred.LocalJobRunner: Finishing task: attempt_local2117652406_0006_m_000000_0
+14/03/18 22:49:58 INFO mapred.Task: Task attempt_local1655295522_0005_r_000000_0 is allowed to commit now
+14/03/18 22:49:58 INFO mapred.LocalJobRunner: Map task executor complete.
+14/03/18 22:49:58 INFO mapred.LocalJobRunner: map
+14/03/18 22:49:58 INFO mapred.Task: Task 'attempt_local676721768_0007_m_000000_0' done.
+14/03/18 22:49:58 INFO mapred.LocalJobRunner: Finishing task: attempt_local676721768_0007_m_000000_0
+14/03/18 22:49:58 INFO mapred.LocalJobRunner: Map task executor complete.
+14/03/18 22:49:58 INFO output.FileOutputCommitter: Saved output of task 'attempt_local1655295522_0005_r_000000_0' to file:/mnt/castor/seas_home/x/xwe/software/joshua/examples/pipeline/1/pipeline-ur-en-hiero-_mnt_castor_seas_home_x_xwe_software_joshua_examples_pipeline_1/annotation/_temporary/0/task_local1655295522_0005_r_000000
+14/03/18 22:49:58 INFO mapred.LocalJobRunner: reduce > reduce
+14/03/18 22:49:58 INFO mapred.Task: Task 'attempt_local1655295522_0005_r_000000_0' done.
+14/03/18 22:49:58 INFO mapred.Task:  Using ResourceCalculatorProcessTree : [ ]
+14/03/18 22:49:58 INFO mapred.Task:  Using ResourceCalculatorProcessTree : [ ]
+14/03/18 22:49:58 INFO mapred.Merger: Merging 1 sorted segments
+14/03/18 22:49:58 INFO mapred.Merger: Down to the last merge-pass, with 1 segments left of total size: 5803126 bytes
+14/03/18 22:49:58 INFO mapred.LocalJobRunner: 
+14/03/18 22:49:58 INFO mapred.Merger: Merging 1 sorted segments
+14/03/18 22:49:58 INFO mapred.Merger: Down to the last merge-pass, with 1 segments left of total size: 5761850 bytes
+14/03/18 22:49:58 INFO mapred.LocalJobRunner: 
+14/03/18 22:49:59 INFO mapred.Task: Task:attempt_local2117652406_0006_r_000000_0 is done. And is in the process of committing
+14/03/18 22:49:59 INFO mapred.LocalJobRunner: 
+14/03/18 22:49:59 INFO mapred.Task: Task attempt_local2117652406_0006_r_000000_0 is allowed to commit now
+14/03/18 22:49:59 INFO mapred.Task: Task:attempt_local676721768_0007_r_000000_0 is done. And is in the process of committing
+14/03/18 22:49:59 INFO output.FileOutputCommitter: Saved output of task 'attempt_local2117652406_0006_r_000000_0' to file:/mnt/castor/seas_home/x/xwe/software/joshua/examples/pipeline/1/pipeline-ur-en-hiero-_mnt_castor_seas_home_x_xwe_software_joshua_examples_pipeline_1/e_given_f_phrase/_temporary/0/task_local2117652406_0006_r_000000
+14/03/18 22:49:59 INFO mapred.LocalJobRunner: reduce > reduce
+14/03/18 22:49:59 INFO mapred.Task: Task 'attempt_local2117652406_0006_r_000000_0' done.
+14/03/18 22:49:59 INFO mapred.LocalJobRunner: 
+14/03/18 22:49:59 INFO mapred.Task: Task attempt_local676721768_0007_r_000000_0 is allowed to commit now
+14/03/18 22:49:59 INFO output.FileOutputCommitter: Saved output of task 'attempt_local676721768_0007_r_000000_0' to file:/mnt/castor/seas_home/x/xwe/software/joshua/examples/pipeline/1/pipeline-ur-en-hiero-_mnt_castor_seas_home_x_xwe_software_joshua_examples_pipeline_1/f_given_e_phrase/_temporary/0/task_local676721768_0007_r_000000
+14/03/18 22:49:59 INFO mapred.LocalJobRunner: reduce > reduce
+14/03/18 22:49:59 INFO mapred.Task: Task 'attempt_local676721768_0007_r_000000_0' done.
+[SCHED] class edu.jhu.thrax.hadoop.features.annotation.AnnotationFeatureJob in state SUCCESS
+[SCHED] class edu.jhu.thrax.hadoop.features.mapred.SourcePhraseGivenTargetFeature in state SUCCESS
+[SCHED] class edu.jhu.thrax.hadoop.features.mapred.TargetPhraseGivenSourceFeature in state SUCCESS
+[SCHED] class edu.jhu.thrax.hadoop.jobs.OutputJob in state READY
+[SCHED] class edu.jhu.thrax.hadoop.jobs.OutputJob in state RUNNING
+14/03/18 22:49:59 INFO jvm.JvmMetrics: Cannot initialize JVM Metrics with processName=JobTracker, sessionId= - already initialized
+14/03/18 22:49:59 INFO input.FileInputFormat: Total input paths to process : 3
+14/03/18 22:49:59 INFO mapreduce.JobSubmitter: number of splits:3
+14/03/18 22:49:59 INFO Configuration.deprecation: user.name is deprecated. Instead, use mapreduce.job.user.name
+14/03/18 22:49:59 INFO Configuration.deprecation: mapred.output.compress is deprecated. Instead, use mapreduce.output.fileoutputformat.compress
+14/03/18 22:49:59 INFO Configuration.deprecation: mapred.jar is deprecated. Instead, use mapreduce.job.jar
+14/03/18 22:49:59 INFO Configuration.deprecation: mapred.output.compression.codec is deprecated. Instead, use mapreduce.output.fileoutputformat.compress.codec
+14/03/18 22:49:59 INFO Configuration.deprecation: mapred.reduce.tasks is deprecated. Instead, use mapreduce.job.reduces
+14/03/18 22:49:59 INFO Configuration.deprecation: mapreduce.partitioner.class is deprecated. Instead, use mapreduce.job.partitioner.class
+14/03/18 22:49:59 INFO Configuration.deprecation: mapred.output.value.class is deprecated. Instead, use mapreduce.job.output.value.class
+14/03/18 22:49:59 INFO Configuration.deprecation: mapred.output.key.comparator.class is deprecated. Instead, use mapreduce.job.output.key.comparator.class
+14/03/18 22:49:59 INFO Configuration.deprecation: mapred.mapoutput.value.class is deprecated. Instead, use mapreduce.map.output.value.class
+14/03/18 22:49:59 INFO Configuration.deprecation: mapreduce.map.class is deprecated. Instead, use mapreduce.job.map.class
+14/03/18 22:49:59 INFO Configuration.deprecation: mapred.job.name is deprecated. Instead, use mapreduce.job.name
+14/03/18 22:49:59 INFO Configuration.deprecation: mapreduce.reduce.class is deprecated. Instead, use mapreduce.job.reduce.class
+14/03/18 22:49:59 INFO Configuration.deprecation: mapreduce.inputformat.class is deprecated. Instead, use mapreduce.job.inputformat.class
+14/03/18 22:49:59 INFO Configuration.deprecation: mapred.input.dir is deprecated. Instead, use mapreduce.input.fileinputformat.inputdir
+14/03/18 22:49:59 INFO Configuration.deprecation: mapred.output.dir is deprecated. Instead, use mapreduce.output.fileoutputformat.outputdir
+14/03/18 22:49:59 INFO Configuration.deprecation: mapred.max.split.size is deprecated. Instead, use mapreduce.input.fileinputformat.split.maxsize
+14/03/18 22:49:59 INFO Configuration.deprecation: mapred.map.tasks is deprecated. Instead, use mapreduce.job.maps
+14/03/18 22:49:59 INFO Configuration.deprecation: mapred.output.key.class is deprecated. Instead, use mapreduce.job.output.key.class
+14/03/18 22:49:59 INFO Configuration.deprecation: mapred.mapoutput.key.class is deprecated. Instead, use mapreduce.map.output.key.class
+14/03/18 22:49:59 INFO Configuration.deprecation: mapred.working.dir is deprecated. Instead, use mapreduce.job.working.dir
+14/03/18 22:49:59 INFO mapreduce.JobSubmitter: Submitting tokens for job: job_local1939740388_0008
+14/03/18 22:49:59 WARN conf.Configuration: file:/tmp/hadoop-xwe/mapred/staging/xwe1939740388/.staging/job_local1939740388_0008/job.xml:an attempt to override final parameter: mapreduce.job.end-notification.max.retry.interval;  Ignoring.
+14/03/18 22:49:59 WARN conf.Configuration: file:/tmp/hadoop-xwe/mapred/staging/xwe1939740388/.staging/job_local1939740388_0008/job.xml:an attempt to override final parameter: mapreduce.job.end-notification.max.attempts;  Ignoring.
+14/03/18 22:49:59 WARN conf.Configuration: file:/tmp/hadoop-xwe/mapred/local/localRunner/xwe/job_local1939740388_0008/job_local1939740388_0008.xml:an attempt to override final parameter: mapreduce.job.end-notification.max.retry.interval;  Ignoring.
+14/03/18 22:49:59 WARN conf.Configuration: file:/tmp/hadoop-xwe/mapred/local/localRunner/xwe/job_local1939740388_0008/job_local1939740388_0008.xml:an attempt to override final parameter: mapreduce.job.end-notification.max.attempts;  Ignoring.
+14/03/18 22:49:59 INFO mapreduce.Job: The url to track the job: http://localhost:8080/
+14/03/18 22:49:59 INFO mapred.LocalJobRunner: OutputCommitter set in config null
+14/03/18 22:49:59 INFO mapred.LocalJobRunner: OutputCommitter is org.apache.hadoop.mapreduce.lib.output.FileOutputCommitter
+14/03/18 22:49:59 INFO mapred.LocalJobRunner: Waiting for map tasks
+14/03/18 22:49:59 INFO mapred.LocalJobRunner: Starting task: attempt_local1939740388_0008_m_000000_0
+14/03/18 22:49:59 INFO mapred.Task:  Using ResourceCalculatorProcessTree : [ ]
+14/03/18 22:49:59 INFO mapred.MapTask: Processing split: file:/mnt/castor/seas_home/x/xwe/software/joshua/examples/pipeline/1/pipeline-ur-en-hiero-_mnt_castor_seas_home_x_xwe_software_joshua_examples_pipeline_1/annotation/part-r-00000:0+10972438
+14/03/18 22:49:59 INFO mapred.MapTask: Map output collector class = org.apache.hadoop.mapred.MapTask$MapOutputBuffer
+14/03/18 22:49:59 INFO mapred.MapTask: (EQUATOR) 0 kvi 26214396(104857584)
+14/03/18 22:49:59 INFO mapred.MapTask: mapreduce.task.io.sort.mb: 100
+14/03/18 22:49:59 INFO mapred.MapTask: soft limit at 83886080
+14/03/18 22:49:59 INFO mapred.MapTask: bufstart = 0; bufvoid = 104857600
+14/03/18 22:49:59 INFO mapred.MapTask: kvstart = 26214396; length = 6553600
+14/03/18 22:50:00 INFO mapred.LocalJobRunner: 
+14/03/18 22:50:00 INFO mapred.MapTask: Starting flush of map output
+14/03/18 22:50:00 INFO mapred.MapTask: Spilling map output
+14/03/18 22:50:00 INFO mapred.MapTask: bufstart = 0; bufend = 9063329; bufvoid = 104857600
+14/03/18 22:50:00 INFO mapred.MapTask: kvstart = 26214396(104857584); kvend = 25313552(101254208); length = 900845/6553600
+14/03/18 22:50:01 INFO mapred.MapTask: Finished spill 0
+14/03/18 22:50:01 INFO mapred.Task: Task:attempt_local1939740388_0008_m_000000_0 is done. And is in the process of committing
+14/03/18 22:50:01 INFO mapred.LocalJobRunner: map
+14/03/18 22:50:01 INFO mapred.Task: Task 'attempt_local1939740388_0008_m_000000_0' done.
+14/03/18 22:50:01 INFO mapred.LocalJobRunner: Finishing task: attempt_local1939740388_0008_m_000000_0
+14/03/18 22:50:01 INFO mapred.LocalJobRunner: Starting task: attempt_local1939740388_0008_m_000001_0
+14/03/18 22:50:01 INFO mapred.Task:  Using ResourceCalculatorProcessTree : [ ]
+14/03/18 22:50:01 INFO mapred.MapTask: Processing split: file:/mnt/castor/seas_home/x/xwe/software/joshua/examples/pipeline/1/pipeline-ur-en-hiero-_mnt_castor_seas_home_x_xwe_software_joshua_examples_pipeline_1/e_given_f_phrase/part-r-00000:0+2711199
+14/03/18 22:50:01 INFO mapred.MapTask: Map output collector class = org.apache.hadoop.mapred.MapTask$MapOutputBuffer
+14/03/18 22:50:01 INFO mapred.MapTask: (EQUATOR) 0 kvi 26214396(104857584)
+14/03/18 22:50:01 INFO mapred.MapTask: mapreduce.task.io.sort.mb: 100
+14/03/18 22:50:01 INFO mapred.MapTask: soft limit at 83886080
+14/03/18 22:50:01 INFO mapred.MapTask: bufstart = 0; bufvoid = 104857600
+14/03/18 22:50:01 INFO mapred.MapTask: kvstart = 26214396; length = 6553600
+14/03/18 22:50:01 INFO mapred.LocalJobRunner: 
+14/03/18 22:50:01 INFO mapred.MapTask: Starting flush of map output
+14/03/18 22:50:01 INFO mapred.MapTask: Spilling map output
+14/03/18 22:50:01 INFO mapred.MapTask: bufstart = 0; bufend = 2234142; bufvoid = 104857600
+14/03/18 22:50:01 INFO mapred.MapTask: kvstart = 26214396(104857584); kvend = 25989188(103956752); length = 225209/6553600
+14/03/18 22:50:02 INFO mapred.MapTask: Finished spill 0
+14/03/18 22:50:02 INFO mapred.Task: Task:attempt_local1939740388_0008_m_000001_0 is done. And is in the process of committing
+14/03/18 22:50:02 INFO mapred.LocalJobRunner: map
+14/03/18 22:50:02 INFO mapred.Task: Task 'attempt_local1939740388_0008_m_000001_0' done.
+14/03/18 22:50:02 INFO mapred.LocalJobRunner: Finishing task: attempt_local1939740388_0008_m_000001_0
+14/03/18 22:50:02 INFO mapred.LocalJobRunner: Starting task: attempt_local1939740388_0008_m_000002_0
+14/03/18 22:50:02 INFO mapred.Task:  Using ResourceCalculatorProcessTree : [ ]
+14/03/18 22:50:02 INFO mapred.MapTask: Processing split: file:/mnt/castor/seas_home/x/xwe/software/joshua/examples/pipeline/1/pipeline-ur-en-hiero-_mnt_castor_seas_home_x_xwe_software_joshua_examples_pipeline_1/f_given_e_phrase/part-r-00000:0+2711199
+14/03/18 22:50:02 INFO mapred.MapTask: Map output collector class = org.apache.hadoop.mapred.MapTask$MapOutputBuffer
+14/03/18 22:50:02 INFO mapred.MapTask: (EQUATOR) 0 kvi 26214396(104857584)
+14/03/18 22:50:02 INFO mapred.MapTask: mapreduce.task.io.sort.mb: 100
+14/03/18 22:50:02 INFO mapred.MapTask: soft limit at 83886080
+14/03/18 22:50:02 INFO mapred.MapTask: bufstart = 0; bufvoid = 104857600
+14/03/18 22:50:02 INFO mapred.MapTask: kvstart = 26214396; length = 6553600
+14/03/18 22:50:02 INFO mapred.LocalJobRunner: 
+14/03/18 22:50:02 INFO mapred.MapTask: Starting flush of map output
+14/03/18 22:50:02 INFO mapred.MapTask: Spilling map output
+14/03/18 22:50:02 INFO mapred.MapTask: bufstart = 0; bufend = 2234142; bufvoid = 104857600
+14/03/18 22:50:02 INFO mapred.MapTask: kvstart = 26214396(104857584); kvend = 25989188(103956752); length = 225209/6553600
+14/03/18 22:50:02 INFO mapred.MapTask: Finished spill 0
+14/03/18 22:50:02 INFO mapred.Task: Task:attempt_local1939740388_0008_m_000002_0 is done. And is in the process of committing
+14/03/18 22:50:02 INFO mapred.LocalJobRunner: map
+14/03/18 22:50:02 INFO mapred.Task: Task 'attempt_local1939740388_0008_m_000002_0' done.
+14/03/18 22:50:02 INFO mapred.LocalJobRunner: Finishing task: attempt_local1939740388_0008_m_000002_0
+14/03/18 22:50:02 INFO mapred.LocalJobRunner: Map task executor complete.
+14/03/18 22:50:02 INFO mapred.Task:  Using ResourceCalculatorProcessTree : [ ]
+14/03/18 22:50:02 INFO mapred.Merger: Merging 3 sorted segments
+14/03/18 22:50:02 INFO mapred.Merger: Down to the last merge-pass, with 3 segments left of total size: 14207213 bytes
+14/03/18 22:50:02 INFO mapred.LocalJobRunner: 
+14/03/18 22:50:06 INFO mapred.Task: Task:attempt_local1939740388_0008_r_000000_0 is done. And is in the process of committing
+14/03/18 22:50:06 INFO mapred.LocalJobRunner: 
+14/03/18 22:50:06 INFO mapred.Task: Task attempt_local1939740388_0008_r_000000_0 is allowed to commit now
+14/03/18 22:50:06 INFO output.FileOutputCommitter: Saved output of task 'attempt_local1939740388_0008_r_000000_0' to file:/mnt/castor/seas_home/x/xwe/software/joshua/examples/pipeline/1/pipeline-ur-en-hiero-_mnt_castor_seas_home_x_xwe_software_joshua_examples_pipeline_1/final/_temporary/0/task_local1939740388_0008_r_000000
+14/03/18 22:50:06 INFO mapred.LocalJobRunner: reduce > reduce
+14/03/18 22:50:06 INFO mapred.Task: Task 'attempt_local1939740388_0008_r_000000_0' done.
+[SCHED] class edu.jhu.thrax.hadoop.jobs.OutputJob in state SUCCESS
+class edu.jhu.thrax.hadoop.jobs.TargetWordGivenSourceWordProbabilityJob	SUCCESS
+class edu.jhu.thrax.hadoop.features.mapred.SourcePhraseGivenTargetFeature	SUCCESS
+class edu.jhu.thrax.hadoop.features.annotation.AnnotationFeatureJob	SUCCESS
+class edu.jhu.thrax.hadoop.jobs.ExtractionJob	SUCCESS
+class edu.jhu.thrax.hadoop.jobs.OutputJob	SUCCESS
+class edu.jhu.thrax.hadoop.jobs.VocabularyJob	SUCCESS
+class edu.jhu.thrax.hadoop.features.mapred.TargetPhraseGivenSourceFeature	SUCCESS
+class edu.jhu.thrax.hadoop.jobs.SourceWordGivenTargetWordProbabilityJob	SUCCESS
+Work directory was pipeline-ur-en-hiero-_mnt_castor_seas_home_x_xwe_software_joshua_examples_pipeline_1/
+To retrieve grammar:
+hadoop fs -getmerge pipeline-ur-en-hiero-_mnt_castor_seas_home_x_xwe_software_joshua_examples_pipeline_1/final <destination>

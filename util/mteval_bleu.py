@@ -137,6 +137,27 @@ class MtEval_BLEU:
         m = re.search(b'BLEU = ([\d+\.]+)', mteval_result[0])
         return float(m.group(1)) / 100.0
 
+    """Get Result for joshua"""
+
+    def get_bleu_from_joshua(self, step, path_ref, targets):
+        path_tar = self.model_config.resultdor + '/joshua_target_%s.txt' % step
+        f = open(path_tar, 'w', encoding='utf-8')
+        # joshua require lower case
+        f.write(self.result2txt(targets, lowercase=True))
+        f.close()
+
+        return self.get_result_joshua(path_ref, path_tar)
+
+    def get_result_joshua(self, path_ref, path_tar):
+        args = ' '.join([self.model_config.joshua_script, path_tar, path_ref,
+                         str(self.model_config.num_refs), self.model_config.joshua_class])
+
+        pipe = subprocess.Popen(args, stdin=subprocess.PIPE, stdout=subprocess.PIPE, shell=True)
+        mteval_result = pipe.communicate()
+
+        m = re.search(b'BLEU = ([\d+\.]+)', mteval_result[0])
+        return float(m.group(1))
+
 
 if __name__ == '__main__':
     bleu = MtEval_BLEU(DefaultConfig())

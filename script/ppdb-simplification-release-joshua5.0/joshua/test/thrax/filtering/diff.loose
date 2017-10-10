@@ -1,0 +1,17 @@
+--- loose.log	2014-03-07 10:33:20.086769000 -0500
++++ loose.log.gold	2014-02-14 11:32:42.582502000 -0500
+@@ -5,11 +5,10 @@
+ [INFO] Rules kept: 4099
+ [INFO] Rules dropped: 4237
+ [INFO] cached queries: 8022
+-Could not open input.de (No such file or directory)
+-Added 0 sentences.
++Added 3 sentences.
+ 
+ Filtering rules with the loose filter...
+ [INFO] Total rules read: 4
+-[INFO] Rules kept: 0
+-[INFO] Rules dropped: 4
++[INFO] Rules kept: 3
++[INFO] Rules dropped: 1
+ [INFO] cached queries: 0

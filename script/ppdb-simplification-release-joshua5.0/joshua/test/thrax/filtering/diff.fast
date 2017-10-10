@@ -1,0 +1,17 @@
+--- fast.log	2014-03-07 10:33:18.832872000 -0500
++++ fast.log.gold	2014-02-14 11:32:42.554501000 -0500
+@@ -5,11 +5,10 @@
+ [INFO] Rules kept: 1087
+ [INFO] Rules dropped: 7249
+ [INFO] cached queries: 8022
+-Could not open input.de (No such file or directory)
+-Added 0 sentences.
++Added 3 sentences.
+ 
+ Filtering rules with the fast filter...
+ [INFO] Total rules read: 4
+-[INFO] Rules kept: 0
+-[INFO] Rules dropped: 4
++[INFO] Rules kept: 2
++[INFO] Rules dropped: 2
+ [INFO] cached queries: 0

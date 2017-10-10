@@ -1,0 +1,81 @@
+Evaluator.searchForThreshold	false
+Evaluator.thresholdIntervals	20
+Evaluator.saveAlignmentObjects	false
+Evaluator.usePosteriorDecoding	true
+Evaluator.posteriorDecodingThreshold	0.5
+Evaluator.writePosteriors	false
+Evaluator.writePosteriorThreshold	1.0E-4
+Evaluator.writeGIZA	false
+Evaluator.alignInputsSeparately	false
+EMWordAligner.nullProb	1.0E-6
+EMWordAligner.mergeConsiderNull	false
+EMWordAligner.handleUnknownWords	false
+EMWordAligner.priorFraction	1.0
+EMWordAligner.numThreads	1
+EMWordAligner.safeConcurrency	false
+EMWordAligner.evaluateDuringTraining	false
+Data.trainSources	/mnt/castor/seas_home/x/xwe/software/joshua/examples/pipeline/1/data/train/splits/corpus
+Data.testSources	/dev/null
+Data.sentences	MAX
+Data.offsetTrainingSentences	0
+Data.maxTrainingLength	200
+Data.maxTestSentences	2147483647
+Data.offsetTestSentences	0
+Data.foreignSuffix	ur.0
+Data.englishSuffix	en.0
+Data.reverseAlignments	false
+Data.lowercaseWords	false
+Data.leaveTrainingOnDisk	false
+Data.saveRejects	false
+Data.addTestToTrain	true
+Data.dictionary	example/en-ch.dict
+Data.splitDefinitions	false
+Main.forwardModels	MODEL1 HMM
+Main.reverseModels	MODEL1 HMM
+Main.iters	5 5
+Main.mode	JOINT JOINT
+Main.trainingCacheMaxSize	30
+Main.loadParamsDir	
+Main.loadLexicalModelOnly	true
+Main.saveParams	true
+Main.saveAlignOutput	true
+Main.alignTraining	true
+Main.saveLexicalWeights	false
+Main.competitiveThresholding	true
+Main.evaluateDirectionalModels	false
+Main.evaluateHardCombination	false
+Main.evaluateSoftCombination	false
+Main.rantOutput	false
+TreeWalkModel.usePushProbabilities	true
+TreeWalkModel.conditionOnTag	true
+TreeWalkModel.cacheTreePaths	false
+exec.create	true
+exec.monitor	false
+exec.execDir	alignments/0
+exec.execPoolDir	
+exec.actualExecPoolDir	
+exec.overwriteExecDir	true
+exec.useStandardExecPoolDirStrategy	false
+exec.printOptionsAndExit	false
+exec.miscOptions	
+exec.addToView	
+exec.recordPath	
+exec.charEncoding	
+exec.jarFiles	
+exec.dontInitializeJars	false
+exec.initializeJarsAfterDirCreation	false
+exec.makeThunk	false
+exec.thunkAutoQueue	false
+exec.thunkPriority	0
+exec.thunkMainClassName	
+exec.thunkJavaOpts	
+exec.thunkUseScala	false
+exec.thunkReqMemory	1024
+exec.dontCatchExceptions	false
+log.maxIndLevel	10
+log.msPerLine	10000
+log.file	alignments/0/log
+log.stdout	true
+log.note	
+log.forcePrint	false
+log.maxPrintErrors	10000
