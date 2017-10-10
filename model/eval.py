@@ -201,12 +201,14 @@ def eval(model_config=None, ckpt=None):
             ibleus.append(batch_ibleu)
 
             # Compute SARI
-            rsents = []
-            for ref_i in range(model_config.num_refs):
-                rsents.append(' '.join(ref[ref_i][batch_i]))
-            batch_sari = SARIsent(' '.join(sentence_complex_raw[batch_i]),
-                                  ' '.join(target_raw[batch_i]),
-                                  rsents)
+            batch_sari = 0
+            if model_config.num_refs > 0:
+                rsents = []
+                for ref_i in range(model_config.num_refs):
+                    rsents.append(' '.join(ref[ref_i][batch_i]))
+                batch_sari = SARIsent(' '.join(sentence_complex_raw[batch_i]),
+                                      ' '.join(target_raw[batch_i]),
+                                      rsents)
             saris.append(batch_sari)
             saris_all.append(batch_sari)
 
