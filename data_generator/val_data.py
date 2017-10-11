@@ -30,11 +30,14 @@ class ValData:
             self.vocab_simple)
         # Populate simple references
         self.data_references = []
+        self.data_references_raw = []
         for i in range(self.model_config.num_refs):
-            self.data_references.append(
-                self.populate_data(self.model_config.val_dataset_simple_folder +
-                                   self.model_config.val_dataset_simple_references +
-                                   str(i), self.vocab_simple)[0])
+            ref_tmp, ref_tmp_raw = self.populate_data(
+                self.model_config.val_dataset_simple_folder +
+                self.model_config.val_dataset_simple_references +
+                str(i), self.vocab_simple, need_raw=True)
+            self.data_references.append(ref_tmp)
+            self.data_references_raw.append(ref_tmp_raw)
 
         if self.model_config.replace_ner:
             self.mapper = load_mappers(self.model_config.val_mapper, self.model_config.lower_case)
@@ -77,10 +80,13 @@ class ValData:
     def get_data_iter(self):
         i = 0
         while True:
-            ref_batch = cp.deepcopy([self.data_references[j][i] for j in range(self.model_config.num_refs)])
+            ref_batch = cp.deepcopy([self.data_references[j][i]
+                                     for j in range(self.model_config.num_refs)])
+            ref_raw_batch = cp.deepcopy([self.data_references_raw[j][i]
+                                         for j in range(self.model_config.num_refs)])
             yield (cp.deepcopy(self.data_simple[i]), cp.deepcopy(self.data_complex[i]),
-                   cp.deepcopy(self.data_complex_raw[i]), self.mapper[i], ref_batch)
+                   cp.deepcopy(self.data_complex_raw[i]), self.mapper[i], ref_batch, ref_raw_batch)
 
             i += 1
             if i == len(self.data_simple):
-                yield None, None, None, None, None
+                yield None, None, None, None, None, None

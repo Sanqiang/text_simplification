@@ -38,11 +38,12 @@ def get_graph_val_data(sentence_simple_input, sentence_complex_input,
     tmp_sentence_simple, tmp_sentence_complex, tmp_sentence_complex_raw = [], [], []
     tmp_mapper = []
     tmp_ref = [[] for _ in range(model_config.num_refs)]
+    tmp_ref_raw = [[] for _ in range(model_config.num_refs)]
     effective_batch_size = 0
     is_end = False
     for i in range(model_config.batch_size):
         if not is_end:
-            sentence_simple, sentence_complex, sentence_complex_raw, mapper, ref = next(it)
+            sentence_simple, sentence_complex, sentence_complex_raw, mapper, ref, ref_raw = next(it)
             effective_batch_size += 1
         if sentence_simple is None or is_end:
             # End of data set
@@ -54,6 +55,8 @@ def get_graph_val_data(sentence_simple_input, sentence_complex_input,
         if ref:
             for i_ref in range(model_config.num_refs):
                 tmp_ref[i_ref].append(ref[i_ref])
+            for i_ref in range(model_config.num_refs):
+                tmp_ref_raw[i_ref].append(ref_raw[i_ref])
 
         # PAD zeros
         if len(sentence_simple) < model_config.max_simple_sentence:
@@ -81,7 +84,7 @@ def get_graph_val_data(sentence_simple_input, sentence_complex_input,
                                                          for batch_idx in range(model_config.batch_size)]
 
     return (input_feed, tmp_sentence_simple, tmp_sentence_complex,
-            tmp_sentence_complex_raw, tmp_mapper, tmp_ref, effective_batch_size, is_end)
+            tmp_sentence_complex_raw, tmp_mapper, tmp_ref, tmp_ref_raw, effective_batch_size, is_end)
 
 
 def eval(model_config=None, ckpt=None):
@@ -121,12 +124,14 @@ def eval(model_config=None, ckpt=None):
     sess = sv.PrepareSession(config=session.get_session_config(model_config))
     while True:
         (input_feed, sentence_simple, sentence_complex,
-         sentence_complex_raw, mapper, ref, effective_batch_size, is_end) = get_graph_val_data(
+         sentence_complex_raw, mapper, ref, ref_raw, effective_batch_size, is_end) = get_graph_val_data(
             graph.sentence_simple_input_placeholder,
             graph.sentence_complex_input_placeholder,
             model_config, it)
         postprocess = PostProcess(model_config, val_data)
         sentence_complex_raw = postprocess.replace_ner(sentence_complex_raw, mapper)
+        for ref_i in range(model_config.num_refs):
+            ref_raw[ref_i] = postprocess.replace_ner(ref_raw[ref_i], mapper)
 
         fetches = {'decoder_target_list': graph.decoder_target_list,
                    'loss': graph.loss,
@@ -149,7 +154,6 @@ def eval(model_config=None, ckpt=None):
             sentence_complex_raw = exclude_list(sentence_complex_raw, exclude_idxs)
             for ref_i in range(model_config.num_refs):
                 ref[ref_i] = exclude_list(ref[ref_i], exclude_idxs)
-
 
         target = decode(target, val_data.vocab_simple)
         target_raw = target
@@ -204,7 +208,7 @@ def eval(model_config=None, ckpt=None):
             if model_config.num_refs > 0:
                 rsents = []
                 for ref_i in range(model_config.num_refs):
-                    rsents.append(' '.join(ref[ref_i][batch_i]))
+                    rsents.append(' '.join(ref_raw[ref_i][batch_i]))
                 batch_sari = SARIsent(' '.join(sentence_complex_raw[batch_i]),
                                       ' '.join(target_raw[batch_i]),
                                       rsents)
