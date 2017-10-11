@@ -35,6 +35,10 @@ def get_args():
     # For Transformer
     parser.add_argument('-pos', '--hparams_pos', default='timing',
                         help='Whether to use positional encoding?')
+    parser.add_argument('-digate', '--decode_input_gate', default=False,
+                        help='Whether to use gate in decode input?')
+    parser.add_argument('-dagate', '--decode_atten_gate', default=False,
+                        help='Whether to use gate in decode attention?')
 
 
     args = parser.parse_args()

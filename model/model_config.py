@@ -39,14 +39,15 @@ class DefaultConfig():
     loss_fn = args.loss_fn
     num_samples = args.number_samples
 
-
     beam_search_size = -1
 
     # Overwrite transformer config
     # timing: use positional encoding
     hparams_pos = args.hparams_pos
 
-    # data quality model
+    # Our research ideas !!!
+    decode_input_gate = args.decode_input_gate
+    decode_atten_gate = args.decode_atten_gate
     use_quality_model = args.use_quality_model
 
     # post process

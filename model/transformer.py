@@ -134,17 +134,28 @@ class TransformerGraph(Graph):
         return prev_logit
 
     def decode_inputs_to_outputs(self, decoder_embed_inputs, encoder_outputs, encoder_attn_bias):
+        if self.model_config.decode_input_gate:
+            with tf.variable_scope('decode_input_gate'):
+                gate_filter = tf.get_variable('gate_decode',
+                                           [1, self.model_config.dimension, self.model_config.dimension],
+                                           tf.float32,
+                                           initializer=tf.contrib.layers.xavier_initializer())
+                gate_decode_input = tf.tanh(
+                    tf.nn.conv1d(decoder_embed_inputs, gate_filter, 1, 'SAME'))
+                decoder_embed_inputs *= gate_decode_input
+
         if self.hparams.pos == 'timing':
             decoder_embed_inputs = common_attention.add_timing_signal_1d(decoder_embed_inputs)
             print('Use positional encoding in decoder text.')
+
         decoder_attn_bias = common_attention.attention_bias_lower_triangle(tf.shape(decoder_embed_inputs)[1])
         decoder_embed_inputs = tf.nn.dropout(decoder_embed_inputs,
                                              1.0 - self.hparams.layer_prepostprocess_dropout)
         decoder_output = transformer.transformer_decoder(decoder_embed_inputs,
-                                               encoder_outputs,
-                                               decoder_attn_bias,
-                                               encoder_attn_bias,
-                                               self.hparams)
+                                                         encoder_outputs,
+                                                         decoder_attn_bias,
+                                                         encoder_attn_bias,
+                                                         self.hparams)
         return decoder_output
 
     def setup_hparams(self):
@@ -152,9 +163,12 @@ class TransformerGraph(Graph):
         self.hparams.pos = self.model_config.hparams_pos
         self.hparams.hidden_size = self.model_config.dimension
         self.hparams.layer_prepostprocess_dropout = self.model_config.layer_prepostprocess_dropout
+
         if self.is_train:
             self.hparams.add_hparam('mode', tf.estimator.ModeKeys.TRAIN)
         else:
             self.hparams.add_hparam('mode', tf.estimator.ModeKeys.EVAL)
             self.hparams.layer_prepostprocess_dropout = 0
+
+        self.hparams.add_hparam('decode_atten_gate', self.model_config.decode_atten_gate)
 
