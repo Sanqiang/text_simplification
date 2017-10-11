@@ -82,6 +82,9 @@ class DefaultConfig():
     val_dataset_simple_raw_file = val_dataset_simple_file
     val_dataset_simple_raw_references = val_dataset_simple_references
     val_dataset_complex_raw = val_dataset_complex
+    val_dataset_complex_rawlines_file = val_dataset_complex_raw
+    val_dataset_simple_rawlines_file_references = val_dataset_simple_references
+    val_dataset_simple_rawlines_file = val_dataset_simple_raw_file
     num_refs = 3
 
     output_folder = args.output_folder
@@ -136,7 +139,12 @@ class WikiDressLargeDefault(DefaultConfig):
     val_mapper = get_path('../text_simplification_data/val/tune.8turkers.tok.map')
     val_dataset_simple_raw_file = 'tune.8turkers.tok.simp.raw'
     val_dataset_simple_raw_references = 'tune.8turkers.tok.turk.raw.'
-    val_dataset_complex_raw = get_path('../text_simplification_data/val/tune.8turkers.tok.norm.raw')
+    val_dataset_complex_raw = get_path(
+        '../text_simplification_data/val/tune.8turkers.tok.norm.raw')
+    val_dataset_complex_rawlines_file = get_path(
+        '../text_simplification_data/val/tune.8turkers.tok.norm')
+    val_dataset_simple_rawlines_file_references = 'tune.8turkers.tok.turk.'
+    val_dataset_simple_rawlines_file = 'tune.8turkers.tok.simp'
     num_refs = 8
 
     save_model_secs = 600
@@ -186,7 +194,12 @@ class SubValWikiEightRefConfig(SubTest):
     val_mapper = get_path('../text_simplification_data/val/tune.8turkers.tok.map')
     val_dataset_simple_raw_file = 'tune.8turkers.tok.simp.raw'
     val_dataset_simple_raw_references = 'tune.8turkers.tok.turk.raw.'
-    val_dataset_complex_raw = get_path('../text_simplification_data/val/tune.8turkers.tok.norm.raw')
+    val_dataset_complex_raw = get_path(
+        '../text_simplification_data/val/tune.8turkers.tok.norm.raw')
+    val_dataset_complex_rawlines_file = get_path(
+        '../text_simplification_data/val/tune.8turkers.tok.norm')
+    val_dataset_simple_rawlines_file_references = 'tune.8turkers.tok.turk.'
+    val_dataset_simple_rawlines_file = 'tune.8turkers.tok.simp'
     num_refs = 8
 
 class SubValWikiEightRefConfigBeam4(SubValWikiEightRefConfig):
@@ -206,7 +219,12 @@ class SubTestWikiEightRefConfig(SubTest):
     val_mapper = get_path('../text_simplification_data/test/test.8turkers.tok.map')
     val_dataset_simple_raw_file = 'test.8turkers.tok.simp.raw'
     val_dataset_simple_raw_references = 'test.8turkers.tok.turk.raw.'
-    val_dataset_complex_raw = get_path('../text_simplification_data/test/test.8turkers.tok.norm.raw')
+    val_dataset_complex_raw = get_path(
+        '../text_simplification_data/test/test.8turkers.tok.norm.raw')
+    val_dataset_complex_rawlines_file = get_path(
+        '../text_simplification_data/val/test.8turkers.tok.norm')
+    val_dataset_simple_rawlines_file_references = 'test.8turkers.tok.turk.'
+    val_dataset_simple_rawlines_file = 'test.8turkers.tok.simp'
     num_refs = 8
 
 
@@ -230,6 +248,8 @@ class SubValWikiDress(SubTest):
     val_dataset_simple_raw_file = 'PWKP_108016.tag.80.aner.ori.valid.dst'
     val_dataset_complex_raw = get_path(
         '../text_simplification_data/train/dress/wikismall/PWKP_108016.tag.80.aner.ori.valid.src')
+    val_dataset_complex_rawlines_file = val_dataset_complex_raw
+    val_dataset_simple_rawlines_file = val_dataset_simple_raw_file
     num_refs = 0
 
 
@@ -247,6 +267,8 @@ class SubTestWikiDress(SubTest):
     val_dataset_simple_raw_file = 'PWKP_108016.tag.80.aner.ori.test.dst'
     val_dataset_complex_raw = get_path(
         '../text_simplification_data/train/dress/wikismall/PWKP_108016.tag.80.aner.ori.test.src')
+    val_dataset_complex_rawlines_file = val_dataset_complex_raw
+    val_dataset_simple_rawlines_file = val_dataset_simple_raw_file
     num_refs = 0
 
 
@@ -264,6 +286,8 @@ class SubValWikiDressL(SubTest):
     val_dataset_simple_raw_file = 'wiki.full.aner.ori.valid.dst'
     val_dataset_complex_raw = get_path(
         '../text_simplification_data/train/dress/wikilarge/wiki.full.aner.ori.valid.src')
+    val_dataset_complex_rawlines_file = val_dataset_complex_raw
+    val_dataset_simple_rawlines_file = val_dataset_simple_raw_file
     num_refs = 0
 
 
@@ -281,6 +305,8 @@ class SubTestWikiDressL(SubTest):
     val_dataset_simple_raw_file = 'wiki.full.aner.ori.test.dst'
     val_dataset_complex_raw = get_path(
         '../text_simplification_data/train/dress/wikilarge/wiki.full.aner.ori.test.src')
+    val_dataset_complex_rawlines_file = val_dataset_complex_raw
+    val_dataset_simple_rawlines_file = val_dataset_simple_raw_file
     num_refs = 0
 
 

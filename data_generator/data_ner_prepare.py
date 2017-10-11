@@ -406,6 +406,6 @@ class DataNERPrepareBase:
 
 if __name__ == '__main__':
     data_ner = DataNERPrepareBase()
-    # data_ner.process()
+    data_ner.process()
     data_ner.process_dress()
     # data_ner.prepare_raw_data()

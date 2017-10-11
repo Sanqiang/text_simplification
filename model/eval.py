@@ -35,15 +35,18 @@ def get_graph_val_data(sentence_simple_input, sentence_complex_input,
     input_feed = {}
     voc = Vocab(model_config)
 
-    tmp_sentence_simple, tmp_sentence_complex, tmp_sentence_complex_raw = [], [], []
+    (tmp_sentence_simple, tmp_sentence_complex,
+     tmp_sentence_complex_raw, tmp_sentence_complex_raw_lines) = [], [], [], []
     tmp_mapper = []
     tmp_ref = [[] for _ in range(model_config.num_refs)]
     tmp_ref_raw = [[] for _ in range(model_config.num_refs)]
+    tmp_ref_raw_lines = [[] for _ in range(model_config.num_refs)]
     effective_batch_size = 0
     is_end = False
     for i in range(model_config.batch_size):
         if not is_end:
-            sentence_simple, sentence_complex, sentence_complex_raw, mapper, ref, ref_raw = next(it)
+            (sentence_simple, sentence_complex, sentence_complex_raw, sentence_complex_raw_lines,
+             mapper, ref, ref_raw, ref_raw_lines) = next(it)
             effective_batch_size += 1
         if sentence_simple is None or is_end:
             # End of data set
@@ -51,12 +54,6 @@ def get_graph_val_data(sentence_simple_input, sentence_complex_input,
                 effective_batch_size -= 1
             is_end = True
             sentence_simple, sentence_complex, ref = [], [], []
-
-        if ref:
-            for i_ref in range(model_config.num_refs):
-                tmp_ref[i_ref].append(ref[i_ref])
-            for i_ref in range(model_config.num_refs):
-                tmp_ref_raw[i_ref].append(ref_raw[i_ref])
 
         # PAD zeros
         if len(sentence_simple) < model_config.max_simple_sentence:
@@ -75,6 +72,12 @@ def get_graph_val_data(sentence_simple_input, sentence_complex_input,
         tmp_sentence_complex.append(sentence_complex)
         tmp_mapper.append(mapper)
         tmp_sentence_complex_raw.append(sentence_complex_raw)
+        tmp_sentence_complex_raw_lines.append(sentence_complex_raw_lines)
+        if ref:
+            for i_ref in range(model_config.num_refs):
+                tmp_ref[i_ref].append(ref[i_ref])
+                tmp_ref_raw[i_ref].append(ref_raw[i_ref])
+                tmp_ref_raw_lines[i_ref].append(ref_raw_lines[i_ref])
 
     for step in range(model_config.max_simple_sentence):
         input_feed[sentence_simple_input[step].name] = [tmp_sentence_simple[batch_idx][step]
@@ -83,8 +86,12 @@ def get_graph_val_data(sentence_simple_input, sentence_complex_input,
         input_feed[sentence_complex_input[step].name] = [tmp_sentence_complex[batch_idx][step]
                                                          for batch_idx in range(model_config.batch_size)]
 
-    return (input_feed, tmp_sentence_simple, tmp_sentence_complex,
-            tmp_sentence_complex_raw, tmp_mapper, tmp_ref, tmp_ref_raw, effective_batch_size, is_end)
+    return (input_feed, tmp_sentence_simple,
+            tmp_sentence_complex, tmp_sentence_complex_raw, tmp_sentence_complex_raw_lines,
+            tmp_mapper,
+            tmp_ref, tmp_ref_raw, tmp_ref_raw_lines,
+            effective_batch_size,
+            is_end)
 
 
 def eval(model_config=None, ckpt=None):
@@ -123,12 +130,18 @@ def eval(model_config=None, ckpt=None):
     sv = tf.train.Supervisor(init_fn=init_fn)
     sess = sv.PrepareSession(config=session.get_session_config(model_config))
     while True:
-        (input_feed, sentence_simple, sentence_complex,
-         sentence_complex_raw, mapper, ref, ref_raw, effective_batch_size, is_end) = get_graph_val_data(
+        (input_feed, sentence_simple,
+         sentence_complex, sentence_complex_raw, sentence_complex_raw_lines,
+         mapper,
+         ref, ref_raw, ref_raw_lines,
+         effective_batch_size, is_end) = get_graph_val_data(
             graph.sentence_simple_input_placeholder,
             graph.sentence_complex_input_placeholder,
             model_config, it)
+
         postprocess = PostProcess(model_config, val_data)
+        # Replace UNK for sentence_complex_raw and ref_raw
+        # Note that sentence_complex_raw_lines and ref_raw_lines are original file lines
         sentence_complex_raw = postprocess.replace_ner(sentence_complex_raw, mapper)
         for ref_i in range(model_config.num_refs):
             ref_raw[ref_i] = postprocess.replace_ner(ref_raw[ref_i], mapper)
@@ -149,11 +162,18 @@ def eval(model_config=None, ckpt=None):
         exclude_idxs = get_exclude_list(sentence_complex, val_data.vocab_complex)
         if exclude_idxs:
             sentence_complex = exclude_list(sentence_complex, exclude_idxs)
-            sentence_simple = exclude_list(sentence_simple, exclude_idxs)
-            target = exclude_list(target, exclude_idxs)
             sentence_complex_raw = exclude_list(sentence_complex_raw, exclude_idxs)
+            sentence_complex_raw_lines = exclude_list(sentence_complex_raw_lines, exclude_idxs)
+
+            sentence_simple = exclude_list(sentence_simple, exclude_idxs)
+
+            target = exclude_list(target, exclude_idxs)
+            mapper = exclude_list(mapper, exclude_idxs)
+
             for ref_i in range(model_config.num_refs):
                 ref[ref_i] = exclude_list(ref[ref_i], exclude_idxs)
+                ref_raw[ref_i] = exclude_list(ref_raw[ref_i], exclude_idxs)
+                ref_raw_lines[ref_i] = exclude_list(ref_raw_lines[ref_i], exclude_idxs)
 
         target = decode(target, val_data.vocab_simple)
         target_raw = target
@@ -173,7 +193,7 @@ def eval(model_config=None, ckpt=None):
         for ref_i in range(model_config.num_refs):
             ref[ref_i] = decode(ref[ref_i], val_data.vocab_simple)
 
-        #Truncate decode results
+        # Truncate decode results
         target = truncate_sents(target)
         target_raw = truncate_sents(target_raw)
         sentence_simple = truncate_sents(sentence_simple)
@@ -208,8 +228,8 @@ def eval(model_config=None, ckpt=None):
             if model_config.num_refs > 0:
                 rsents = []
                 for ref_i in range(model_config.num_refs):
-                    rsents.append(' '.join(ref_raw[ref_i][batch_i]))
-                batch_sari = SARIsent(' '.join(sentence_complex_raw[batch_i]),
+                    rsents.append(ref_raw_lines[ref_i][batch_i])
+                batch_sari = SARIsent(sentence_complex_raw_lines[batch_i],
                                       ' '.join(target_raw[batch_i]),
                                       rsents)
             saris.append(batch_sari)
@@ -274,7 +294,7 @@ def eval(model_config=None, ckpt=None):
     bleu_joshua = bleu_oi_raw
     if model_config.num_refs > 0:
         bleu_joshua = mteval.get_bleu_from_joshua(
-            step, model_config.val_dataset_simple_folder + model_config.val_dataset_simple_raw_references[:-5],
+            step, model_config.val_dataset_simple_folder + model_config.val_dataset_simple_rawlines_file_references,
             targets_raw)
 
     decimal_cnt = 5

@@ -58,7 +58,7 @@ class PostProcess:
         ndecoder_target = cp.deepcopy(decoder_target)
         for len_i in range(len(decoder_target)):
             target = decoder_target[len_i]
-            if target == constant.SYMBOL_UNK:
+            if target == constant.SYMBOL_UNK or target == constant.SYMBOL_NUM:
                 nword = encoder_word[attn_dist[len_i]]
                 ndecoder_target[len_i] = nword
         return ndecoder_target
@@ -71,13 +71,13 @@ class PostProcess:
         for batch_i in range(batch_size):
             for len_i in range(len(decoder_targets[batch_i])):
                 target = decoder_targets[batch_i][len_i]
-                if target == constant.SYMBOL_UNK:
+                if target == constant.SYMBOL_UNK or target == constant.SYMBOL_NUM:
                     query = decoder_outputs[batch_i, len_i, :]
                     # word_exclude = set()
                     word_exclude = set(ndecoder_targets[batch_i])
                     word_exclude.update([
                         constant.SYMBOL_START, constant.SYMBOL_END, constant.SYMBOL_UNK,
-                        constant.SYMBOL_PAD, constant.SYMBOL_GO])
+                        constant.SYMBOL_PAD, constant.SYMBOL_GO, constant.SYMBOL_NUM])
                     dists = [99999 for _ in range(len(encoder_words[batch_i]))]
                     replace = False
                     for loop_i in range(len(encoder_words[batch_i])):
@@ -93,7 +93,7 @@ class PostProcess:
                     else:
                         word_exclude = set()
                         word_exclude.update([constant.SYMBOL_START, constant.SYMBOL_END, constant.SYMBOL_UNK,
-                                             constant.SYMBOL_PAD, constant.SYMBOL_GO])
+                                             constant.SYMBOL_PAD, constant.SYMBOL_GO, constant.SYMBOL_NUM])
                         dists = [99999 for _ in range(len(encoder_words[batch_i]))]
                         for loop_i in range(len(encoder_words[batch_i])):
                             if encoder_words[batch_i][loop_i] in word_exclude:
@@ -116,11 +116,11 @@ class PostProcess:
         for batch_i in range(batch_size):
             for len_i in range(len(decoder_targets[batch_i])):
                 target = decoder_targets[batch_i][len_i]
-                if target == constant.SYMBOL_UNK:
+                if target == constant.SYMBOL_UNK or target == constant.SYMBOL_NUM:
                     word_cands = set(encoder_words[batch_i]) - set(ndecoder_targets[batch_i])
                     exclude_word = set([
                         constant.SYMBOL_START, constant.SYMBOL_END, constant.SYMBOL_UNK,
-                        constant.SYMBOL_PAD, constant.SYMBOL_GO])
+                        constant.SYMBOL_PAD, constant.SYMBOL_GO, constant.SYMBOL_NUM])
                     word_cands -= exclude_word
                     word_cands = list(word_cands)
                     word_cands_point = [0 for _ in range(len(word_cands))]

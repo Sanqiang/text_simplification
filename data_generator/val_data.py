@@ -25,12 +25,15 @@ class ValData:
         # Populate basic complex simple pairs
         self.data_complex, self.data_complex_raw = self.populate_data(
             self.model_config.val_dataset_complex, self.vocab_complex, need_raw=True)
+        self.data_complex_raw_lines = self.populate_data_rawfile(
+            self.model_config.val_dataset_complex_rawlines_file)
         self.data_simple, _ = self.populate_data(
             self.model_config.val_dataset_simple_folder + self.model_config.val_dataset_simple_file,
             self.vocab_simple)
         # Populate simple references
         self.data_references = []
         self.data_references_raw = []
+        self.data_references_raw_lines = []
         for i in range(self.model_config.num_refs):
             ref_tmp, ref_tmp_raw = self.populate_data(
                 self.model_config.val_dataset_simple_folder +
@@ -38,6 +41,12 @@ class ValData:
                 str(i), self.vocab_simple, need_raw=True)
             self.data_references.append(ref_tmp)
             self.data_references_raw.append(ref_tmp_raw)
+
+            ref_tmp_rawlines = self.populate_data_rawfile(
+                self.model_config.val_dataset_simple_folder +
+                self.model_config.val_dataset_simple_rawlines_file_references +
+                str(i))
+            self.data_references_raw_lines.append(ref_tmp_rawlines)
 
         if self.model_config.replace_ner:
             self.mapper = load_mappers(self.model_config.val_mapper, self.model_config.lower_case)
@@ -47,12 +56,22 @@ class ValData:
         self.size = len(self.data_simple)
         assert len(self.data_complex) == self.size
         assert len(self.data_complex_raw) == self.size
+        assert len(self.data_complex_raw_lines) == self.size
         assert len(self.mapper) == self.size
         for i in range(self.model_config.num_refs):
             assert len(self.data_references[i]) == self.size
+            assert len(self.data_references_raw[i]) == self.size
+            assert len(self.data_references_raw_lines[i]) == self.size
         print('Use Val Dataset: \n Simple\t %s. \n Complex\t %s. \n Size\t %d'
               % (self.model_config.val_dataset_simple_folder + self.model_config.val_dataset_simple_file,
                  self.model_config.val_dataset_complex, self.size))
+
+    def populate_data_rawfile(self, data_path):
+        """Populate data raw lines into memory"""
+        data = []
+        for line in open(data_path, encoding='utf-8'):
+            data.append(line.strip())
+        return data
 
     def populate_data(self, data_path, vocab, need_raw=False):
         # Populate data into memory
@@ -84,9 +103,15 @@ class ValData:
                                      for j in range(self.model_config.num_refs)])
             ref_raw_batch = cp.deepcopy([self.data_references_raw[j][i]
                                          for j in range(self.model_config.num_refs)])
-            yield (cp.deepcopy(self.data_simple[i]), cp.deepcopy(self.data_complex[i]),
-                   cp.deepcopy(self.data_complex_raw[i]), self.mapper[i], ref_batch, ref_raw_batch)
+            ref_rawlines_batch = cp.deepcopy([self.data_references_raw_lines[j][i]
+                                         for j in range(self.model_config.num_refs)])
+            yield (cp.deepcopy(self.data_simple[i]),
+                   cp.deepcopy(self.data_complex[i]),
+                   cp.deepcopy(self.data_complex_raw[i]),
+                   cp.deepcopy(self.data_complex_raw_lines[i]),
+                   self.mapper[i],
+                   ref_batch, ref_raw_batch, ref_rawlines_batch)
 
             i += 1
             if i == len(self.data_simple):
-                yield None, None, None, None, None, None
+                yield None, None, None, None, None, None, None, None

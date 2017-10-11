@@ -20,9 +20,14 @@ def is_numeric(word):
 
 
 def data_parse(word):
-    if word == '\'\'' or word == '\'' or word == '"' or word == '`' or word == '``':
-        return constant.SYMBOL_QUOTE
-    return word
+    if word == '``':
+        return "\""
+    elif word == '`':
+        return "'"
+    elif word == '\'\'':
+        return "\""
+    else:
+        return word
 
 if __name__ == '__main__':
     print(is_numeric('1'))
