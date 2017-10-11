@@ -2,8 +2,6 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="664865aa-46f3-4e35-a681-41d75bf51175" name="Default" comment="">
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/experiments/eval_dress_da.sh" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/experiments/train_dress_da.sh" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.gitignore" afterPath="$PROJECT_DIR$/.gitignore" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
     </list>
@@ -54,11 +52,21 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="train_dress_da.sh" pinned="false" current-in-tab="true">
+      <file leaf-file-name="train_dress_da.sh" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/experiments/train_dress_da.sh">
           <provider selected="true" editor-type-id="text-editor">
             <state relative-caret-position="210">
-              <caret line="14" column="180" lean-forward="false" selection-start-line="14" selection-start-column="180" selection-end-line="14" selection-end-column="180" />
+              <caret line="14" column="104" lean-forward="false" selection-start-line="14" selection-start-column="104" selection-end-line="14" selection-end-column="104" />
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name=".gitignore" pinned="false" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/.gitignore">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="15">
+              <caret line="1" column="11" lean-forward="false" selection-start-line="1" selection-start-column="11" selection-end-line="1" selection-end-column="11" />
               <folding />
             </state>
           </provider>
@@ -152,13 +160,13 @@
         <option value="$PROJECT_DIR$/model/model_config.py" />
         <option value="$PROJECT_DIR$/tensor2tensor/models/transformer.py" />
         <option value="$PROJECT_DIR$/model/transformer.py" />
-        <option value="$PROJECT_DIR$/.gitignore" />
         <option value="$PROJECT_DIR$/data_generator/val_data.py" />
         <option value="$PROJECT_DIR$/model/eval.py" />
         <option value="$PROJECT_DIR$/experiments/eval_dress_di.sh" />
         <option value="$PROJECT_DIR$/experiments/eval_dress_da.sh" />
         <option value="$PROJECT_DIR$/experiments/train_dress_di.sh" />
         <option value="$PROJECT_DIR$/experiments/train_dress_da.sh" />
+        <option value="$PROJECT_DIR$/.gitignore" />
       </list>
     </option>
   </component>
@@ -899,14 +907,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/.gitignore">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="0">
-          <caret line="0" column="6" lean-forward="false" selection-start-line="0" selection-start-column="6" selection-end-line="0" selection-end-column="6" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/model/transformer.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="418">
@@ -978,7 +978,15 @@
     <entry file="file://$PROJECT_DIR$/experiments/train_dress_da.sh">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="210">
-          <caret line="14" column="180" lean-forward="false" selection-start-line="14" selection-start-column="180" selection-end-line="14" selection-end-column="180" />
+          <caret line="14" column="104" lean-forward="false" selection-start-line="14" selection-start-column="104" selection-end-line="14" selection-end-column="104" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/.gitignore">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="15">
+          <caret line="1" column="11" lean-forward="false" selection-start-line="1" selection-start-column="11" selection-end-line="1" selection-end-column="11" />
           <folding />
         </state>
       </provider>
