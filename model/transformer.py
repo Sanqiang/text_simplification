@@ -135,6 +135,7 @@ class TransformerGraph(Graph):
 
     def decode_inputs_to_outputs(self, decoder_embed_inputs, encoder_outputs, encoder_attn_bias):
         if self.model_config.decode_input_gate:
+            print('Use Decode Input Gate!')
             with tf.variable_scope('decode_input_gate'):
                 gate_filter = tf.get_variable('gate_decode',
                                            [1, self.model_config.dimension, self.model_config.dimension],
@@ -151,11 +152,19 @@ class TransformerGraph(Graph):
         decoder_attn_bias = common_attention.attention_bias_lower_triangle(tf.shape(decoder_embed_inputs)[1])
         decoder_embed_inputs = tf.nn.dropout(decoder_embed_inputs,
                                              1.0 - self.hparams.layer_prepostprocess_dropout)
-        decoder_output = transformer.transformer_decoder(decoder_embed_inputs,
-                                                         encoder_outputs,
-                                                         decoder_attn_bias,
-                                                         encoder_attn_bias,
-                                                         self.hparams)
+        if self.hparams.decode_atten_gate:
+            print('Use Decode Attention Gate')
+            decoder_output = transformer.transformer_decoder_attngate(decoder_embed_inputs,
+                                                             encoder_outputs,
+                                                             decoder_attn_bias,
+                                                             encoder_attn_bias,
+                                                             self.hparams)
+        else:
+            decoder_output = transformer.transformer_decoder(decoder_embed_inputs,
+                                                             encoder_outputs,
+                                                             decoder_attn_bias,
+                                                             encoder_attn_bias,
+                                                             self.hparams)
         return decoder_output
 
     def setup_hparams(self):

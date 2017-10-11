@@ -36,9 +36,6 @@ from tensor2tensor.utils import t2t_model
 
 import tensorflow as tf
 
-# Outside
-from util.nn import linear
-
 
 @registry.register_model
 class Transformer(t2t_model.T2TModel):
@@ -492,44 +489,18 @@ def transformer_decoder(decoder_input,
               max_relative_position=hparams.max_relative_position,
               cache=layer_cache)
           x = common_layers.layer_postprocess(x, y, hparams)
-        x_self_attn = x
         if encoder_output is not None:
           with tf.variable_scope("encdec_attention"):
             # TODO(llion): Add caching.
             y = common_attention.multihead_attention(
-                common_layers.layer_preprocess(x_self_attn, hparams),
+                common_layers.layer_preprocess(x, hparams),
                 encoder_output,
                 encoder_decoder_attention_bias,
                 hparams.attention_key_channels or hparams.hidden_size,
                 hparams.attention_value_channels or hparams.hidden_size,
                 hparams.hidden_size, hparams.num_heads,
                 hparams.attention_dropout)
-            x_decode_attn = common_layers.layer_postprocess(x_self_attn, y, hparams)
-          if hparams.decode_atten_gate:
-              evidence = tf.concat([x_self_attn, x_decode_attn], axis=2)
-
-              # Gated Self Attention
-              gate_selfattn_filter = tf.get_variable(
-                  'gate_selfattn',
-                  [1, hparams.hidden_size * 2, hparams.hidden_size],
-                  tf.float32, initializer=tf.contrib.layers.xavier_initializer())
-              gate_selfattn = tf.tanh(
-                  tf.nn.conv1d(evidence, gate_selfattn_filter, 1, 'SAME'))
-              x_self_attn *= gate_selfattn
-
-              # Gated Decoded Attention
-              gate_decfattn_filter = tf.get_variable(
-                  'gate_decattn',
-                  [1, hparams.hidden_size * 2, hparams.hidden_size],
-                  tf.float32, initializer=tf.contrib.layers.xavier_initializer())
-              gate_decfattn = tf.tanh(
-                  tf.nn.conv1d(evidence, gate_decfattn_filter, 1, 'SAME'))
-              x_decode_attn *= gate_decfattn
-
-              # Output combined attention
-              x_self_attn = x_self_attn + x_decode_attn
-
-        x = x_self_attn
+            x = common_layers.layer_postprocess(x, y, hparams)
         with tf.variable_scope("ffn"):
           y = transformer_ffn_layer(
               common_layers.layer_preprocess(x, hparams), hparams)
@@ -538,6 +509,95 @@ def transformer_decoder(decoder_input,
     # on the output, since the output can grow very large, being the sum of
     # a whole stack of unnormalized layer outputs.
     return common_layers.layer_preprocess(x, hparams)
+
+### TODO(sanqiang) Our Ideas!
+def transformer_decoder_attngate(decoder_input,
+                      encoder_output,
+                      decoder_self_attention_bias,
+                      encoder_decoder_attention_bias,
+                      hparams,
+                      cache=None,
+                      name="decoder"):
+  """A stack of transformer layers.
+
+  Args:
+    decoder_input: a Tensor
+    encoder_output: a Tensor
+    decoder_self_attention_bias: bias Tensor for self-attention
+      (see common_attention.attention_bias())
+    encoder_decoder_attention_bias: bias Tensor for encoder-decoder attention
+      (see common_attention.attention_bias())
+    hparams: hyperparameters for model
+    cache: dict, containing tensors which are the results of previous
+        attentions, used for fast decoding.
+    name: a string
+
+  Returns:
+    y: a Tensors
+  """
+  x = decoder_input
+  with tf.variable_scope(name):
+      for layer in xrange(hparams.num_decoder_layers or
+                                  hparams.num_hidden_layers):
+          layer_name = "layer_%d" % layer
+          layer_cache = cache[layer_name] if cache is not None else None
+          with tf.variable_scope(layer_name):
+              with tf.variable_scope("self_attention"):
+                  y = common_attention.multihead_attention(
+                      common_layers.layer_preprocess(x, hparams),
+                      None,
+                      decoder_self_attention_bias,
+                      hparams.attention_key_channels or hparams.hidden_size,
+                      hparams.attention_value_channels or hparams.hidden_size,
+                      hparams.hidden_size,
+                      hparams.num_heads,
+                      hparams.attention_dropout,
+                      attention_type=hparams.self_attention_type,
+                      max_relative_position=hparams.max_relative_position,
+                      cache=layer_cache)
+                  x_self_attn = common_layers.layer_postprocess(x, y, hparams)
+              with tf.variable_scope("encdec_attention"):
+                  # TODO(llion): Add caching.
+                  y = common_attention.multihead_attention(
+                      common_layers.layer_preprocess(x_self_attn, hparams),
+                      encoder_output,
+                      encoder_decoder_attention_bias,
+                      hparams.attention_key_channels or hparams.hidden_size,
+                      hparams.attention_value_channels or hparams.hidden_size,
+                      hparams.hidden_size, hparams.num_heads,
+                      hparams.attention_dropout)
+                  x_decode_attn = common_layers.layer_postprocess(x_self_attn, y, hparams)
+
+                  evidence = tf.concat([x_self_attn, x_decode_attn], axis=2)
+
+                  # Gated Self Attention
+                  gate_selfattn_filter = tf.get_variable(
+                      'gate_selfattn',
+                      [1, hparams.hidden_size * 2, hparams.hidden_size],
+                      tf.float32, initializer=tf.contrib.layers.xavier_initializer())
+                  gate_selfattn = tf.tanh(
+                      tf.nn.conv1d(evidence, gate_selfattn_filter, 1, 'SAME'))
+                  x_self_attn *= gate_selfattn
+
+                  # Gated Decoded Attention
+                  gate_decfattn_filter = tf.get_variable(
+                      'gate_decattn',
+                      [1, hparams.hidden_size * 2, hparams.hidden_size],
+                      tf.float32, initializer=tf.contrib.layers.xavier_initializer())
+                  gate_decfattn = tf.tanh(
+                      tf.nn.conv1d(evidence, gate_decfattn_filter, 1, 'SAME'))
+                  x_decode_attn *= gate_decfattn
+
+                  # Output combined attention
+                  x = x_self_attn + x_decode_attn
+              with tf.variable_scope("ffn"):
+                  y = transformer_ffn_layer(
+                      common_layers.layer_preprocess(x, hparams), hparams)
+                  x = common_layers.layer_postprocess(x, y, hparams)
+      # if normalization is done in layer_preprocess, then it shuold also be done
+      # on the output, since the output can grow very large, being the sum of
+      # a whole stack of unnormalized layer outputs.
+      return common_layers.layer_preprocess(x, hparams)
 
 
 def transformer_ffn_layer(x, hparams, pad_remover=None):
