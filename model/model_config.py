@@ -222,7 +222,7 @@ class SubTestWikiEightRefConfig(SubTest):
     val_dataset_complex_raw = get_path(
         '../text_simplification_data/test/test.8turkers.tok.norm.raw')
     val_dataset_complex_rawlines_file = get_path(
-        '../text_simplification_data/val/test.8turkers.tok.norm')
+        '../text_simplification_data/test/test.8turkers.tok.norm')
     val_dataset_simple_rawlines_file_references = 'test.8turkers.tok.turk.'
     val_dataset_simple_rawlines_file = 'test.8turkers.tok.simp'
     num_refs = 8

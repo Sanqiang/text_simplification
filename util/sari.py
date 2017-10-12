@@ -177,9 +177,9 @@ def SARIsent(ssent, csent, rsents):
     return finalscore
 
 if __name__ == '__main__':
-    fnamenorm = "./turkcorpus/test.8turkers.tok.norm"
-    fnamesimp = "./turkcorpus/test.8turkers.tok.simp"
-    fnameturk = "./turkcorpus/test.8turkers.tok.turk."
+    # fnamenorm = "./turkcorpus/test.8turkers.tok.norm"
+    # fnamesimp = "./turkcorpus/test.8turkers.tok.simp"
+    # fnameturk = "./turkcorpus/test.8turkers.tok.turk."
 
     ssent = "About 95 species are currently accepted ."
     csent1 = "About 95 you now get in ."
@@ -187,6 +187,8 @@ if __name__ == '__main__':
     csent3 = "About 95 species are currently agreed ."
     rsents = ["About 95 species are currently known .", "About 95 species are now accepted .",
               "95 species are now accepted ."]
+    rsents = ["About nnn species are currently known .", "About nnn species are now accepted .",
+              "nnn species are now accepted ."]
 
     print(SARIsent(ssent, csent1, rsents))
     print(SARIsent(ssent, csent2, rsents))

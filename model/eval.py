@@ -218,7 +218,7 @@ def eval(model_config=None, ckpt=None):
             try:
                 batch_ibleu = sentence_bleu([sentence_simple[batch_i]], target[batch_i])
             except Exception as e:
-                print('Bleu exception:\t' + str(e))
+                print('Bleu error:\t' + str(e) + '\n' + str(target[batch_i]) + '\n')
                 batch_ibleu = 0
             ibleus_all.append(batch_ibleu)
             ibleus.append(batch_ibleu)
@@ -229,9 +229,14 @@ def eval(model_config=None, ckpt=None):
                 rsents = []
                 for ref_i in range(model_config.num_refs):
                     rsents.append(ref_raw_lines[ref_i][batch_i])
-                batch_sari = SARIsent(sentence_complex_raw_lines[batch_i],
-                                      ' '.join(target_raw[batch_i]),
-                                      rsents)
+                try:
+                    batch_sari = SARIsent(sentence_complex_raw_lines[batch_i],
+                                          ' '.join(target_raw[batch_i]),
+                                          rsents)
+                except:
+                    print('sari error: %s \n %s \n %s. \n' %
+                          (sentence_complex_raw_lines[batch_i],
+                           ' '.join(target_raw[batch_i]), rsents))
             saris.append(batch_sari)
             saris_all.append(batch_sari)
 
@@ -382,14 +387,14 @@ if __name__ == '__main__':
             model_config = WikiDressLargeDefault()
             ckpt = get_ckpt(model_config.modeldir, model_config.outdir)
 
+            eval(SubValWikiEightRefConfig(), ckpt)
+            eval(SubTestWikiEightRefConfig(), ckpt)
+
             eval(SubValWikiDressL(), ckpt)
             eval(SubTestWikiDressL(), ckpt)
 
             eval(SubValWikiDress(), ckpt)
             eval(SubTestWikiDress(), ckpt)
-
-            eval(SubValWikiEightRefConfig(), ckpt)
-            eval(SubTestWikiEightRefConfig(), ckpt)
 
             eval(SubValWikiDressLBeam4(), ckpt)
             eval(SubTestWikiDressLBeam4(), ckpt)
