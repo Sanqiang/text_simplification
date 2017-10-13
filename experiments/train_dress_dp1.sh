@@ -12,4 +12,4 @@
 module restore
 
 # Run the job
-srun python ../model/train.py -fw transformer -out dr_dp1 -layer_drop 0.1 -op adagrad -lr 0.1 --mode dress -warm /ihome/hdaqing/saz31/sanqiang/dr/mode/model.ckpt-165000
+srun python ../model/train.py -fw transformer -out dr_dp1 -layer_drop 0.1 -op adagrad -lr 0.1 --mode dress -warm /ihome/hdaqing/saz31/sanqiang/dr/output/model.ckpt-20300
