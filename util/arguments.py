@@ -19,6 +19,8 @@ def get_args():
                         help='Dropout rate for data input?')
 
     # For Data
+    parser.add_argument('-lc', '--lower_case', default=False, type=bool,
+                        help='Whether to lowercase the vocabulary?')
     parser.add_argument('-mc', '--min_count', default=5, type=int,
                         help='Truncate the vocabulary less than equal to the count?')
 

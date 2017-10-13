@@ -24,7 +24,7 @@ class DefaultConfig():
     save_model_secs = 60
 
     min_count = 0
-    lower_case = False
+    lower_case = args.lower_case
     tokenizer = 'split' # split: white space split / nltk: nltk tokenizer
 
     # Follow the configuration from https://github.com/XingxingZhang/dress
@@ -73,6 +73,11 @@ class DefaultConfig():
     vocab_simple = get_path('data/dummy_simple_vocab')
     vocab_complex = get_path('data/dummy_complex_vocab')
     vocab_all = get_path('data/dummy_vocab')
+    if args.lower_case:
+        vocab_simple = vocab_simple + '.lower'
+        vocab_complex = vocab_complex + '.lower'
+        vocab_all = vocab_all + '.lower'
+
 
     val_dataset_simple_folder = get_path('data/')
     val_dataset_simple_file = 'valid_dummy_simple_dataset'
@@ -127,6 +132,10 @@ class WikiDressLargeDefault(DefaultConfig):
     vocab_simple = get_path('../text_simplification_data/train/dress/wikilarge/wiki.full.aner.train.dst.vocab')
     vocab_complex = get_path('../text_simplification_data/train/dress/wikilarge/wiki.full.aner.train.src.vocab')
     vocab_all = get_path('../text_simplification_data/train/dress/wikilarge/wiki.full.aner.train.vocab')
+    if args.lower_case:
+        vocab_simple = vocab_simple + '.lower'
+        vocab_complex = vocab_complex + '.lower'
+        vocab_all = vocab_all + '.lower'
 
     # num_refs = 0
     # val_dataset_simple_folder = get_path('../text_simplification_data/train/dress/wikilarge/')
