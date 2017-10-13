@@ -45,6 +45,11 @@ class DefaultConfig():
     # timing: use positional encoding
     hparams_pos = args.hparams_pos
 
+    num_heads = args.num_heads
+    num_hidden_layers = args.num_hidden_layers
+    num_encoder_layers = args.num_encoder_layers
+    num_decoder_layers = args.num_decoder_layers
+
     # Our research ideas !!!
     decode_input_gate = args.decode_input_gate
     decode_atten_gate = args.decode_atten_gate
@@ -159,7 +164,6 @@ class WikiDressLargeDefault(DefaultConfig):
     save_model_secs = 600
 
     dimension = 300
-    num_heads = 5
     max_complex_sentence = 85
     max_simple_sentence = 85
     min_count = args.min_count

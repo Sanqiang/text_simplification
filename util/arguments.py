@@ -41,6 +41,15 @@ def get_args():
                         help='Whether to use gate in decode input?')
     parser.add_argument('-dagate', '--decode_atten_gate', default=False,
                         help='Whether to use gate in decode attention?')
+    parser.add_argument('-nhl', '--num_hidden_layers', default=6, type=int,
+                        help='Number of hidden layer?')
+    parser.add_argument('-nel', '--num_encoder_layers', default=6, type=int,
+                        help='Number of encoder layer?')
+    parser.add_argument('-ndl', '--num_decoder_layers', default=6, type=int,
+                        help='Number of decoder layer?')
+    parser.add_argument('-nh', '--num_heads', default=5, type=int,
+                        help='Number of multi-attention heads?')
+
 
 
     args = parser.parse_args()

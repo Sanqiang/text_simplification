@@ -169,6 +169,9 @@ class TransformerGraph(Graph):
 
     def setup_hparams(self):
         self.hparams.num_heads = self.model_config.num_heads
+        self.hparams.num_hidden_layers = self.model_config.num_hidden_layers
+        self.hparams.num_encoder_layers = self.model_config.num_encoder_layers
+        self.hparams.num_decoder_layers = self.model_config.num_decoder_layers
         self.hparams.pos = self.model_config.hparams_pos
         self.hparams.hidden_size = self.model_config.dimension
         self.hparams.layer_prepostprocess_dropout = self.model_config.layer_prepostprocess_dropout
