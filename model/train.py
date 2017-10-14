@@ -144,12 +144,13 @@ def train(model_config=None):
             from model.model_config import SubValWikiEightRefConfig, SubTestWikiEightRefConfig
             from model.model_config import DefaultTestConfig, DefaultTestConfig2
             ckpt = get_ckpt(model_config.modeldir, model_config.logdir)
-            if args.mode == 'dummy':
-                eval(DefaultTestConfig(), ckpt)
-                eval(DefaultTestConfig2(), ckpt)
-            elif args.mode == 'dress' or args.mode == 'all':
-                eval(SubValWikiEightRefConfig(), ckpt)
-                eval(SubTestWikiEightRefConfig(), ckpt)
+            if ckpt:
+                if args.mode == 'dummy':
+                    eval(DefaultTestConfig(), ckpt)
+                    eval(DefaultTestConfig2(), ckpt)
+                elif args.mode == 'dress' or args.mode == 'all':
+                    eval(SubValWikiEightRefConfig(), ckpt)
+                    eval(SubTestWikiEightRefConfig(), ckpt)
 
         # if step % model_config.model_save_freq == 0:
         #     graph.saver.save(sess, model_config.outdir + '/model.ckpt-%d' % step)

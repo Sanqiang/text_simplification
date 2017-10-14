@@ -356,16 +356,17 @@ def eval(model_config=None, ckpt=None):
     f.close()
 
 
-def get_ckpt(modeldir, logdir):
+def get_ckpt(modeldir, logdir, wait_second=60):
     while True:
         try:
             ckpt = copy_ckpt_to_modeldir(modeldir, logdir)
-            break
+            return ckpt
         except FileNotFoundError as exp:
-            print(str(exp) + '\nWait for 1 minutes.')
-            time.sleep(60)
-    return ckpt
-
+            if wait_second:
+                print(str(exp) + '\nWait for 1 minutes.')
+                time.sleep(wait_second)
+            else:
+                return None
 
 if __name__ == '__main__':
     config = None
@@ -373,8 +374,9 @@ if __name__ == '__main__':
         while True:
             model_config = DefaultTestConfig()
             ckpt = get_ckpt(model_config.modeldir, model_config.logdir)
-            eval(DefaultTestConfig(), ckpt)
-            eval(DefaultTestConfig2(), ckpt)
+            if ckpt:
+                eval(DefaultTestConfig(), ckpt)
+                eval(DefaultTestConfig2(), ckpt)
     elif args.mode == 'all' or args.mode == 'dress':
         from model.model_config import WikiDressLargeDefault
         from model.model_config import SubValWikiEightRefConfig, SubTestWikiEightRefConfig
@@ -387,21 +389,22 @@ if __name__ == '__main__':
             model_config = WikiDressLargeDefault()
             ckpt = get_ckpt(model_config.modeldir, model_config.logdir)
 
-            eval(SubValWikiEightRefConfig(), ckpt)
-            eval(SubTestWikiEightRefConfig(), ckpt)
+            if ckpt:
+                eval(SubValWikiEightRefConfig(), ckpt)
+                eval(SubTestWikiEightRefConfig(), ckpt)
 
-            eval(SubValWikiDressL(), ckpt)
-            eval(SubTestWikiDressL(), ckpt)
+                eval(SubValWikiDressL(), ckpt)
+                eval(SubTestWikiDressL(), ckpt)
 
-            eval(SubValWikiDress(), ckpt)
-            eval(SubTestWikiDress(), ckpt)
+                eval(SubValWikiDress(), ckpt)
+                eval(SubTestWikiDress(), ckpt)
 
-            eval(SubValWikiDressLBeam4(), ckpt)
-            eval(SubTestWikiDressLBeam4(), ckpt)
+                eval(SubValWikiDressLBeam4(), ckpt)
+                eval(SubTestWikiDressLBeam4(), ckpt)
 
-            eval(SubValWikiEightRefConfigBeam4(), ckpt)
-            eval(SubTestWikiEightRefConfigBeam4(), ckpt)
+                eval(SubValWikiEightRefConfigBeam4(), ckpt)
+                eval(SubTestWikiEightRefConfigBeam4(), ckpt)
 
-            eval(SubValWikiDressBeam4(), ckpt)
-            eval(SubTestWikiDressBeam4(), ckpt)
+                eval(SubValWikiDressBeam4(), ckpt)
+                eval(SubTestWikiDressBeam4(), ckpt)
 
