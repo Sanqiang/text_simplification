@@ -128,7 +128,7 @@ class Graph:
 
         with tf.variable_scope('optimization'):
             self.global_step = tf.get_variable(
-                'global_step', initializer=tf.constant(0, dtype=tf.int64), trainable=False)
+                'global_step', initializer=tf.constant(1, dtype=tf.int64), trainable=False)
 
             if self.is_train:
                 self.increment_global_step = tf.assign_add(self.global_step, 1)

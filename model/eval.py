@@ -6,7 +6,7 @@ sys.path.insert(0, '/ihome/hdaqing/saz31/sanqiang/text_simplification')
 from data_generator.val_data import ValData
 from model.transformer import TransformerGraph
 from model.seq2seq import Seq2SeqGraph
-from model.model_config import DefaultConfig, DefaultTestConfig, WikiDressLargeTestConfig, DefaultTestConfig2, list_config
+from model.model_config import DefaultConfig, DefaultTestConfig, DefaultTestConfig2, list_config
 from data_generator.vocab import Vocab
 from util import constant
 from util import session
@@ -385,7 +385,7 @@ if __name__ == '__main__':
         from model.model_config import SubValWikiDressLBeam4, SubTestWikiDressLBeam4
         while True:
             model_config = WikiDressLargeDefault()
-            ckpt = get_ckpt(model_config.modeldir, model_config.outdir)
+            ckpt = get_ckpt(model_config.modeldir, model_config.logdir)
 
             eval(SubValWikiEightRefConfig(), ckpt)
             eval(SubTestWikiEightRefConfig(), ckpt)

@@ -11,11 +11,10 @@ from data_generator.vocab import Vocab
 from util import session
 from util import constant
 from util.checkpoint import find_train_ckptpaths, backup_log
-from model.eval import decode_to_output, decode
+from model.eval import eval, get_ckpt
 
 import tensorflow as tf
 import tensorflow.contrib.slim as slim
-import math
 import numpy as np
 from util.arguments import get_args
 
@@ -140,6 +139,17 @@ def train(model_config=None):
         if step % model_config.model_print_freq == 0:
             print('Perplexity:\t%f at step %d with lr %s' % (np.mean(perplexity), step, lr))
             perplexitys.clear()
+
+        if step % model_config.model_eval_freq == 0:
+            from model.model_config import SubValWikiEightRefConfig, SubTestWikiEightRefConfig
+            from model.model_config import DefaultTestConfig, DefaultTestConfig2
+            ckpt = get_ckpt(model_config.modeldir, model_config.logdir)
+            if args.mode == 'dummy':
+                eval(DefaultTestConfig(), ckpt)
+                eval(DefaultTestConfig2(), ckpt)
+            elif args.mode == 'dress' or args.mode == 'all':
+                eval(SubValWikiEightRefConfig(), ckpt)
+                eval(SubTestWikiEightRefConfig(), ckpt)
 
         # if step % model_config.model_save_freq == 0:
         #     graph.saver.save(sess, model_config.outdir + '/model.ckpt-%d' % step)

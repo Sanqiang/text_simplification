@@ -20,6 +20,7 @@ class DefaultConfig():
     max_simple_sentence = 15
     min_simple_sentence = 5 #Used for Beam Search
     model_save_freq = 1000
+    model_eval_freq = 1000
     model_print_freq = 1
     save_model_secs = 60
 
@@ -100,7 +101,6 @@ class DefaultConfig():
 
     output_folder = args.output_folder
     logdir = get_path('../' + output_folder + '/log/')
-    outdir = get_path('../' + output_folder + '/output/')
     modeldir = get_path('../' + output_folder + '/model/')
     resultdor = get_path('../' + output_folder + '/result/')
 
@@ -135,6 +135,7 @@ class DefaultTestConfig2(DefaultConfig):
 class WikiDressLargeDefault(DefaultConfig):
     model_print_freq = 50
     save_model_secs = 1000
+    model_eval_freq = 10000
 
     train_dataset_simple = get_path('../text_simplification_data/train/dress/wikilarge/wiki.full.aner.train.dst')
     train_dataset_complex = get_path('../text_simplification_data/train/dress/wikilarge/wiki.full.aner.train.src')
