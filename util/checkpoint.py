@@ -40,19 +40,19 @@ def get_model_files(steps, path):
     return model_files
 
 
-def copy_ckpt_to_modeldir(modeldir, outdir):
+def copy_ckpt_to_modeldir(modeldir, logdir):
     if not exists(modeldir):
         makedirs(modeldir)
-    if not exists(outdir):
-        makedirs(outdir)
+    if not exists(logdir):
+        makedirs(logdir)
 
-    files, max_step = find_train_ckptfiles(outdir, True)
+    files, max_step = find_train_ckptfiles(logdir, False)
     _, cur_max_step = find_train_ckptfiles(modeldir, False)
     if cur_max_step == max_step:
         raise FileNotFoundError('No new ckpt.')
 
     for file in files:
-        source = outdir + file
+        source = logdir + file
         target = modeldir + file
         copy2(source, target)
         print('Copy Ckpt from %s \t to \t %s.' % (source, target))

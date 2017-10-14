@@ -141,15 +141,15 @@ def train(model_config=None):
             print('Perplexity:\t%f at step %d.' % (np.mean(perplexity), step))
             perplexitys.clear()
 
-        if step % model_config.model_save_freq == 0:
-            graph.saver.save(sess, model_config.outdir + '/model.ckpt-%d' % step)
-            f = open(model_config.outdir + '/output_model.ckpt-%d' % step, 'w', encoding='utf-8')
-            result = decode(result, data.vocab_simple)
-            sentence_simple = decode(sentence_simple, data.vocab_simple)
-            sentence_complex = decode(sentence_complex, data.vocab_complex)
-            r = decode_to_output(result, sentence_simple, sentence_complex, model_config.batch_size)
-            f.write(r)
-            f.flush()
+        # if step % model_config.model_save_freq == 0:
+        #     graph.saver.save(sess, model_config.outdir + '/model.ckpt-%d' % step)
+        #     f = open(model_config.outdir + '/output_model.ckpt-%d' % step, 'w', encoding='utf-8')
+        #     result = decode(result, data.vocab_simple)
+        #     sentence_simple = decode(sentence_simple, data.vocab_simple)
+        #     sentence_complex = decode(sentence_complex, data.vocab_complex)
+        #     r = decode_to_output(result, sentence_simple, sentence_complex, model_config.batch_size)
+        #     f.write(r)
+        #     f.flush()
 
 
 if __name__ == '__main__':

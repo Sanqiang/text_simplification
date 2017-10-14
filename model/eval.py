@@ -356,10 +356,10 @@ def eval(model_config=None, ckpt=None):
     f.close()
 
 
-def get_ckpt(modeldir, outdir):
+def get_ckpt(logdir, outdir):
     while True:
         try:
-            ckpt = copy_ckpt_to_modeldir(modeldir, outdir)
+            ckpt = copy_ckpt_to_modeldir(logdir, outdir)
             break
         except FileNotFoundError as exp:
             print(str(exp) + '\nWait for 1 minutes.')
@@ -372,7 +372,7 @@ if __name__ == '__main__':
     if args.mode == 'dummy':
         while True:
             model_config = DefaultTestConfig()
-            ckpt = get_ckpt(model_config.modeldir, model_config.outdir)
+            ckpt = get_ckpt(model_config.logdir, model_config.outdir)
             eval(DefaultTestConfig(), ckpt)
             eval(DefaultTestConfig2(), ckpt)
     elif args.mode == 'all' or args.mode == 'dress':
@@ -385,7 +385,7 @@ if __name__ == '__main__':
         from model.model_config import SubValWikiDressLBeam4, SubTestWikiDressLBeam4
         while True:
             model_config = WikiDressLargeDefault()
-            ckpt = get_ckpt(model_config.modeldir, model_config.outdir)
+            ckpt = get_ckpt(model_config.logdir, model_config.outdir)
 
             eval(SubValWikiEightRefConfig(), ckpt)
             eval(SubTestWikiEightRefConfig(), ckpt)

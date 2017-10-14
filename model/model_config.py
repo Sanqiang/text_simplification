@@ -21,7 +21,7 @@ class DefaultConfig():
     min_simple_sentence = 5 #Used for Beam Search
     model_save_freq = 1000
     model_print_freq = 10
-    save_model_secs = 60
+    save_model_secs = 600
 
     min_count = 0
     lower_case = args.lower_case
