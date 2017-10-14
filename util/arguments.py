@@ -9,6 +9,9 @@ def get_args():
                         help='Output folder?')
     parser.add_argument('-warm', '--warm_start', default='',
                         help='Path for warm start checkpoint?')
+    parser.add_argument('-upr', '--use_partial_restore', default=True, type=bool,
+                        help='Whether to use partial restore?')
+
     parser.add_argument('-mode', '--mode', default='dress',
                         help='The Usage Model?')
     parser.add_argument('-op', '--optimizer', default='adagrad',
@@ -17,6 +20,8 @@ def get_args():
                         help='Value of learning rate?')
     parser.add_argument('-layer_drop', '--layer_prepostprocess_dropout', default=0.0, type=float,
                         help='Dropout rate for data input?')
+    parser.add_argument('-cop', '--change_optimizer', default=False, type=bool,
+                        help='Whether to change the optimizer?')
 
     # For Data
     parser.add_argument('-lc', '--lower_case', default=False, type=bool,

@@ -10,6 +10,7 @@ from model.model_config import DefaultConfig, DefaultTrainConfig, WikiDressLarge
 from data_generator.vocab import Vocab
 from util import session
 from util import constant
+from util.checkpoint import find_train_ckptpaths, backup_log
 from model.eval import decode_to_output, decode
 
 import tensorflow as tf
@@ -74,9 +75,19 @@ def train(model_config=None):
 
     graph.create_model()
 
+    if model_config.change_optimizer:
+        # Back up Log
+        backup_log(model_config.logdir)
+        ckpt_model = find_train_ckptpaths(model_config.outdir)
+
+    ckpt_path = None
     if model_config.warm_start:
+        ckpt_path = model_config.warm_start
+    elif model_config.change_optimizer:
+        ckpt_path = ckpt_model
+    if ckpt_path is not None:
         partial_restore_ckpt = slim.assign_from_checkpoint_fn(
-            model_config.warm_start, slim.get_variables_to_restore(),
+            ckpt_path, [v for v in slim.get_variables_to_restore() if 'optim' not in v.name],
             ignore_missing_vars=True, reshape_variables=False)
 
     def init_fn(session):
@@ -86,14 +97,24 @@ def train(model_config=None):
             session.run([graph.replace_emb_complex, graph.replace_emb_simple], input_feed)
             print('Replace Pretrained Word Embedding.')
 
+        # Restore ckpt either from warm start or automatically get when changing optimizer
+        ckpt_path = None
         if model_config.warm_start:
-            try:
-                graph.saver.restore(session, model_config.warm_start)
-            except Exception as ex:
-                print('Fully restore failed, use partial restore instead. \n %s' % str(ex))
-                partial_restore_ckpt(session)
+            ckpt_path = model_config.warm_start
+        if model_config.change_optimizer:
+            ckpt_path = ckpt_model
 
-            print('Warm start with checkpoint %s' % model_config.warm_start)
+        if ckpt_path is not None:
+            if model_config.use_partial_restore:
+                partial_restore_ckpt(session)
+            else:
+                try:
+                    graph.saver.restore(session, ckpt_path)
+                except Exception as ex:
+                    print('Fully restore failed, use partial restore instead. \n %s' % str(ex))
+                    partial_restore_ckpt(session)
+
+            print('Warm start with checkpoint %s' % ckpt_path)
 
     sv = tf.train.Supervisor(logdir=model_config.logdir,
                              global_step=graph.global_step,

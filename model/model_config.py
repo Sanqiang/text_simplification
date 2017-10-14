@@ -12,10 +12,10 @@ def get_path(file_path):
 class DefaultConfig():
     framework = args.framework
     warm_start = args.warm_start
+    use_partial_restore = args.use_partial_restore
     use_gpu = True
     batch_size = 3
-    dimension = 32
-    num_heads = 4
+    dimension = 30
     max_complex_sentence = 20
     max_simple_sentence = 15
     min_simple_sentence = 5 #Used for Beam Search
@@ -29,11 +29,12 @@ class DefaultConfig():
 
     # Follow the configuration from https://github.com/XingxingZhang/dress
     optimizer = args.optimizer
+    change_optimizer = args.change_optimizer
     learning_rate_warmup_steps = 50000
     use_learning_rate_decay = True
     learning_rate = args.learning_rate
     max_grad_staleness = 0.0
-    max_grad_norm = 2.0
+    max_grad_norm = 4.0
     layer_prepostprocess_dropout = args.layer_prepostprocess_dropout
 
     loss_fn = args.loss_fn
