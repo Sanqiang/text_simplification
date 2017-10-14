@@ -26,7 +26,11 @@ class MtEval_BLEU:
                                  '-s', path_src,
                                  '-t', path_tar])
         m = re.search(b'BLEU score = (.+) for', mteval_result)
-        return float(m.group(1))
+        try:
+            result = float(m.group(1)) /100.0
+        except AttributeError:
+            result = 0
+        return result
 
 
     def get_bleu_from_decoderesult(self, step, sentence_complexs, sentence_simples, targets):
@@ -144,7 +148,12 @@ class MtEval_BLEU:
         mteval_result = pipe.communicate()
 
         m = re.search(b'BLEU = ([\d+\.]+)', mteval_result[0])
-        return float(m.group(1)) / 100.0
+        try:
+            result = float(m.group(1)) /100.0
+        except AttributeError:
+            result = 0
+
+        return result
 
     """Get Result for joshua"""
 
@@ -165,7 +174,12 @@ class MtEval_BLEU:
         mteval_result = pipe.communicate()
 
         m = re.search(b'BLEU = ([\d+\.]+)', mteval_result[0])
-        return float(m.group(1))
+
+        try:
+            result = float(m.group(1))
+        except AttributeError:
+            result = 0
+        return result
 
 
 if __name__ == '__main__':

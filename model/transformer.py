@@ -28,8 +28,12 @@ class TransformerGraph(Graph):
         with tf.variable_scope('transformer_encoder'):
             encoder_embed_inputs = tf.nn.dropout(encoder_embed_inputs,
                                                  1.0 - self.hparams.layer_prepostprocess_dropout)
-            encoder_outputs = transformer.transformer_encoder(
-                encoder_embed_inputs, encoder_attn_bias, self.hparams)
+            if self.model_config.trans_layer_gate:
+                encoder_outputs = transformer.transformer_encoder_gate(
+                    encoder_embed_inputs, encoder_attn_bias, self.hparams)
+            else:
+                encoder_outputs = transformer.transformer_encoder(
+                    encoder_embed_inputs, encoder_attn_bias, self.hparams)
 
         with tf.variable_scope('transformer_decoder'):
             if self.is_train:
@@ -131,9 +135,16 @@ class TransformerGraph(Graph):
         decoder_attn_bias = common_attention.attention_bias_lower_triangle(tf.shape(decoder_embed_inputs)[1])
         decoder_embed_inputs = tf.nn.dropout(decoder_embed_inputs,
                                              1.0 - self.hparams.layer_prepostprocess_dropout)
-        if self.hparams.decode_atten_gate:
+        if self.model_config.decode_atten_gate:
             print('Use Decode Attention Gate')
             decoder_output = transformer.transformer_decoder_attngate(decoder_embed_inputs,
+                                                             encoder_outputs,
+                                                             decoder_attn_bias,
+                                                             encoder_attn_bias,
+                                                             self.hparams)
+        elif self.model_config.trans_layer_gate:
+            print('Use Layer Gate Transformer')
+            decoder_output = transformer.transformer_decoder_gate(decoder_embed_inputs,
                                                              encoder_outputs,
                                                              decoder_attn_bias,
                                                              encoder_attn_bias,
@@ -160,6 +171,3 @@ class TransformerGraph(Graph):
         else:
             self.hparams.add_hparam('mode', tf.estimator.ModeKeys.EVAL)
             self.hparams.layer_prepostprocess_dropout = 0
-
-        self.hparams.add_hparam('decode_atten_gate', self.model_config.decode_atten_gate)
-

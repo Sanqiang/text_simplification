@@ -55,7 +55,9 @@ class DefaultConfig():
     # Our research ideas !!!
     decode_input_gate = args.decode_input_gate
     decode_atten_gate = args.decode_atten_gate
+    trans_layer_gate = args.trans_layer_gate
     use_quality_model = args.use_quality_model
+
 
     # post process
     replace_unk_by_attn = False
@@ -134,7 +136,7 @@ class DefaultTestConfig2(DefaultConfig):
 
 class WikiDressLargeDefault(DefaultConfig):
     model_print_freq = 50
-    save_model_secs = 1000
+    save_model_secs = 600
     model_eval_freq = 10000
 
     train_dataset_simple = get_path('../text_simplification_data/train/dress/wikilarge/wiki.full.aner.train.dst')
@@ -166,14 +168,11 @@ class WikiDressLargeDefault(DefaultConfig):
     val_dataset_simple_rawlines_file = 'tune.8turkers.tok.simp'
     num_refs = 8
 
-    save_model_secs = 600
-
     dimension = 300
     max_complex_sentence = 85
     max_simple_sentence = 85
     min_count = args.min_count
     batch_size = 32
-    model_save_freq = 1000
 
     tokenizer = 'split'
     pretrained_embedding = get_path('../text_simplification_data/glove/glove.840B.300d.txt')

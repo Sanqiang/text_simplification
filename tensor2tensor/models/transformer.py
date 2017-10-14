@@ -600,6 +600,164 @@ def transformer_decoder_attngate(decoder_input,
       return common_layers.layer_preprocess(x, hparams)
 
 
+def transformer_encoder_gate(encoder_input,
+                             encoder_self_attention_bias,
+                             hparams,
+                             name="encoder"):
+    """A stack of transformer layers.
+
+    Args:
+      encoder_input: a Tensor
+      encoder_self_attention_bias: bias Tensor for self-attention
+         (see common_attention.attention_bias())
+      hparams: hyperparameters for model
+      name: a string
+
+    Returns:
+      y: a Tensors
+    """
+    x = encoder_input
+    with tf.variable_scope(name):
+        pad_remover = None
+        if hparams.use_pad_remover:
+            pad_remover = expert_utils.PadRemover(
+                common_attention.attention_bias_to_padding(
+                    encoder_self_attention_bias))
+        for layer in xrange(hparams.num_encoder_layers or
+                                    hparams.num_hidden_layers):
+            with tf.variable_scope("layer_%d" % layer):
+                with tf.variable_scope("self_attention"):
+                    y = common_attention.multihead_attention(
+                        common_layers.layer_preprocess(x, hparams),
+                        None,
+                        encoder_self_attention_bias,
+                        hparams.attention_key_channels or hparams.hidden_size,
+                        hparams.attention_value_channels or hparams.hidden_size,
+                        hparams.hidden_size,
+                        hparams.num_heads,
+                        hparams.attention_dropout,
+                        attention_type=hparams.self_attention_type,
+                        max_relative_position=hparams.max_relative_position)
+                    x = common_layers.layer_postprocess(x, y, hparams)
+
+                    gate_fiter = tf.get_variable(
+                        'gate_layer_%d' % layer,
+                        [1, hparams.hidden_size, hparams.hidden_size],
+                        tf.float32, initializer=tf.contrib.layers.xavier_initializer())
+                    gate_x = tf.tanh(
+                        tf.nn.conv1d(x, gate_fiter, 1, 'SAME'))
+                    x *= gate_x
+
+                with tf.variable_scope("ffn"):
+                    y = transformer_ffn_layer(
+                        common_layers.layer_preprocess(x, hparams), hparams, pad_remover)
+                    x = common_layers.layer_postprocess(x, y, hparams)
+
+                    gate_fiter = tf.get_variable(
+                        'gate_layer_%d' % layer,
+                        [1, hparams.hidden_size, hparams.hidden_size],
+                        tf.float32, initializer=tf.contrib.layers.xavier_initializer())
+                    gate_x = tf.tanh(
+                        tf.nn.conv1d(x, gate_fiter, 1, 'SAME'))
+                    x *= gate_x
+        # if normalization is done in layer_preprocess, then it shuold also be done
+        # on the output, since the output can grow very large, being the sum of
+        # a whole stack of unnormalized layer outputs.
+        return common_layers.layer_preprocess(x, hparams)
+
+
+def transformer_decoder_gate(decoder_input,
+                        encoder_output,
+                        decoder_self_attention_bias,
+                        encoder_decoder_attention_bias,
+                        hparams,
+                        cache=None,
+                        name="decoder"):
+  """A stack of transformer layers.
+
+  Args:
+    decoder_input: a Tensor
+    encoder_output: a Tensor
+    decoder_self_attention_bias: bias Tensor for self-attention
+      (see common_attention.attention_bias())
+    encoder_decoder_attention_bias: bias Tensor for encoder-decoder attention
+      (see common_attention.attention_bias())
+    hparams: hyperparameters for model
+    cache: dict, containing tensors which are the results of previous
+        attentions, used for fast decoding.
+    name: a string
+
+  Returns:
+    y: a Tensors
+  """
+  x = decoder_input
+  with tf.variable_scope(name):
+    for layer in xrange(hparams.num_decoder_layers or
+                        hparams.num_hidden_layers):
+      layer_name = "layer_%d" % layer
+      layer_cache = cache[layer_name] if cache is not None else None
+      with tf.variable_scope(layer_name):
+        with tf.variable_scope("self_attention"):
+          y = common_attention.multihead_attention(
+              common_layers.layer_preprocess(x, hparams),
+              None,
+              decoder_self_attention_bias,
+              hparams.attention_key_channels or hparams.hidden_size,
+              hparams.attention_value_channels or hparams.hidden_size,
+              hparams.hidden_size,
+              hparams.num_heads,
+              hparams.attention_dropout,
+              attention_type=hparams.self_attention_type,
+              max_relative_position=hparams.max_relative_position,
+              cache=layer_cache)
+          x = common_layers.layer_postprocess(x, y, hparams)
+
+          gate_fiter = tf.get_variable(
+              'gate_layer_%d' % layer,
+              [1, hparams.hidden_size, hparams.hidden_size],
+              tf.float32, initializer=tf.contrib.layers.xavier_initializer())
+          gate_x = tf.tanh(
+              tf.nn.conv1d(x, gate_fiter, 1, 'SAME'))
+          x *= gate_x
+
+        if encoder_output is not None:
+          with tf.variable_scope("encdec_attention"):
+            # TODO(llion): Add caching.
+            y = common_attention.multihead_attention(
+                common_layers.layer_preprocess(x, hparams),
+                encoder_output,
+                encoder_decoder_attention_bias,
+                hparams.attention_key_channels or hparams.hidden_size,
+                hparams.attention_value_channels or hparams.hidden_size,
+                hparams.hidden_size, hparams.num_heads,
+                hparams.attention_dropout)
+            x = common_layers.layer_postprocess(x, y, hparams)
+
+            gate_fiter = tf.get_variable(
+                'gate_layer_%d' % layer,
+                [1, hparams.hidden_size, hparams.hidden_size],
+                tf.float32, initializer=tf.contrib.layers.xavier_initializer())
+            gate_x = tf.tanh(
+                tf.nn.conv1d(x, gate_fiter, 1, 'SAME'))
+            x *= gate_x
+        with tf.variable_scope("ffn"):
+          y = transformer_ffn_layer(
+              common_layers.layer_preprocess(x, hparams), hparams)
+          x = common_layers.layer_postprocess(x, y, hparams)
+
+          gate_fiter = tf.get_variable(
+              'gate_layer_%d' % layer,
+              [1, hparams.hidden_size, hparams.hidden_size],
+              tf.float32, initializer=tf.contrib.layers.xavier_initializer())
+          gate_x = tf.tanh(
+              tf.nn.conv1d(x, gate_fiter, 1, 'SAME'))
+        x *= gate_x
+    # if normalization is done in layer_preprocess, then it shuold also be done
+    # on the output, since the output can grow very large, being the sum of
+    # a whole stack of unnormalized layer outputs.
+    return common_layers.layer_preprocess(x, hparams)
+
+
 def transformer_ffn_layer(x, hparams, pad_remover=None):
   """Feed-forward layer in the transformer.
 
