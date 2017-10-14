@@ -137,31 +137,18 @@ class Graph:
             self.saver = tf.train.Saver(write_version=tf.train.SaverDef.V2)
         print('Graph Built.')
 
-        # warmup_steps = tf.to_float(model_config.learning_rate_warmup_steps)
-        # step = tf.to_float(step)
-        # return tf.cond(step < warmup_steps,
-        #                lambda: self.model_config.learning_rate,
-        #                lambda: self.model_config.learning_rate / (2 ** ((step - warmup_steps) // 50000))
-        #                )
-
     def create_train_op(self):
         def learning_rate_decay(model_config, step, perplexity):
-            # def learningrate_10(): return 0.001
-            #
-            # def learningrate_50(): return 0.01
-            #
-            # def learningrate_100(): return 0.1
-            #
-            # def learningrate_default(): return 0.15
-
             learning_rate = tf.case({
                 tf.less(perplexity, 10):
                     lambda : 0.001,
                 tf.logical_and(tf.less(perplexity, 50), tf.greater_equal(perplexity, 10)):
-                    lambda: 0.01,
+                    lambda: 0.002,
                 tf.logical_and(tf.less(perplexity, 100), tf.greater_equal(perplexity, 50)):
-                    lambda: 0.1,
-            }, default=lambda : 0.15, exclusive=True)
+                    lambda: 0.003,
+                tf.logical_and(tf.less(perplexity, 500), tf.greater_equal(perplexity, 100)):
+                    lambda: 0.005,
+            }, default=lambda : 0.01, exclusive=True)
             return learning_rate
 
         self.perplexity = tf.exp(tf.reduce_mean(self.loss))
