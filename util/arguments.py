@@ -38,6 +38,9 @@ def get_args():
                         help='Number of samples used in Softmax?')
     parser.add_argument('-uqm', '--use_quality_model', default=False, type=bool,
                         help='Whether to use quality model?')
+    parser.add_argument('-decay', '--use_learning_rate_decay', default=False, type=bool,
+                        help='Whether to use learning rate decay?')
+
 
     # For Transformer
     parser.add_argument('-pos', '--hparams_pos', default='timing',

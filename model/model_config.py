@@ -31,7 +31,7 @@ class DefaultConfig():
     optimizer = args.optimizer
     change_optimizer = args.change_optimizer
     learning_rate_warmup_steps = 50000
-    use_learning_rate_decay = True
+    use_learning_rate_decay = args.use_learning_rate_decay
     learning_rate = args.learning_rate
     max_grad_staleness = 0.0
     max_grad_norm = 4.0
