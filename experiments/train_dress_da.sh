@@ -12,4 +12,4 @@
 module restore
 
 # Run the job
-srun python ../model/train.py -fw transformer -out dr_dag -layer_drop 0.2 -op adagrad -lr 0.1 --mode dress -dagate True
+srun python ../model/train.py -fw transformer -out dr_dag -layer_drop 0.2 -op adam -lr 0.001 --mode dress -dagate True -cop True
