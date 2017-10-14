@@ -156,7 +156,7 @@ class Graph:
         if self.model_config.use_learning_rate_decay:
             learning_rate = learning_rate_decay(
                 self.model_config, self.global_step, self.perplexity)
-        self.learning_rate = learning_rate
+        self.learning_rate = tf.constant(learning_rate)
 
         if self.model_config.optimizer == 'adagrad':
             opt = tf.train.AdagradOptimizer(learning_rate)
