@@ -83,11 +83,13 @@ def train(model_config=None):
     ckpt_path = None
     if model_config.warm_start:
         ckpt_path = model_config.warm_start
+        var_list = slim.get_variables_to_restore()
     elif model_config.change_optimizer:
         ckpt_path = ckpt_model
+        var_list = [v for v in slim.get_variables_to_restore() if 'optim' not in v.name]
     if ckpt_path is not None:
         partial_restore_ckpt = slim.assign_from_checkpoint_fn(
-            ckpt_path, [v for v in slim.get_variables_to_restore() if 'optim' not in v.name],
+            ckpt_path, var_list,
             ignore_missing_vars=True, reshape_variables=False)
 
     def init_fn(session):
