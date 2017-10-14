@@ -20,8 +20,8 @@ class DefaultConfig():
     max_simple_sentence = 15
     min_simple_sentence = 5 #Used for Beam Search
     model_save_freq = 1000
-    model_print_freq = 10
-    save_model_secs = 600
+    model_print_freq = 1
+    save_model_secs = 60
 
     min_count = 0
     lower_case = args.lower_case
@@ -133,6 +133,9 @@ class DefaultTestConfig2(DefaultConfig):
 
 
 class WikiDressLargeDefault(DefaultConfig):
+    model_print_freq = 50
+    save_model_secs = 1000
+
     train_dataset_simple = get_path('../text_simplification_data/train/dress/wikilarge/wiki.full.aner.train.dst')
     train_dataset_complex = get_path('../text_simplification_data/train/dress/wikilarge/wiki.full.aner.train.src')
     vocab_simple = get_path('../text_simplification_data/train/dress/wikilarge/wiki.full.aner.train.dst.vocab')

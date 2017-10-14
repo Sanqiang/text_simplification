@@ -132,13 +132,13 @@ def train(model_config=None):
             graph.sentence_complex_input_placeholder,
             model_config)
 
-        fetches = [graph.train_op, graph.loss, graph.global_step, graph.decoder_target_list]
-        _, loss, step, result = sess.run(fetches, input_feed)
-        perplexity = math.exp(loss)
+        fetches = [graph.train_op, graph.loss, graph.global_step, graph.decoder_target_list,
+                   graph.perplexity, graph.learning_rate]
+        _, loss, step, result, perplexity, lr = sess.run(fetches, input_feed)
         perplexitys.append(perplexity)
 
         if step % model_config.model_print_freq == 0:
-            print('Perplexity:\t%f at step %d.' % (np.mean(perplexity), step))
+            print('Perplexity:\t%f at step %d with lr %s' % (np.mean(perplexity), step, lr))
             perplexitys.clear()
 
         # if step % model_config.model_save_freq == 0:

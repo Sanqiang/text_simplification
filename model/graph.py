@@ -137,25 +137,45 @@ class Graph:
             self.saver = tf.train.Saver(write_version=tf.train.SaverDef.V2)
         print('Graph Built.')
 
-    def create_train_op(self):
+        # warmup_steps = tf.to_float(model_config.learning_rate_warmup_steps)
+        # step = tf.to_float(step)
+        # return tf.cond(step < warmup_steps,
+        #                lambda: self.model_config.learning_rate,
+        #                lambda: self.model_config.learning_rate / (2 ** ((step - warmup_steps) // 50000))
+        #                )
 
-        def learning_rate_decay(model_config, step):
-            warmup_steps = tf.to_float(model_config.learning_rate_warmup_steps)
-            step = tf.to_float(step)
-            return tf.cond(step < warmup_steps,
-                           lambda: self.model_config.learning_rate,
-                           lambda: self.model_config.learning_rate / (2 ** ((step - warmup_steps) // 50000))
-                           )
+    def create_train_op(self):
+        def learning_rate_decay(model_config, step, perplexity):
+            # def learningrate_10(): return 0.001
+            #
+            # def learningrate_50(): return 0.01
+            #
+            # def learningrate_100(): return 0.1
+            #
+            # def learningrate_default(): return 0.15
+
+            learning_rate = tf.case({
+                tf.less(perplexity, 10):
+                    lambda : 0.001,
+                tf.logical_and(tf.less(perplexity, 50), tf.greater_equal(perplexity, 10)):
+                    lambda: 0.01,
+                tf.logical_and(tf.less(perplexity, 100), tf.greater_equal(perplexity, 50)):
+                    lambda: 0.1,
+            }, default=lambda : 0.15, exclusive=True)
+            return learning_rate
+
+        self.perplexity = tf.exp(tf.reduce_mean(self.loss))
+        learning_rate = self.model_config.learning_rate
+        if self.model_config.use_learning_rate_decay:
+            learning_rate = learning_rate_decay(
+                self.model_config, self.global_step, self.perplexity)
+        self.learning_rate = learning_rate
 
         if self.model_config.optimizer == 'adagrad':
-            if self.model_config.use_learning_rate_decay:
-                opt = tf.train.AdagradOptimizer(learning_rate_decay(
-                    self.model_config, self.global_step))
-            else:
-                opt = tf.train.AdagradOptimizer(self.model_config.learning_rate)
+            opt = tf.train.AdagradOptimizer(learning_rate)
         # Adam need lower learning rate
         elif self.model_config.optimizer == 'adam':
-            opt = tf.train.AdamOptimizer(self.model_config.learning_rate)
+            opt = tf.train.AdamOptimizer(learning_rate)
         elif self.model_config.optimizer == 'lazy_adam':
             if not hasattr(self, 'hparams'):
                 # In case not using Transformer model
@@ -173,9 +193,9 @@ class Graph:
                 self.hparams = transformer.transformer_base()
             return TransformerOptimizer(self.loss, self.hparams, self.global_step).get_op()
         elif self.model_config.optimizer == 'adadelta':
-            opt = tf.train.AdadeltaOptimizer(self.model_config.learning_rate)
+            opt = tf.train.AdadeltaOptimizer(learning_rate)
         elif self.model_config.optimizer == 'adagraddao':
-            opt = tf.train.AdagradDAOptimizer(self.model_config.learning_rate, self.global_step)
+            opt = tf.train.AdagradDAOptimizer(learning_rate, self.global_step)
         else:
             raise Exception('Not Implemented Optimizer!')
 
