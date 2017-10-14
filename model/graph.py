@@ -141,14 +141,14 @@ class Graph:
         def learning_rate_decay(model_config, step, perplexity):
             learning_rate = tf.case({
                 tf.less(perplexity, 10):
-                    lambda : 0.001,
+                    lambda : 0.0001,
                 tf.logical_and(tf.less(perplexity, 50), tf.greater_equal(perplexity, 10)):
-                    lambda: 0.002,
+                    lambda: 0.0002,
                 tf.logical_and(tf.less(perplexity, 100), tf.greater_equal(perplexity, 50)):
-                    lambda: 0.003,
+                    lambda: 0.0003,
                 tf.logical_and(tf.less(perplexity, 500), tf.greater_equal(perplexity, 100)):
-                    lambda: 0.005,
-            }, default=lambda : 0.01, exclusive=True)
+                    lambda: 0.0005,
+            }, default=lambda : 0.001, exclusive=True)
             return learning_rate
 
         self.perplexity = tf.exp(tf.reduce_mean(self.loss))
