@@ -27,7 +27,7 @@ class MtEval_BLEU:
                                  '-t', path_tar])
         m = re.search(b'BLEU score = (.+) for', mteval_result)
         try:
-            result = float(m.group(1)) /100.0
+            result = float(m.group(1))
         except AttributeError:
             result = 0
         return result
