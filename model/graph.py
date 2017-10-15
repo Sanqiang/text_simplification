@@ -74,7 +74,10 @@ class Graph:
                 self.encoder_embs = tf.stack(
                     self.embedding_fn(self.sentence_complex_input_placeholder, self.emb_complex),
                     axis=1)
-                self.decoder_outputs = output.decoder_outputs
+                if type(output.decoder_outputs) == list:
+                    self.decoder_outputs = tf.stack(output.decoder_outputs, axis=1)
+                else:
+                    self.decoder_outputs = output.decoder_outputs
 
             if (not self.is_train and self.model_config.beam_search_size > 0 and
                         self.model_config.framework == 'transformer'):
