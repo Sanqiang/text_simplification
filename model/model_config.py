@@ -58,6 +58,8 @@ class DefaultConfig():
     trans_layer_gate = args.trans_layer_gate
     use_quality_model = args.use_quality_model
 
+    # Seq2seq config
+    bidirectional_config = False
 
     # post process
     replace_unk_by_attn = False

@@ -73,7 +73,7 @@ class Seq2SeqGraph(Graph):
 
                     def masked_attention(e):
                         attn_dist = tf.nn.softmax(e)
-                        # attn_dist *= self._enc_padding_mask
+                        attn_dist *= self._enc_padding_mask
                         masked_sums = tf.reduce_sum(attn_dist, axis=1)
                         return attn_dist / tf.reshape(masked_sums, [-1, 1])
 
@@ -99,7 +99,8 @@ class Seq2SeqGraph(Graph):
                 if self.is_train or i == 0:
                     inp_emb = gt_inp_embs[i]
 
-                x = linear([inp_emb] + [context_vector], self.model_config.dimension, True)
+                # x = linear([inp_emb] + [context_vector], self.model_config.dimension, True)
+                x = inp_emb
                 cell_output, state = cell(x, state)
                 if i == 0:
                     with tf.variable_scope(
@@ -121,39 +122,67 @@ class Seq2SeqGraph(Graph):
             cell_fw = tf.contrib.rnn.LSTMCell(
                 self.model_config.dimension,
                 initializer=self.rand_unif_init, state_is_tuple=True)
-            cell_bw = tf.contrib.rnn.LSTMCell(
-                self.model_config.dimension,
-                initializer=self.rand_unif_init, state_is_tuple=True)
-            (encoder_outputs, (fw_st, bw_st)) = tf.nn.bidirectional_dynamic_rnn(
-                cell_fw, cell_bw, tf.stack(self._enc, axis=1),
-                dtype=tf.float32,
-                sequence_length=self._enc_len,
-                swap_memory=True)
-            encoder_outputs = tf.concat(axis=2, values=encoder_outputs)
-            return encoder_outputs, fw_st, bw_st
+            if self.model_config.bidirectional_config:
+                cell_bw = tf.contrib.rnn.LSTMCell(
+                    self.model_config.dimension,
+                    initializer=self.rand_unif_init, state_is_tuple=True)
+                (encoder_outputs, (fw_st, bw_st)) = tf.nn.bidirectional_dynamic_rnn(
+                    cell_fw, cell_bw, tf.stack(self._enc, axis=1),
+                    dtype=tf.float32,
+                    sequence_length=self._enc_len,
+                    swap_memory=True)
+                encoder_outputs = tf.concat(axis=2, values=encoder_outputs)
+                return encoder_outputs, fw_st, bw_st
+            else:
+                encoder_outputs, fw_st = tf.nn.dynamic_rnn(
+                    cell_fw, tf.stack(self._enc, axis=1),
+                    dtype=tf.float32,
+                    sequence_length=self._enc_len,
+                    swap_memory=True)
+                return encoder_outputs, fw_st, None
+
+
 
     def _reduce_states(self, fw_st, bw_st):
         with tf.variable_scope('reduce_final_st'):
-            # Define weights and biases to reduce the cell and reduce the state
-            w_reduce_c = tf.get_variable(
-                'w_reduce_c', [self.model_config.dimension * 2, self.model_config.dimension],
+            assert bw_st is None is not self.model_config.bidirectional_config
+            if bw_st:
+                # Define weights and biases to reduce the cell and reduce the state
+                w_reduce_c = tf.get_variable(
+                    'w_reduce_c', [self.model_config.dimension * 2, self.model_config.dimension],
+                    dtype=tf.float32, initializer=self.rand_unif_init)
+                w_reduce_h = tf.get_variable(
+                    'w_reduce_h', [self.model_config.dimension * 2, self.model_config.dimension],
+                    dtype=tf.float32, initializer=self.rand_unif_init)
+                bias_reduce_c = tf.get_variable(
+                    'bias_reduce_c', [self.model_config.dimension],
+                    dtype=tf.float32, initializer=self.rand_unif_init)
+                bias_reduce_h = tf.get_variable(
+                    'bias_reduce_h', [self.model_config.dimension],
+                    dtype=tf.float32, initializer=self.rand_unif_init)
+                # Apply linear layer
+                old_c = tf.concat(axis=1, values=[fw_st.c, bw_st.c])
+                old_h = tf.concat(axis=1, values=[fw_st.h, bw_st.h])
+                new_c = tf.nn.relu(tf.matmul(old_c, w_reduce_c) + bias_reduce_c)
+                new_h = tf.nn.relu(tf.matmul(old_h, w_reduce_h) + bias_reduce_h)
+            else:
+                w_reduce_c = tf.get_variable(
+                'w_reduce_c', [self.model_config.dimension, self.model_config.dimension],
                 dtype=tf.float32, initializer=self.rand_unif_init)
-            w_reduce_h = tf.get_variable(
-                'w_reduce_h', [self.model_config.dimension * 2, self.model_config.dimension],
-                dtype=tf.float32, initializer=self.rand_unif_init)
-            bias_reduce_c = tf.get_variable(
-                'bias_reduce_c', [self.model_config.dimension],
-                dtype=tf.float32, initializer=self.rand_unif_init)
-            bias_reduce_h = tf.get_variable(
-                'bias_reduce_h', [self.model_config.dimension],
-                dtype=tf.float32, initializer=self.rand_unif_init)
+                w_reduce_h = tf.get_variable(
+                    'w_reduce_h', [self.model_config.dimension, self.model_config.dimension],
+                    dtype=tf.float32, initializer=self.rand_unif_init)
+                bias_reduce_c = tf.get_variable(
+                    'bias_reduce_c', [self.model_config.dimension],
+                    dtype=tf.float32, initializer=self.rand_unif_init)
+                bias_reduce_h = tf.get_variable(
+                    'bias_reduce_h', [self.model_config.dimension],
+                    dtype=tf.float32, initializer=self.rand_unif_init)
+                # Apply linear layer
+                new_c = tf.nn.relu(tf.matmul(fw_st.c, w_reduce_c) + bias_reduce_c)
+                new_h = tf.nn.relu(tf.matmul(fw_st.h, w_reduce_h) + bias_reduce_h)
+        return tf.contrib.rnn.LSTMStateTuple(new_c, new_h)
 
-            # Apply linear layer
-            old_c = tf.concat(axis=1, values=[fw_st.c, bw_st.c])
-            old_h = tf.concat(axis=1, values=[fw_st.h, bw_st.h])
-            new_c = tf.nn.relu(tf.matmul(old_c, w_reduce_c) + bias_reduce_c)
-            new_h = tf.nn.relu(tf.matmul(old_h, w_reduce_h) + bias_reduce_h)
-            return tf.contrib.rnn.LSTMStateTuple(new_c, new_h)
 
     # For Evaluation Beam Search Graph
     # Following code will only dedicated to beam search in evaluation.

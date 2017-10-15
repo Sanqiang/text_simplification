@@ -137,7 +137,7 @@ def train(model_config=None):
         perplexitys.append(perplexity)
 
         if step % model_config.model_print_freq == 0:
-            print('Perplexity:\t%f at step %d with lr %s' % (np.mean(perplexity), step, lr))
+            print('Perplexity:\t%f at step %d with lr %s' % (perplexity, step, lr))
             perplexitys.clear()
 
         if step % model_config.model_eval_freq == 0:
@@ -149,7 +149,7 @@ def train(model_config=None):
                     eval(DefaultTestConfig(), ckpt)
                     eval(DefaultTestConfig2(), ckpt)
                 elif args.mode == 'dress' or args.mode == 'all':
-                    eval(SubValWikiEightRefConfig(), ckpt)
+                    # eval(SubValWikiEightRefConfig(), ckpt)
                     eval(SubTestWikiEightRefConfig(), ckpt)
 
         # if step % model_config.model_save_freq == 0:
