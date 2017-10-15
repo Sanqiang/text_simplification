@@ -15,7 +15,7 @@ class DefaultConfig():
     use_partial_restore = args.use_partial_restore
     use_gpu = True
     batch_size = 3
-    dimension = 30
+    dimension = 300
     max_complex_sentence = 20
     max_simple_sentence = 15
     min_simple_sentence = 5 #Used for Beam Search
@@ -59,7 +59,7 @@ class DefaultConfig():
     use_quality_model = args.use_quality_model
 
     # Seq2seq config
-    bidirectional_config = False
+    num_rnn_encoder_layers = 1
 
     # post process
     replace_unk_by_attn = False

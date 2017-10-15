@@ -26,10 +26,10 @@ class Seq2SeqGraph(Graph):
         self._enc = self.embedding_fn(self.sentence_complex_input_placeholder, self.emb_complex)
         self._enc_len = tf.to_int32(tf.reduce_sum(self._enc_padding_mask, axis=1))
 
-        enc_outputs, fw_st, bw_st = self._encoder()
+        enc_outputs, fw_st = self._encoder()
         self._enc_states = enc_outputs
 
-        self._dec_in_state = self._reduce_states(fw_st, bw_st)
+        self._dec_in_state = self._reduce_states(fw_st)
 
         with tf.variable_scope('decoder'):
             decoder_outputs, logits, self._dec_out_state, self.attn_dists = self._decoder()
@@ -101,6 +101,8 @@ class Seq2SeqGraph(Graph):
 
                 # x = linear([inp_emb] + [context_vector], self.model_config.dimension, True)
                 x = inp_emb
+                x = tf.nn.dropout(x,
+                                  1.0 - self.model_config.layer_prepostprocess_dropout)
                 cell_output, state = cell(x, state)
                 if i == 0:
                     with tf.variable_scope(
@@ -112,75 +114,53 @@ class Seq2SeqGraph(Graph):
 
                 with tf.variable_scope("AttnOutputProjection"):
                     output = linear([cell_output] + [context_vector], cell.output_size, True)
+                    output = tf.nn.dropout(output,
+                                           1.0 - self.model_config.layer_prepostprocess_dropout)
                     logit = tf.nn.xw_plus_b(output, tf.transpose(self.w), self.b)
                 outputs.append(output)
                 logits.append(logit)
             return outputs, logits, state, attn_dists
 
     def _encoder(self):
+        encoder_outputs_stack = []
+        state_stack = []
         with tf.variable_scope('encoder'):
-            cell_fw = tf.contrib.rnn.LSTMCell(
-                self.model_config.dimension,
-                initializer=self.rand_unif_init, state_is_tuple=True)
-            if self.model_config.bidirectional_config:
-                cell_bw = tf.contrib.rnn.LSTMCell(
-                    self.model_config.dimension,
-                    initializer=self.rand_unif_init, state_is_tuple=True)
-                (encoder_outputs, (fw_st, bw_st)) = tf.nn.bidirectional_dynamic_rnn(
-                    cell_fw, cell_bw, tf.stack(self._enc, axis=1),
-                    dtype=tf.float32,
-                    sequence_length=self._enc_len,
-                    swap_memory=True)
-                encoder_outputs = tf.concat(axis=2, values=encoder_outputs)
-                return encoder_outputs, fw_st, bw_st
-            else:
-                encoder_outputs, fw_st = tf.nn.dynamic_rnn(
-                    cell_fw, tf.stack(self._enc, axis=1),
-                    dtype=tf.float32,
-                    sequence_length=self._enc_len,
-                    swap_memory=True)
-                return encoder_outputs, fw_st, None
+            rnn_inputs = tf.stack(self._enc, axis=1)
+            rnn_inputs = tf.nn.dropout(rnn_inputs,
+                                       1.0 - self.model_config.layer_prepostprocess_dropout)
 
+            for layer_i in range(self.model_config.num_rnn_encoder_layers):
+                with tf.variable_scope('encoder_%s' % layer_i):
+                    cell_fw = tf.contrib.rnn.LSTMCell(
+                        self.model_config.dimension,
+                        initializer=self.rand_unif_init, state_is_tuple=True)
+                    encoder_output, fw_st = tf.nn.dynamic_rnn(
+                        cell_fw, rnn_inputs,
+                        dtype=tf.float32,
+                        sequence_length=self._enc_len,
+                        swap_memory=True)
+                    encoder_outputs_stack.append(encoder_output)
+                    state_stack.append(fw_st)
+                    rnn_inputs = encoder_output
+        return encoder_outputs_stack[-1], state_stack[-1]
 
-
-    def _reduce_states(self, fw_st, bw_st):
+    def _reduce_states(self, fw_st):
         with tf.variable_scope('reduce_final_st'):
-            assert bw_st is None is not self.model_config.bidirectional_config
-            if bw_st:
-                # Define weights and biases to reduce the cell and reduce the state
-                w_reduce_c = tf.get_variable(
-                    'w_reduce_c', [self.model_config.dimension * 2, self.model_config.dimension],
-                    dtype=tf.float32, initializer=self.rand_unif_init)
-                w_reduce_h = tf.get_variable(
-                    'w_reduce_h', [self.model_config.dimension * 2, self.model_config.dimension],
-                    dtype=tf.float32, initializer=self.rand_unif_init)
-                bias_reduce_c = tf.get_variable(
-                    'bias_reduce_c', [self.model_config.dimension],
-                    dtype=tf.float32, initializer=self.rand_unif_init)
-                bias_reduce_h = tf.get_variable(
-                    'bias_reduce_h', [self.model_config.dimension],
-                    dtype=tf.float32, initializer=self.rand_unif_init)
-                # Apply linear layer
-                old_c = tf.concat(axis=1, values=[fw_st.c, bw_st.c])
-                old_h = tf.concat(axis=1, values=[fw_st.h, bw_st.h])
-                new_c = tf.nn.relu(tf.matmul(old_c, w_reduce_c) + bias_reduce_c)
-                new_h = tf.nn.relu(tf.matmul(old_h, w_reduce_h) + bias_reduce_h)
-            else:
-                w_reduce_c = tf.get_variable(
-                'w_reduce_c', [self.model_config.dimension, self.model_config.dimension],
+            w_reduce_c = tf.get_variable(
+            'w_reduce_c', [self.model_config.dimension, self.model_config.dimension],
+            dtype=tf.float32, initializer=self.rand_unif_init)
+            w_reduce_h = tf.get_variable(
+                'w_reduce_h', [self.model_config.dimension, self.model_config.dimension],
                 dtype=tf.float32, initializer=self.rand_unif_init)
-                w_reduce_h = tf.get_variable(
-                    'w_reduce_h', [self.model_config.dimension, self.model_config.dimension],
-                    dtype=tf.float32, initializer=self.rand_unif_init)
-                bias_reduce_c = tf.get_variable(
-                    'bias_reduce_c', [self.model_config.dimension],
-                    dtype=tf.float32, initializer=self.rand_unif_init)
-                bias_reduce_h = tf.get_variable(
-                    'bias_reduce_h', [self.model_config.dimension],
-                    dtype=tf.float32, initializer=self.rand_unif_init)
-                # Apply linear layer
-                new_c = tf.nn.relu(tf.matmul(fw_st.c, w_reduce_c) + bias_reduce_c)
-                new_h = tf.nn.relu(tf.matmul(fw_st.h, w_reduce_h) + bias_reduce_h)
+            bias_reduce_c = tf.get_variable(
+                'bias_reduce_c', [self.model_config.dimension],
+                dtype=tf.float32, initializer=self.rand_unif_init)
+            bias_reduce_h = tf.get_variable(
+                'bias_reduce_h', [self.model_config.dimension],
+                dtype=tf.float32, initializer=self.rand_unif_init)
+            # Apply linear layer
+            new_c = tf.nn.relu(tf.matmul(fw_st.c, w_reduce_c) + bias_reduce_c)
+            new_h = tf.nn.relu(tf.matmul(fw_st.h, w_reduce_h) + bias_reduce_h)
         return tf.contrib.rnn.LSTMStateTuple(new_c, new_h)
 
 
