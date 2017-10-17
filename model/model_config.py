@@ -151,7 +151,7 @@ class DefaultTestConfig2(DefaultConfig):
 class WikiDressLargeDefault(DefaultConfig):
     model_print_freq = 50
     save_model_secs = 600
-    model_eval_freq = 10000
+    model_eval_freq = 5000
 
     train_dataset_simple = get_path('../text_simplification_data/train/dress/wikilarge/wiki.full.aner.train.dst')
     train_dataset_simple_ppdb = get_path('../text_simplification_data/train/dress/wikilarge/wiki.full.aner.train.dst.rules')
