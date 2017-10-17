@@ -15,7 +15,7 @@ class DefaultConfig():
     use_partial_restore = args.use_partial_restore
     use_gpu = True
     batch_size = 3
-    dimension = 300
+    dimension = 30
     max_complex_sentence = 20
     max_simple_sentence = 15
     min_simple_sentence = 5 #Used for Beam Search
@@ -42,6 +42,12 @@ class DefaultConfig():
     num_samples = args.number_samples
 
     beam_search_size = -1
+
+    # RL weight
+    rl_prelenth = args.rl_prelenth
+    rl_bleu = args.rl_bleu
+    rl_sari = args.rl_sari
+    rl_fkgl = args.rl_fkgl
 
     # Overwrite transformer config
     # timing: use positional encoding
@@ -80,7 +86,9 @@ class DefaultConfig():
     pretrained_embedding = None
 
     train_dataset_simple = get_path('data/train_dummy_simple_dataset')
+    train_dataset_simple_ppdb = get_path('data/train_dummy_simple_dataset.rules')
     train_dataset_complex = get_path('data/train_dummy_complex_dataset')
+    # train_dataset_complex_ppdb = get_path('data/train_dummy_complex_dataset.rules')
     vocab_simple = get_path('data/dummy_simple_vocab')
     vocab_complex = get_path('data/dummy_complex_vocab')
     vocab_all = get_path('data/dummy_vocab')
@@ -117,6 +125,10 @@ class DefaultConfig():
     joshua_class = get_path('script/ppdb-simplification-release-joshua5.0/joshua/class')
     joshua_script = get_path('script/ppdb-simplification-release-joshua5.0/joshua/bin/bleu')
 
+    add_ppdb_training = args.add_ppdb_training
+    path_ppdb_refine = get_path(
+        '../text_simplification_data/ppdb/ppdb_rules2.simp.rules')
+
 
 class DefaultTrainConfig(DefaultConfig):
     beam_search_size = 0
@@ -142,9 +154,11 @@ class WikiDressLargeDefault(DefaultConfig):
     model_eval_freq = 10000
 
     train_dataset_simple = get_path('../text_simplification_data/train/dress/wikilarge/wiki.full.aner.train.dst')
+    train_dataset_simple_ppdb = get_path('../text_simplification_data/train/dress/wikilarge/wiki.full.aner.train.dst.rules')
     train_dataset_complex = get_path('../text_simplification_data/train/dress/wikilarge/wiki.full.aner.train.src')
-    vocab_simple = get_path('../text_simplification_data/train/dress/wikilarge/wiki.full.aner.train.dst.vocab')
-    vocab_complex = get_path('../text_simplification_data/train/dress/wikilarge/wiki.full.aner.train.src.vocab')
+    # train_dataset_complex_ppdb = get_path('../text_simplification_data/train/dress/wikilarge/wiki.full.aner.train.src.rules')
+    vocab_simple = get_path('../text_simplification_data/train/dress/wikilarge/wiki.full.aner.train.dst.vocab.dress')
+    vocab_complex = get_path('../text_simplification_data/train/dress/wikilarge/wiki.full.aner.train.src.vocab.dress')
     vocab_all = get_path('../text_simplification_data/train/dress/wikilarge/wiki.full.aner.train.vocab')
     if args.lower_case:
         vocab_simple = vocab_simple + '.lower'
@@ -156,14 +170,14 @@ class WikiDressLargeDefault(DefaultConfig):
     # val_dataset_simple_file = 'wiki.full.aner.valid.dst'
     # val_dataset_complex = get_path('../text_simplification_data/train/dress/wikilarge/wiki.full.aner.valid.src')
     val_dataset_simple_folder = get_path('../text_simplification_data/val/')
-    val_dataset_simple_file = 'tune.8turkers.tok.simp.processed'
-    val_dataset_simple_references = 'tune.8turkers.tok.turk.processed.'
-    val_dataset_complex = get_path('../text_simplification_data/val/tune.8turkers.tok.norm.processed')
-    val_mapper = get_path('../text_simplification_data/val/tune.8turkers.tok.map')
-    val_dataset_simple_raw_file = 'tune.8turkers.tok.simp.raw'
-    val_dataset_simple_raw_references = 'tune.8turkers.tok.turk.raw.'
+    val_dataset_simple_file = 'tune.8turkers.tok.simp'
+    val_dataset_simple_references = 'tune.8turkers.tok.turk.'
+    val_dataset_complex = get_path('../text_simplification_data/val/tune.8turkers.tok.norm')
+    val_mapper = get_path('../text_simplification_data/val/tune.8turkers.tok.map.dress')
+    val_dataset_simple_raw_file = 'tune.8turkers.tok.simp'
+    val_dataset_simple_raw_references = 'tune.8turkers.tok.turk.'
     val_dataset_complex_raw = get_path(
-        '../text_simplification_data/val/tune.8turkers.tok.norm.raw')
+        '../text_simplification_data/val/tune.8turkers.tok.norm')
     val_dataset_complex_rawlines_file = get_path(
         '../text_simplification_data/val/tune.8turkers.tok.norm')
     val_dataset_simple_rawlines_file_references = 'tune.8turkers.tok.turk.'
@@ -207,14 +221,14 @@ class SubValWikiEightRefConfig(SubTest):
     resultdor = get_path('../' + output_folder + '/result/eightref_val')
 
     val_dataset_simple_folder = get_path('../text_simplification_data/val/')
-    val_dataset_simple_file = 'tune.8turkers.tok.simp.processed'
-    val_dataset_simple_references = 'tune.8turkers.tok.turk.processed.'
-    val_dataset_complex = get_path('../text_simplification_data/val/tune.8turkers.tok.norm.processed')
-    val_mapper = get_path('../text_simplification_data/val/tune.8turkers.tok.map')
-    val_dataset_simple_raw_file = 'tune.8turkers.tok.simp.raw'
-    val_dataset_simple_raw_references = 'tune.8turkers.tok.turk.raw.'
+    val_dataset_simple_file = 'tune.8turkers.tok.simp'
+    val_dataset_simple_references = 'tune.8turkers.tok.turk.'
+    val_dataset_complex = get_path('../text_simplification_data/val/tune.8turkers.tok.norm')
+    val_mapper = get_path('../text_simplification_data/val/tune.8turkers.tok.map.dress')
+    val_dataset_simple_raw_file = 'tune.8turkers.tok.simp'
+    val_dataset_simple_raw_references = 'tune.8turkers.tok.turk.'
     val_dataset_complex_raw = get_path(
-        '../text_simplification_data/val/tune.8turkers.tok.norm.raw')
+        '../text_simplification_data/val/tune.8turkers.tok.norm')
     val_dataset_complex_rawlines_file = get_path(
         '../text_simplification_data/val/tune.8turkers.tok.norm')
     val_dataset_simple_rawlines_file_references = 'tune.8turkers.tok.turk.'

@@ -28,6 +28,8 @@ def get_args():
                         help='Whether to lowercase the vocabulary?')
     parser.add_argument('-mc', '--min_count', default=5, type=int,
                         help='Truncate the vocabulary less than equal to the count?')
+    parser.add_argument('-ppdb', '--add_ppdb_training', default=False, type=bool,
+                        help='Whether add ppdb rules into training data set?')
 
     # For Graph
     parser.add_argument('-emb', '--tied_embedding', default='none',
@@ -40,6 +42,15 @@ def get_args():
                         help='Whether to use quality model?')
     parser.add_argument('-decay', '--use_learning_rate_decay', default=False, type=bool,
                         help='Whether to use learning rate decay?')
+
+    parser.add_argument('-rl_len', '--rl_prelenth', default=3, type=int,
+                        help='Length of output sentences before RL applied?')
+    parser.add_argument('-rl_bleu', '--rl_bleu', default=0.0, type=float,
+                        help='The weight for BLEU in RL?')
+    parser.add_argument('-rl_sari', '--rl_sari', default=0.0, type=float,
+                        help='The weight for SARI in RL?')
+    parser.add_argument('-rl_fkgl', '--rl_fkgl', default=0.0, type=float,
+                        help='The weight for FKGL in RL?')
 
 
     # For Transformer
