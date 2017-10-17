@@ -101,14 +101,10 @@ class DefaultConfig():
     val_dataset_simple_folder = get_path('data/')
     val_dataset_simple_file = 'valid_dummy_simple_dataset'
     val_dataset_complex = get_path('data/valid_dummy_complex_dataset')
-    val_dataset_simple_references = 'valid_dummy_simple_dataset.raw.'
     val_mapper = get_path('data/valid_dummy_mapper')
-    val_dataset_simple_raw_file = val_dataset_simple_file
-    val_dataset_simple_raw_references = val_dataset_simple_references
-    val_dataset_complex_raw = val_dataset_complex
-    val_dataset_complex_rawlines_file = val_dataset_complex_raw
-    val_dataset_simple_rawlines_file_references = val_dataset_simple_references
-    val_dataset_simple_rawlines_file = val_dataset_simple_raw_file
+    val_dataset_complex_rawlines_file = val_dataset_complex
+    val_dataset_simple_rawlines_file_references = 'valid_dummy_simple_dataset.raw.'
+    val_dataset_simple_rawlines_file = val_dataset_simple_file
     num_refs = 3
 
     output_folder = args.output_folder
@@ -157,8 +153,10 @@ class WikiDressLargeDefault(DefaultConfig):
     train_dataset_simple_ppdb = get_path('../text_simplification_data/train/dress/wikilarge/wiki.full.aner.train.dst.rules')
     train_dataset_complex = get_path('../text_simplification_data/train/dress/wikilarge/wiki.full.aner.train.src')
     # train_dataset_complex_ppdb = get_path('../text_simplification_data/train/dress/wikilarge/wiki.full.aner.train.src.rules')
+    # add .dress extention will be same vocab as dress
     vocab_simple = get_path('../text_simplification_data/train/dress/wikilarge/wiki.full.aner.train.dst.vocab.dress')
     vocab_complex = get_path('../text_simplification_data/train/dress/wikilarge/wiki.full.aner.train.src.vocab.dress')
+    # don't have dress version of tied vocab
     vocab_all = get_path('../text_simplification_data/train/dress/wikilarge/wiki.full.aner.train.vocab')
     if args.lower_case:
         vocab_simple = vocab_simple + '.lower'
@@ -170,14 +168,14 @@ class WikiDressLargeDefault(DefaultConfig):
     # val_dataset_simple_file = 'wiki.full.aner.valid.dst'
     # val_dataset_complex = get_path('../text_simplification_data/train/dress/wikilarge/wiki.full.aner.valid.src')
     val_dataset_simple_folder = get_path('../text_simplification_data/val/')
-    val_dataset_simple_file = 'tune.8turkers.tok.simp.processed'
-    val_dataset_simple_references = 'tune.8turkers.tok.turk.processed.'
-    val_dataset_complex = get_path('../text_simplification_data/val/tune.8turkers.tok.norm.processed')
+    # use the original dress
+    val_dataset_simple_file = 'wiki.full.aner.valid.dst'
+    val_dataset_complex = get_path('../text_simplification_data/val/wiki.full.aner.valid.src')
     val_mapper = get_path('../text_simplification_data/val/tune.8turkers.tok.map.dress')
-    val_dataset_simple_raw_file = 'tune.8turkers.tok.simp.raw'
-    val_dataset_simple_raw_references = 'tune.8turkers.tok.turk.raw.'
+    # wiki.full.aner.ori.valid.dst is uppercase whereas tune.8turkers.tok.simp is lowercase
+    val_dataset_simple_raw_file = 'wiki.full.aner.ori.valid.dst'
     val_dataset_complex_raw = get_path(
-        '../text_simplification_data/val/tune.8turkers.tok.norm.raw')
+        '../text_simplification_data/val/wiki.full.aner.ori.valid.src')
     val_dataset_complex_rawlines_file = get_path(
         '../text_simplification_data/val/tune.8turkers.tok.norm')
     val_dataset_simple_rawlines_file_references = 'tune.8turkers.tok.turk.'
@@ -221,14 +219,11 @@ class SubValWikiEightRefConfig(SubTest):
     resultdor = get_path('../' + output_folder + '/result/eightref_val')
 
     val_dataset_simple_folder = get_path('../text_simplification_data/val/')
-    val_dataset_simple_file = 'tune.8turkers.tok.simp.processed'
-    val_dataset_simple_references = 'tune.8turkers.tok.turk.processed.'
-    val_dataset_complex = get_path('../text_simplification_data/val/tune.8turkers.tok.norm.processed')
+    # use the original dress
+    val_dataset_simple_file = 'wiki.full.aner.valid.dst'
+    val_dataset_complex = get_path('../text_simplification_data/val/wiki.full.aner.valid.src')
     val_mapper = get_path('../text_simplification_data/val/tune.8turkers.tok.map.dress')
-    val_dataset_simple_raw_file = 'tune.8turkers.tok.simp.raw'
-    val_dataset_simple_raw_references = 'tune.8turkers.tok.turk.raw.'
-    val_dataset_complex_raw = get_path(
-        '../text_simplification_data/val/tune.8turkers.tok.norm.raw')
+    # wiki.full.aner.ori.valid.dst is uppercase whereas tune.8turkers.tok.simp is lowercase
     val_dataset_complex_rawlines_file = get_path(
         '../text_simplification_data/val/tune.8turkers.tok.norm')
     val_dataset_simple_rawlines_file_references = 'tune.8turkers.tok.turk.'
@@ -246,14 +241,11 @@ class SubTestWikiEightRefConfig(SubTest):
     resultdor = get_path('../' + output_folder + '/result/eightref_test')
 
     val_dataset_simple_folder = get_path('../text_simplification_data/test/')
-    val_dataset_simple_file = 'test.8turkers.tok.simp.processed'
-    val_dataset_simple_references = 'test.8turkers.tok.turk.processed.'
-    val_dataset_complex = get_path('../text_simplification_data/test/test.8turkers.tok.norm.processed')
-    val_mapper = get_path('../text_simplification_data/test/test.8turkers.tok.map')
-    val_dataset_simple_raw_file = 'test.8turkers.tok.simp.raw'
-    val_dataset_simple_raw_references = 'test.8turkers.tok.turk.raw.'
-    val_dataset_complex_raw = get_path(
-        '../text_simplification_data/test/test.8turkers.tok.norm.raw')
+    # use the original dress
+    val_dataset_simple_file = 'wiki.full.aner.test.dst'
+    val_dataset_complex = get_path('../text_simplification_data/test/wiki.full.aner.test.src')
+    val_mapper = get_path('../text_simplification_data/test/test.8turkers.tok.map.dress')
+    # wiki.full.aner.ori.test.dst is uppercase whereas test.8turkers.tok.simp is lowercase
     val_dataset_complex_rawlines_file = get_path(
         '../text_simplification_data/test/test.8turkers.tok.norm')
     val_dataset_simple_rawlines_file_references = 'test.8turkers.tok.turk.'
@@ -265,105 +257,6 @@ class SubTestWikiEightRefConfigBeam4(SubTestWikiEightRefConfig):
     beam_search_size = 4
     output_folder = args.output_folder
     resultdor = get_path('../' + output_folder + '/result/eightref_test_bm')
-
-
-class SubValWikiDress(SubTest):
-    output_folder = args.output_folder
-    resultdor = get_path('../' + output_folder + '/result/dresssmall_val')
-
-    val_dataset_simple_folder = get_path(
-        '../text_simplification_data/train/dress/wikismall/')
-    val_dataset_simple_file = 'PWKP_108016.tag.80.aner.ori.valid.dst.processed'
-    val_dataset_complex = get_path(
-        '../text_simplification_data/train/dress/wikismall/PWKP_108016.tag.80.aner.ori.valid.src.processed')
-    val_mapper = get_path(
-        '../text_simplification_data/train/dress/wikismall/PWKP_108016.tag.80.aner.ori.valid.map')
-    val_dataset_simple_raw_file = 'PWKP_108016.tag.80.aner.ori.valid.dst'
-    val_dataset_complex_raw = get_path(
-        '../text_simplification_data/train/dress/wikismall/PWKP_108016.tag.80.aner.ori.valid.src')
-    val_dataset_complex_rawlines_file = val_dataset_complex_raw
-    val_dataset_simple_rawlines_file = val_dataset_simple_raw_file
-    num_refs = 0
-
-
-class SubTestWikiDress(SubTest):
-    output_folder = args.output_folder
-    resultdor = get_path('../' + output_folder + '/result/dresssmall_test')
-
-    val_dataset_simple_folder = get_path(
-        '../text_simplification_data/train/dress/wikismall/')
-    val_dataset_simple_file = 'PWKP_108016.tag.80.aner.ori.test.dst.processed'
-    val_dataset_complex = get_path(
-        '../text_simplification_data/train/dress/wikismall/PWKP_108016.tag.80.aner.ori.test.src.processed')
-    val_mapper = get_path(
-        '../text_simplification_data/train/dress/wikismall/PWKP_108016.tag.80.aner.ori.test.map')
-    val_dataset_simple_raw_file = 'PWKP_108016.tag.80.aner.ori.test.dst'
-    val_dataset_complex_raw = get_path(
-        '../text_simplification_data/train/dress/wikismall/PWKP_108016.tag.80.aner.ori.test.src')
-    val_dataset_complex_rawlines_file = val_dataset_complex_raw
-    val_dataset_simple_rawlines_file = val_dataset_simple_raw_file
-    num_refs = 0
-
-
-class SubValWikiDressL(SubTest):
-    output_folder = args.output_folder
-    resultdor = get_path('../' + output_folder + '/result/dresslarge_val')
-
-    val_dataset_simple_folder = get_path(
-        '../text_simplification_data/train/dress/wikilarge/')
-    val_dataset_simple_file = 'wiki.full.aner.ori.valid.dst.processed'
-    val_dataset_complex = get_path(
-        '../text_simplification_data/train/dress/wikilarge/wiki.full.aner.ori.valid.src.processed')
-    val_mapper = get_path(
-        '../text_simplification_data/train/dress/wikilarge/wiki.full.aner.ori.valid.map')
-    val_dataset_simple_raw_file = 'wiki.full.aner.ori.valid.dst'
-    val_dataset_complex_raw = get_path(
-        '../text_simplification_data/train/dress/wikilarge/wiki.full.aner.ori.valid.src')
-    val_dataset_complex_rawlines_file = val_dataset_complex_raw
-    val_dataset_simple_rawlines_file = val_dataset_simple_raw_file
-    num_refs = 0
-
-
-class SubTestWikiDressL(SubTest):
-    output_folder = args.output_folder
-    resultdor = get_path('../' + output_folder + '/result/dresslarge_test')
-
-    val_dataset_simple_folder = get_path(
-        '../text_simplification_data/train/dress/wikilarge/')
-    val_dataset_simple_file = 'wiki.full.aner.ori.test.dst.processed'
-    val_dataset_complex = get_path(
-        '../text_simplification_data/train/dress/wikilarge/wiki.full.aner.ori.test.src.processed')
-    val_mapper = get_path(
-        '../text_simplification_data/train/dress/wikilarge/wiki.full.aner.ori.test.map')
-    val_dataset_simple_raw_file = 'wiki.full.aner.ori.test.dst'
-    val_dataset_complex_raw = get_path(
-        '../text_simplification_data/train/dress/wikilarge/wiki.full.aner.ori.test.src')
-    val_dataset_complex_rawlines_file = val_dataset_complex_raw
-    val_dataset_simple_rawlines_file = val_dataset_simple_raw_file
-    num_refs = 0
-
-
-class SubValWikiDressBeam4(SubValWikiDress):
-    beam_search_size = 4
-    output_folder = args.output_folder
-    resultdor = get_path('../' + output_folder + '/result/dresssmall_val_bm')
-
-
-class SubTestWikiDressBeam4(SubTestWikiDress):
-    beam_search_size = 4
-    output_folder = args.output_folder
-    resultdor = get_path('../' + output_folder + '/result/dresssmall_test_bm')
-
-
-class SubValWikiDressLBeam4(SubValWikiDressL):
-    beam_search_size = 4
-    output_folder = args.output_folder
-    resultdor = get_path('../' + output_folder + '/result/dresslarge_val_bm')
-
-class SubTestWikiDressLBeam4(SubTestWikiDressL):
-    beam_search_size = 4
-    output_folder = args.output_folder
-    resultdor = get_path('../' + output_folder + '/result/dresslarge_test_bm')
 
 
 def list_config(config):

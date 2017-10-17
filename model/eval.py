@@ -38,15 +38,13 @@ def get_graph_val_data(sentence_simple_input, sentence_complex_input,
     (tmp_sentence_simple, tmp_sentence_complex,
      tmp_sentence_complex_raw, tmp_sentence_complex_raw_lines) = [], [], [], []
     tmp_mapper = []
-    tmp_ref = [[] for _ in range(model_config.num_refs)]
-    tmp_ref_raw = [[] for _ in range(model_config.num_refs)]
     tmp_ref_raw_lines = [[] for _ in range(model_config.num_refs)]
     effective_batch_size = 0
     is_end = False
     for i in range(model_config.batch_size):
         if not is_end:
             (sentence_simple, sentence_complex, sentence_complex_raw, sentence_complex_raw_lines,
-             mapper, ref, ref_raw, ref_raw_lines) = next(it)
+             mapper, ref_raw_lines) = next(it)
             effective_batch_size += 1
         if sentence_simple is None or is_end:
             # End of data set
@@ -75,8 +73,6 @@ def get_graph_val_data(sentence_simple_input, sentence_complex_input,
         tmp_sentence_complex_raw_lines.append(sentence_complex_raw_lines)
         if ref:
             for i_ref in range(model_config.num_refs):
-                tmp_ref[i_ref].append(ref[i_ref])
-                tmp_ref_raw[i_ref].append(ref_raw[i_ref])
                 tmp_ref_raw_lines[i_ref].append(ref_raw_lines[i_ref])
 
     for step in range(model_config.max_simple_sentence):
@@ -89,7 +85,7 @@ def get_graph_val_data(sentence_simple_input, sentence_complex_input,
     return (input_feed, tmp_sentence_simple,
             tmp_sentence_complex, tmp_sentence_complex_raw, tmp_sentence_complex_raw_lines,
             tmp_mapper,
-            tmp_ref, tmp_ref_raw, tmp_ref_raw_lines,
+            tmp_ref_raw_lines,
             effective_batch_size,
             is_end)
 
@@ -134,7 +130,7 @@ def eval(model_config=None, ckpt=None):
         (input_feed, sentence_simple,
          sentence_complex, sentence_complex_raw, sentence_complex_raw_lines,
          mapper,
-         ref, ref_raw, ref_raw_lines,
+         ref_raw_lines,
          effective_batch_size, is_end) = get_graph_val_data(
             graph.sentence_simple_input_placeholder,
             graph.sentence_complex_input_placeholder,
@@ -144,8 +140,6 @@ def eval(model_config=None, ckpt=None):
         # Replace UNK for sentence_complex_raw and ref_raw
         # Note that sentence_complex_raw_lines and ref_raw_lines are original file lines
         sentence_complex_raw = postprocess.replace_ner(sentence_complex_raw, mapper)
-        for ref_i in range(model_config.num_refs):
-            ref_raw[ref_i] = postprocess.replace_ner(ref_raw[ref_i], mapper)
 
         fetches = {'decoder_target_list': graph.decoder_target_list,
                    'loss': graph.loss,
@@ -172,8 +166,6 @@ def eval(model_config=None, ckpt=None):
             mapper = exclude_list(mapper, exclude_idxs)
 
             for ref_i in range(model_config.num_refs):
-                ref[ref_i] = exclude_list(ref[ref_i], exclude_idxs)
-                ref_raw[ref_i] = exclude_list(ref_raw[ref_i], exclude_idxs)
                 ref_raw_lines[ref_i] = exclude_list(ref_raw_lines[ref_i], exclude_idxs)
 
         target = decode(target, val_data.vocab_simple)
@@ -191,24 +183,18 @@ def eval(model_config=None, ckpt=None):
         sentence_simple = decode(sentence_simple, val_data.vocab_simple)
         sentence_complex = decode(sentence_complex, val_data.vocab_complex)
         sentence_complex_raw = truncate_sents(sentence_complex_raw)
-        for ref_i in range(model_config.num_refs):
-            ref[ref_i] = decode(ref[ref_i], val_data.vocab_simple)
 
         # Truncate decode results
         target = truncate_sents(target)
         target_raw = truncate_sents(target_raw)
         sentence_simple = truncate_sents(sentence_simple)
         sentence_complex = truncate_sents(sentence_complex)
-        for ref_i in range(model_config.num_refs):
-            ref[ref_i] = truncate_sents(ref[ref_i])
 
         targets.extend(target)
         targets_raw.extend(target_raw)
         sentence_simples.extend(sentence_simple)
         sentence_complexs.extend(sentence_complex)
         sentence_complexs_raw.extend(sentence_complex_raw)
-        for ref_i in range(model_config.num_refs):
-            refs[ref_i].extend(ref[ref_i])
 
         ibleus = []
         saris = []
@@ -381,11 +367,7 @@ if __name__ == '__main__':
     elif args.mode == 'all' or args.mode == 'dress':
         from model.model_config import WikiDressLargeDefault
         from model.model_config import SubValWikiEightRefConfig, SubTestWikiEightRefConfig
-        from model.model_config import SubValWikiDress, SubTestWikiDress
-        from model.model_config import SubValWikiDressBeam4, SubTestWikiDressBeam4
         from model.model_config import SubValWikiEightRefConfigBeam4, SubTestWikiEightRefConfigBeam4
-        from model.model_config import SubValWikiDressL, SubTestWikiDressL
-        from model.model_config import SubValWikiDressLBeam4, SubTestWikiDressLBeam4
         while True:
             model_config = WikiDressLargeDefault()
             ckpt = get_ckpt(model_config.modeldir, model_config.logdir)
@@ -394,18 +376,6 @@ if __name__ == '__main__':
                 eval(SubValWikiEightRefConfig(), ckpt)
                 eval(SubTestWikiEightRefConfig(), ckpt)
 
-                eval(SubValWikiDressL(), ckpt)
-                eval(SubTestWikiDressL(), ckpt)
-
-                eval(SubValWikiDress(), ckpt)
-                eval(SubTestWikiDress(), ckpt)
-
-                eval(SubValWikiDressLBeam4(), ckpt)
-                eval(SubTestWikiDressLBeam4(), ckpt)
-
                 eval(SubValWikiEightRefConfigBeam4(), ckpt)
                 eval(SubTestWikiEightRefConfigBeam4(), ckpt)
-
-                eval(SubValWikiDressBeam4(), ckpt)
-                eval(SubTestWikiDressBeam4(), ckpt)
 
