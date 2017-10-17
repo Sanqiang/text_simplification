@@ -101,7 +101,7 @@ class DefaultConfig():
     val_dataset_simple_folder = get_path('data/')
     val_dataset_simple_file = 'valid_dummy_simple_dataset'
     val_dataset_complex = get_path('data/valid_dummy_complex_dataset')
-    val_dataset_simple_references = 'valid_dummy_simple_dataset.'
+    val_dataset_simple_references = 'valid_dummy_simple_dataset.raw.'
     val_mapper = get_path('data/valid_dummy_mapper')
     val_dataset_simple_raw_file = val_dataset_simple_file
     val_dataset_simple_raw_references = val_dataset_simple_references
@@ -151,7 +151,7 @@ class DefaultTestConfig2(DefaultConfig):
 class WikiDressLargeDefault(DefaultConfig):
     model_print_freq = 50
     save_model_secs = 600
-    model_eval_freq = 5000
+    model_eval_freq = 10000
 
     train_dataset_simple = get_path('../text_simplification_data/train/dress/wikilarge/wiki.full.aner.train.dst')
     train_dataset_simple_ppdb = get_path('../text_simplification_data/train/dress/wikilarge/wiki.full.aner.train.dst.rules')
@@ -170,14 +170,14 @@ class WikiDressLargeDefault(DefaultConfig):
     # val_dataset_simple_file = 'wiki.full.aner.valid.dst'
     # val_dataset_complex = get_path('../text_simplification_data/train/dress/wikilarge/wiki.full.aner.valid.src')
     val_dataset_simple_folder = get_path('../text_simplification_data/val/')
-    val_dataset_simple_file = 'tune.8turkers.tok.simp'
-    val_dataset_simple_references = 'tune.8turkers.tok.turk.'
-    val_dataset_complex = get_path('../text_simplification_data/val/tune.8turkers.tok.norm')
+    val_dataset_simple_file = 'tune.8turkers.tok.simp.processed'
+    val_dataset_simple_references = 'tune.8turkers.tok.turk.processed.'
+    val_dataset_complex = get_path('../text_simplification_data/val/tune.8turkers.tok.norm.processed')
     val_mapper = get_path('../text_simplification_data/val/tune.8turkers.tok.map.dress')
-    val_dataset_simple_raw_file = 'tune.8turkers.tok.simp'
-    val_dataset_simple_raw_references = 'tune.8turkers.tok.turk.'
+    val_dataset_simple_raw_file = 'tune.8turkers.tok.simp.raw'
+    val_dataset_simple_raw_references = 'tune.8turkers.tok.turk.raw.'
     val_dataset_complex_raw = get_path(
-        '../text_simplification_data/val/tune.8turkers.tok.norm')
+        '../text_simplification_data/val/tune.8turkers.tok.norm.raw')
     val_dataset_complex_rawlines_file = get_path(
         '../text_simplification_data/val/tune.8turkers.tok.norm')
     val_dataset_simple_rawlines_file_references = 'tune.8turkers.tok.turk.'
@@ -221,14 +221,14 @@ class SubValWikiEightRefConfig(SubTest):
     resultdor = get_path('../' + output_folder + '/result/eightref_val')
 
     val_dataset_simple_folder = get_path('../text_simplification_data/val/')
-    val_dataset_simple_file = 'tune.8turkers.tok.simp'
-    val_dataset_simple_references = 'tune.8turkers.tok.turk.'
-    val_dataset_complex = get_path('../text_simplification_data/val/tune.8turkers.tok.norm')
+    val_dataset_simple_file = 'tune.8turkers.tok.simp.processed'
+    val_dataset_simple_references = 'tune.8turkers.tok.turk.processed.'
+    val_dataset_complex = get_path('../text_simplification_data/val/tune.8turkers.tok.norm.processed')
     val_mapper = get_path('../text_simplification_data/val/tune.8turkers.tok.map.dress')
-    val_dataset_simple_raw_file = 'tune.8turkers.tok.simp'
-    val_dataset_simple_raw_references = 'tune.8turkers.tok.turk.'
+    val_dataset_simple_raw_file = 'tune.8turkers.tok.simp.raw'
+    val_dataset_simple_raw_references = 'tune.8turkers.tok.turk.raw.'
     val_dataset_complex_raw = get_path(
-        '../text_simplification_data/val/tune.8turkers.tok.norm')
+        '../text_simplification_data/val/tune.8turkers.tok.norm.raw')
     val_dataset_complex_rawlines_file = get_path(
         '../text_simplification_data/val/tune.8turkers.tok.norm')
     val_dataset_simple_rawlines_file_references = 'tune.8turkers.tok.turk.'
@@ -246,14 +246,14 @@ class SubTestWikiEightRefConfig(SubTest):
     resultdor = get_path('../' + output_folder + '/result/eightref_test')
 
     val_dataset_simple_folder = get_path('../text_simplification_data/test/')
-    val_dataset_simple_file = 'test.8turkers.tok.simp'
-    val_dataset_simple_references = 'test.8turkers.tok.turk.'
-    val_dataset_complex = get_path('../text_simplification_data/test/test.8turkers.tok.norm')
-    val_mapper = get_path('../text_simplification_data/test/test.8turkers.tok.map.dress')
-    val_dataset_simple_raw_file = 'test.8turkers.tok.simp'
-    val_dataset_simple_raw_references = 'test.8turkers.tok.turk.'
+    val_dataset_simple_file = 'test.8turkers.tok.simp.processed'
+    val_dataset_simple_references = 'test.8turkers.tok.turk.processed.'
+    val_dataset_complex = get_path('../text_simplification_data/test/test.8turkers.tok.norm.processed')
+    val_mapper = get_path('../text_simplification_data/test/test.8turkers.tok.map')
+    val_dataset_simple_raw_file = 'test.8turkers.tok.simp.raw'
+    val_dataset_simple_raw_references = 'test.8turkers.tok.turk.raw.'
     val_dataset_complex_raw = get_path(
-        '../text_simplification_data/test/test.8turkers.tok.norm')
+        '../text_simplification_data/test/test.8turkers.tok.norm.raw')
     val_dataset_complex_rawlines_file = get_path(
         '../text_simplification_data/test/test.8turkers.tok.norm')
     val_dataset_simple_rawlines_file_references = 'test.8turkers.tok.turk.'
@@ -273,9 +273,9 @@ class SubValWikiDress(SubTest):
 
     val_dataset_simple_folder = get_path(
         '../text_simplification_data/train/dress/wikismall/')
-    val_dataset_simple_file = 'PWKP_108016.tag.80.aner.ori.valid.dst'
+    val_dataset_simple_file = 'PWKP_108016.tag.80.aner.ori.valid.dst.processed'
     val_dataset_complex = get_path(
-        '../text_simplification_data/train/dress/wikismall/PWKP_108016.tag.80.aner.ori.valid.src')
+        '../text_simplification_data/train/dress/wikismall/PWKP_108016.tag.80.aner.ori.valid.src.processed')
     val_mapper = get_path(
         '../text_simplification_data/train/dress/wikismall/PWKP_108016.tag.80.aner.ori.valid.map')
     val_dataset_simple_raw_file = 'PWKP_108016.tag.80.aner.ori.valid.dst'
@@ -292,9 +292,9 @@ class SubTestWikiDress(SubTest):
 
     val_dataset_simple_folder = get_path(
         '../text_simplification_data/train/dress/wikismall/')
-    val_dataset_simple_file = 'PWKP_108016.tag.80.aner.ori.test.dst'
+    val_dataset_simple_file = 'PWKP_108016.tag.80.aner.ori.test.dst.processed'
     val_dataset_complex = get_path(
-        '../text_simplification_data/train/dress/wikismall/PWKP_108016.tag.80.aner.ori.test.src')
+        '../text_simplification_data/train/dress/wikismall/PWKP_108016.tag.80.aner.ori.test.src.processed')
     val_mapper = get_path(
         '../text_simplification_data/train/dress/wikismall/PWKP_108016.tag.80.aner.ori.test.map')
     val_dataset_simple_raw_file = 'PWKP_108016.tag.80.aner.ori.test.dst'

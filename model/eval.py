@@ -102,6 +102,7 @@ def eval(model_config=None, ckpt=None):
     print(list_config(model_config))
 
     val_data = ValData(model_config)
+    graph = None
     if model_config.framework == 'transformer':
         graph = TransformerGraph(val_data, False, model_config)
     elif model_config.framework == 'seq2seq':
