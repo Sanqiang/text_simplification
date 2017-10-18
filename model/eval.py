@@ -51,7 +51,7 @@ def get_graph_val_data(sentence_simple_input, sentence_complex_input,
             if not is_end:
                 effective_batch_size -= 1
             is_end = True
-            sentence_simple, sentence_complex, ref = [], [], []
+            sentence_simple, sentence_complex = [], []
 
         # PAD zeros
         if len(sentence_simple) < model_config.max_simple_sentence:
@@ -71,7 +71,7 @@ def get_graph_val_data(sentence_simple_input, sentence_complex_input,
         tmp_mapper.append(mapper)
         tmp_sentence_complex_raw.append(sentence_complex_raw)
         tmp_sentence_complex_raw_lines.append(sentence_complex_raw_lines)
-        if ref:
+        if model_config.num_refs:
             for i_ref in range(model_config.num_refs):
                 tmp_ref_raw_lines[i_ref].append(ref_raw_lines[i_ref])
 
