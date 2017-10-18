@@ -33,13 +33,18 @@ class Graph:
         with tf.variable_scope('variables'):
             self.sentence_simple_input_placeholder = []
             for step in range(self.model_config.max_simple_sentence):
-                self.sentence_simple_input_placeholder.append(tf.zeros(self.model_config.batch_size,
-                                                                       tf.int32, name='simple_input'))
+                self.sentence_simple_input_placeholder.append(
+                    tf.zeros(self.model_config.batch_size, tf.int32, name='simple_input'))
+
+            self.sentence_simple_input_prior_placeholder = []
+            for step in range(self.model_config.max_simple_sentence):
+                self.sentence_simple_input_prior_placeholder.append(
+                    tf.ones(self.model_config.batch_size, tf.float32, name='simple_input_prior'))
 
             self.sentence_complex_input_placeholder = []
             for step in range(self.model_config.max_complex_sentence):
-                self.sentence_complex_input_placeholder.append(tf.zeros(self.model_config.batch_size,
-                                                                        tf.int32, name='complex_input'))
+                self.sentence_complex_input_placeholder.append(
+                    tf.zeros(self.model_config.batch_size, tf.int32, name='complex_input'))
 
             self.embedding = Embedding(self.data.vocab_complex, self.data.vocab_simple, self.model_config)
             self.emb_complex = self.embedding.get_complex_embedding()
@@ -68,7 +73,6 @@ class Graph:
                     [tf.argmax(logit, axis=1) for logit in output.decoder_logit_list],
                     axis=1)
 
-
             if not self.is_train and self.model_config.replace_unk_by_emb:
                 # Get output list matrix for replacement by embedding
                 self.encoder_embs = tf.stack(
@@ -89,8 +93,36 @@ class Graph:
                     [tf.to_float(tf.not_equal(d, self.data.vocab_simple.encode(constant.SYMBOL_PAD)))
                      for d in output.gt_target_list], axis=1)
 
+                prior_weight = tf.stack(self.sentence_simple_input_prior_placeholder, axis=1)
+                decode_word_weight = tf.multiply(prior_weight, decode_word_weight)
+
+                metric = Metric(self.model_config, self.data)
+
+                # Get gt_target (either original one or from rl process)
+                if self.is_train and (
+                                self.model_config.rl_bleu or
+                                self.model_config.rl_sari or
+                            self.model_config.rl_fkgl):
+                    # Use RL
+                    decoder_word_list = [tf.argmax(logit, axis=-1)
+                                         for logit in output.decoder_logit_list]
+                    gt_target, weight_rl = tf.py_func(metric.rl_process,
+                                                           [
+                                                               tf.stack(self.sentence_complex_input_placeholder, axis=1),
+                                                               tf.stack(self.sentence_simple_input_placeholder, axis=1),
+                                                               tf.stack(decoder_word_list, axis=1)
+                                                            ],
+                                                           [tf.int32, tf.float32],
+                                                           stateful=False,
+                                                           name='rl_process')
+                    gt_target.set_shape([self.model_config.batch_size, self.model_config.max_simple_sentence])
+                    weight_rl.set_shape([self.model_config.batch_size, self.model_config.max_simple_sentence])
+                    decode_word_weight = weight_rl
+
+                else:
+                    gt_target = tf.stack(output.gt_target_list, axis=1)
+
                 if self.model_config.use_quality_model:
-                    metric = Metric(self.model_config, self.data)
                     sentence_simple_input_mat = tf.stack(self.sentence_simple_input_placeholder, axis=1)
                     sentence_complex_input_mat = tf.stack(self.sentence_complex_input_placeholder, axis=1)
                     weight_quality = tf.py_func(metric.length_ratio,
@@ -124,7 +156,7 @@ class Graph:
 
 
                 self.loss = sequence_loss(logits=tf.stack(output.decoder_logit_list, axis=1),
-                                          targets=tf.stack(output.gt_target_list, axis=1),
+                                          targets=gt_target,
                                           weights=decode_word_weight,
                                           softmax_loss_function=loss_fn)
 

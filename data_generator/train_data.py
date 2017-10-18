@@ -5,6 +5,7 @@ import numpy as np
 from data_generator.vocab import Vocab
 from nltk import word_tokenize
 from util import constant
+from model.ppdb import PPDB
 
 
 class TrainData:
@@ -26,18 +27,36 @@ class TrainData:
             self.vocab_complex = Vocab(model_config, vocab_all_path)
 
         # Populate basic complex simple pairs
-        self.data_simple = self.populate_data(data_simple_path, self.vocab_simple)
-        self.data_complex = self.populate_data(data_complex_path, self.vocab_complex)
+        self.data_simple, self.data_simple_raw = self.populate_data(
+            data_simple_path, self.vocab_simple, need_raw=True)
+        self.data_complex, _ = self.populate_data(data_complex_path, self.vocab_complex)
+
         self.size = len(self.data_simple)
         assert len(self.data_complex) == self.size
         assert len(self.data_simple) == self.size
+        assert len(self.data_simple_raw) == self.size
+
+        if self.model_config.add_ppdb_training:
+            self.ppdb = PPDB(model_config)
+            ppdb_path = self.model_config.train_dataset_simple_ppdb
+            self.ppdb_rules = self.populate_ppdb(ppdb_path)
+            assert len(self.ppdb_rules) == self.size
+
         print('Use Train Dataset: \n Simple\t %s. \n Complex\t %s. \n Size\t %d'
               % (data_simple_path, data_complex_path, self.size))
         self.init_pretrained_embedding()
 
-    def populate_data(self, data_path, vocab):
+    def populate_ppdb(self, data_path):
+        rules = []
+        for line in open(data_path, encoding='utf-8'):
+            rule = [r for r in line.strip().split('\t') if len(r) > 0]
+            rules.append(rule)
+        return rules
+
+    def populate_data(self, data_path, vocab, need_raw=False):
         # Populate data into memory
         data = []
+        data_raw = []
         for line in open(data_path, encoding='utf-8'):
             # line = line.split('\t')[2]
             if self.model_config.tokenizer == 'split':
@@ -49,24 +68,15 @@ class TrainData:
 
             words = [Vocab.process_word(word, self.model_config)
                      for word in words]
+            if need_raw:
+                words_raw = [constant.SYMBOL_START] + words + [constant.SYMBOL_END]
+                data_raw.append(words_raw)
             words = [vocab.encode(word) for word in words]
             words = ([self.vocab_simple.encode(constant.SYMBOL_START)] + words +
                      [self.vocab_simple.encode(constant.SYMBOL_END)])
 
             data.append(words)
-        return data
-
-    def get_data_sample(self):
-        i = rd.sample(range(self.size), 1)[0]
-        return cp.deepcopy(self.data_simple[i]), cp.deepcopy(self.data_complex[i])
-
-    def get_data_iter(self):
-        i = 0
-        while True:
-            yield cp.deepcopy(self.data_simple[i]), cp.deepcopy(self.data_complex[i])
-            i += 1
-            if i == len(self.data_simple):
-                yield None, None
+        return data, data_raw
 
     def init_pretrained_embedding(self):
         if self.model_config.pretrained_embedding is None:
@@ -127,3 +137,13 @@ class TrainData:
                 'other %s words initialized randomly. Save to %s.' %
                 (pretrained_cnt, random_cnt, self.model_config.pretrained_embedding_simple))
             np.save(self.model_config.pretrained_embedding_simple, self.pretrained_emb_simple)
+
+    def get_data_sample(self):
+        i = rd.sample(range(self.size), 1)[0]
+        if self.model_config.add_ppdb_training:
+            data_simple, data_weight = self.ppdb.simplify(
+                self.data_simple_raw[i], self.ppdb_rules[i], self.vocab_simple)
+            if data_simple:
+                return cp.deepcopy(data_simple), cp.deepcopy(self.data_complex[i]), data_weight
+
+        return cp.deepcopy(self.data_simple[i]), cp.deepcopy(self.data_complex[i]), None

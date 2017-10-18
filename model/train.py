@@ -22,16 +22,18 @@ from util.arguments import get_args
 args = get_args()
 
 
-def get_graph_train_data(data,
-                   sentence_simple_input,
-                   sentence_complex_input,
-                   model_config):
+def get_graph_train_data(
+        data,
+        sentence_simple_input,
+        sentence_complex_input,
+        sentence_simple_input_weight,
+        model_config):
     input_feed = {}
     voc = Vocab(model_config)
 
-    tmp_sentence_simple, tmp_sentence_complex = [], []
+    tmp_sentence_simple, tmp_sentence_complex, tmp_sentence_simple_weight = [], [], []
     for i in range(model_config.batch_size):
-        sentence_simple, sentence_complex = data.get_data_sample()
+        sentence_simple, sentence_complex, sentence_simple_weight = data.get_data_sample()
 
         # PAD zeros
         if len(sentence_simple) < model_config.max_simple_sentence:
@@ -49,6 +51,14 @@ def get_graph_train_data(data,
         tmp_sentence_simple.append(sentence_simple)
         tmp_sentence_complex.append(sentence_complex)
 
+        if sentence_simple_weight is not None:
+            if len(sentence_simple_weight) < model_config.max_simple_sentence:
+                num_pad = model_config.max_simple_sentence - len(sentence_simple_weight)
+                sentence_simple_weight.extend(num_pad * [voc.encode(constant.SYMBOL_PAD)])
+            else:
+                sentence_simple_weight = sentence_simple[:model_config.max_simple_sentence]
+            tmp_sentence_simple_weight.append(sentence_simple_weight)
+
     for step in range(model_config.max_simple_sentence):
         input_feed[sentence_simple_input[step].name] = [tmp_sentence_simple[batch_idx][step]
                                                         for batch_idx in range(model_config.batch_size)]
@@ -56,6 +66,10 @@ def get_graph_train_data(data,
         input_feed[sentence_complex_input[step].name] = [tmp_sentence_complex[batch_idx][step]
                                                          for batch_idx in range(model_config.batch_size)]
 
+    if tmp_sentence_simple_weight:
+        for step in range(model_config.max_simple_sentence):
+            input_feed[sentence_simple_input_weight[step].name] = [tmp_sentence_simple_weight[batch_idx][step]
+                                                                   for batch_idx in range(model_config.batch_size)]
     return input_feed, tmp_sentence_simple, tmp_sentence_complex
 
 
@@ -129,6 +143,7 @@ def train(model_config=None):
             data,
             graph.sentence_simple_input_placeholder,
             graph.sentence_complex_input_placeholder,
+            graph.sentence_simple_input_prior_placeholder,
             model_config)
 
         fetches = [graph.train_op, graph.loss, graph.global_step, graph.decoder_target_list,
@@ -151,16 +166,6 @@ def train(model_config=None):
                 elif args.mode == 'dress' or args.mode == 'all':
                     # eval(SubValWikiEightRefConfig(), ckpt)
                     eval(SubTestWikiEightRefConfig(), ckpt)
-
-        # if step % model_config.model_save_freq == 0:
-        #     graph.saver.save(sess, model_config.outdir + '/model.ckpt-%d' % step)
-        #     f = open(model_config.outdir + '/output_model.ckpt-%d' % step, 'w', encoding='utf-8')
-        #     result = decode(result, data.vocab_simple)
-        #     sentence_simple = decode(sentence_simple, data.vocab_simple)
-        #     sentence_complex = decode(sentence_complex, data.vocab_complex)
-        #     r = decode_to_output(result, sentence_simple, sentence_complex, model_config.batch_size)
-        #     f.write(r)
-        #     f.flush()
 
 
 if __name__ == '__main__':
