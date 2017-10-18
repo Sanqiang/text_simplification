@@ -53,6 +53,10 @@ def get_graph_val_data(sentence_simple_input, sentence_complex_input,
             is_end = True
             sentence_simple, sentence_complex = [], []
 
+        if sentence_simple:
+            for i_ref in range(model_config.num_refs):
+                tmp_ref_raw_lines[i_ref].append(ref_raw_lines[i_ref])
+
         # PAD zeros
         if len(sentence_simple) < model_config.max_simple_sentence:
             num_pad = model_config.max_simple_sentence - len(sentence_simple)
@@ -71,9 +75,6 @@ def get_graph_val_data(sentence_simple_input, sentence_complex_input,
         tmp_mapper.append(mapper)
         tmp_sentence_complex_raw.append(sentence_complex_raw)
         tmp_sentence_complex_raw_lines.append(sentence_complex_raw_lines)
-        if model_config.num_refs:
-            for i_ref in range(model_config.num_refs):
-                tmp_ref_raw_lines[i_ref].append(ref_raw_lines[i_ref])
 
     for step in range(model_config.max_simple_sentence):
         input_feed[sentence_simple_input[step].name] = [tmp_sentence_simple[batch_idx][step]
@@ -274,7 +275,7 @@ def eval(model_config=None, ckpt=None):
     bleu_oi_raw = mteval.get_bleu_from_rawresult(step, targets_raw)
     bleu_or_raw = bleu_oi_raw
     if model_config.num_refs > 0:
-        path_ref = model_config.val_dataset_simple_folder + model_config.val_dataset_simple_raw_references
+        path_ref = model_config.val_dataset_simple_folder + model_config.val_dataset_simple_rawlines_file_references
         bleu_or_raw = mteval.get_bleu_from_decoderesult_multirefs(step, path_ref, targets_raw,
                                                                   lowercase=model_config.lower_case)
     if model_config.num_refs > 0:

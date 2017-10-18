@@ -19,8 +19,8 @@ class DefaultConfig():
     max_complex_sentence = 20
     max_simple_sentence = 15
     min_simple_sentence = 5 #Used for Beam Search
-    model_save_freq = 1000
-    model_eval_freq = 1000
+    model_save_freq = 100
+    model_eval_freq = 100
     model_print_freq = 1
     save_model_secs = 60
 
