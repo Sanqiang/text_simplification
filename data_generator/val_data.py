@@ -100,4 +100,4 @@ class ValData:
 
             i += 1
             if i == len(self.data_simple):
-                yield None, None, None, None, None, None, None, None
+                yield None, None, None, None, None, None
