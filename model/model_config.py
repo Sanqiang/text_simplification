@@ -188,18 +188,20 @@ class WikiDressLargeDefault(DefaultConfig):
     val_dataset_simple_rawlines_file = 'tune.8turkers.tok.simp'
     num_refs = 8
 
-    dimension = 300
+    dimension = args.dimension
     max_complex_sentence = 85
     max_simple_sentence = 85
     min_count = args.min_count
     batch_size = 32
 
     tokenizer = 'split'
-    pretrained_embedding = get_path('../text_simplification_data/glove/glove.840B.300d.txt')
-    pretrained_embedding_simple = get_path(
-        '../text_simplification_data/train/dress/wikilarge/wiki.full.aner.train.dst.vocab.pretrained')
-    pretrained_embedding_complex = get_path(
-        '../text_simplification_data/train/dress/wikilarge/wiki.full.aner.train.src.vocab.pretrained')
+    if dimension == 300:
+        # We only have pretrained embedding for 300 dimension
+        pretrained_embedding = get_path('../text_simplification_data/glove/glove.840B.300d.txt')
+        pretrained_embedding_simple = get_path(
+            '../text_simplification_data/train/dress/wikilarge/wiki.full.aner.train.dst.vocab.pretrained')
+        pretrained_embedding_complex = get_path(
+            '../text_simplification_data/train/dress/wikilarge/wiki.full.aner.train.src.vocab.pretrained')
 
 
 class WikiDressLargeTrainConfig(WikiDressLargeDefault):

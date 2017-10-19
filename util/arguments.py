@@ -32,6 +32,8 @@ def get_args():
                         help='Whether add ppdb rules into training data set?')
 
     # For Graph
+    parser.add_argument('-dim', '--dimension', default=300, type=int,
+                        help='Size of dimension?')
     parser.add_argument('-emb', '--tied_embedding', default='none',
                         help='Version of tied embedding?')
     parser.add_argument('-loss', '--loss_fn', default='sampled_softmax',
