@@ -2,7 +2,7 @@
 #SBATCH --cluster=gpu
 #SBATCH --gres=gpu:1
 #SBATCH --partition=gtx1080
-#SBATCH --job-name=tdr——h256
+#SBATCH --job-name=tdr_h256
 #SBATCH --output=tdr_h256.out
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
