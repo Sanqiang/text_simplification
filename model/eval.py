@@ -25,6 +25,7 @@ import math
 import numpy as np
 import time
 from util.arguments import get_args
+from model.model_config import get_path
 
 
 args = get_args()
@@ -380,10 +381,12 @@ if __name__ == '__main__':
                 # eval(SubValWikiEightRefConfigBeam4(), ckpt)
                 eval(SubTestWikiEightRefConfigBeam4(), ckpt)
 
-                if model_config.penalty_alpha:
+                if model_config.exp_penalty_alpha:
                     config = SubTestWikiEightRefConfig()
                     for i in range(10):
                         alpha = i/10
                         config.penalty_alpha = alpha
+                        config.output_folder = args.output_folder
+                        config.resultdor = get_path('../' + config.output_folder + '/result/eightref_test_alpha%s' % alpha)
                         eval(config, ckpt)
 
