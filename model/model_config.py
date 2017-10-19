@@ -86,6 +86,7 @@ class DefaultConfig():
 
     train_dataset_simple = get_path('data/train_dummy_simple_dataset')
     train_dataset_simple_ppdb = get_path('data/train_dummy_simple_dataset.rules')
+    train_dataset_simple_syntax = get_path('data/train_dummy_simple_dataset.syntax')
     train_dataset_complex = get_path('data/train_dummy_complex_dataset')
     # train_dataset_complex_ppdb = get_path('data/train_dummy_complex_dataset.rules')
     vocab_simple = get_path('data/dummy_simple_vocab')
@@ -150,6 +151,8 @@ class WikiDressLargeDefault(DefaultConfig):
 
     train_dataset_simple = get_path('../text_simplification_data/train/dress/wikilarge/wiki.full.aner.train.dst')
     train_dataset_simple_ppdb = get_path('../text_simplification_data/train/dress/wikilarge/wiki.full.aner.train.dst.rules')
+    train_dataset_simple_syntax = get_path(
+        '../text_simplification_data/train/dress/wikilarge/wiki.full.aner.train.dst.syntax')
     train_dataset_complex = get_path('../text_simplification_data/train/dress/wikilarge/wiki.full.aner.train.src')
     # train_dataset_complex_ppdb = get_path('../text_simplification_data/train/dress/wikilarge/wiki.full.aner.train.src.rules')
     # add .dress extention will be same vocab as dress
@@ -193,6 +196,10 @@ class WikiDressLargeDefault(DefaultConfig):
         '../text_simplification_data/train/dress/wikilarge/wiki.full.aner.train.dst.vocab.pretrained')
     pretrained_embedding_complex = get_path(
         '../text_simplification_data/train/dress/wikilarge/wiki.full.aner.train.src.vocab.pretrained')
+
+    # For Exp
+    exp_penalty_alpha = args.exp_penalty_alpha
+    penalty_alpha = args.penalty_alpha
 
 
 class WikiDressLargeTrainConfig(WikiDressLargeDefault):

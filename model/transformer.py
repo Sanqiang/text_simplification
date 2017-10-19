@@ -58,6 +58,9 @@ class TransformerGraph(Graph):
 
     def decode_step(self, decode_input_list, encoder_outputs, encoder_attn_bias):
         batch_go = [tf.zeros([self.model_config.batch_size, self.model_config.dimension])]
+        # batch_go = self.embedding_fn(
+        #     tf.constant(constant.SYMBOL_GO, dtype=tf.int32, shape=self.model_config.batch_size),
+        #     self.data.vocab_simple)
         target_length = len(decode_input_list) + 1
         decoder_emb_inputs = tf.stack(batch_go + decode_input_list, axis=1)
         decoder_output = self.decode_inputs_to_outputs(
@@ -91,7 +94,7 @@ class TransformerGraph(Graph):
                                                        self.model_config.beam_search_size,
                                                        self.model_config.max_simple_sentence,
                                                        len(self.data.vocab_simple.i2w),
-                                                       0.6,
+                                                       self.model_config.penalty_alpha,
                                                        self.data.vocab_simple.encode(constant.SYMBOL_END))
         top_beam_ids = beam_ids[:, 0, 1:]
         top_beam_ids = tf.pad(top_beam_ids,

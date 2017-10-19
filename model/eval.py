@@ -374,9 +374,16 @@ if __name__ == '__main__':
             ckpt = get_ckpt(model_config.modeldir, model_config.logdir)
 
             if ckpt:
-                eval(SubValWikiEightRefConfig(), ckpt)
+                # eval(SubValWikiEightRefConfig(), ckpt)
                 eval(SubTestWikiEightRefConfig(), ckpt)
 
-                eval(SubValWikiEightRefConfigBeam4(), ckpt)
+                # eval(SubValWikiEightRefConfigBeam4(), ckpt)
                 eval(SubTestWikiEightRefConfigBeam4(), ckpt)
+
+                if model_config.penalty_alpha:
+                    config = SubTestWikiEightRefConfig()
+                    for i in range(10):
+                        alpha = i/10
+                        config.penalty_alpha = alpha
+                        eval(config, ckpt)
 

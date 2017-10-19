@@ -11,6 +11,8 @@ from util.arguments import get_args
 import random as rd
 from numpy.random import choice
 from nltk.stem import WordNetLemmatizer
+import re
+import time
 
 
 args = get_args()
@@ -31,20 +33,15 @@ class PPDB:
         for line in open(self.model_config.path_ppdb_refine, encoding='utf-8'):
             items = line.split('\t')
             weight = float(items[1])
+            pos = items[2]
             ori_words = items[3].strip()
             tar_words = items[4].strip()
-            if ori_words not in self.rules:
-                self.rules[ori_words] = []
-            self.rules[ori_words].append([tar_words, weight])
-        # Normalize
-        for ori_words in self.rules:
-            tar_words_pairs = [[p[0], 0.0001 + p[1]]
-                               for p in self.rules[ori_words]]
-            tar_words_norm = sum([p[1] for p in tar_words_pairs])
-            tar_words_pairs = [[p[0], p[1] / tar_words_norm]
-                               for p in tar_words_pairs]
-            tar_words_pairs = sorted(tar_words_pairs, key=lambda x:-x[1])
-            self.rules[ori_words] = tar_words_pairs
+            if re.match('[a-zA-Z]+', ori_words) or re.match('[a-zA-Z]+', tar_words):
+                if ori_words not in self.rules:
+                    self.rules[ori_words] = {}
+                if pos not in self.rules[ori_words]:
+                    self.rules[ori_words][pos] = []
+                self.rules[ori_words][pos].append([tar_words, weight])
         # Populate rules_index
         for ori_words in self.rules:
             ori_words_list = ori_words.split()
@@ -52,21 +49,71 @@ class PPDB:
                 word_index = ori_words_list[0]
                 self.rules_index[word_index].add(ori_words)
 
+    def generate_synatx(self, syntax):
+        outout_list = []
+        for tree in syntax:
+            if tree.label() == 'ROOT':
+                tree = tree[0]
+            try:
+                self.recursive_gen(tree, outout_list)
+            except Exception:
+                print(syntax)
+        outout_list = '\t'.join(outout_list)
+        return outout_list
+
+    def recursive_gen(self, tree, outout_list):
+        if type(tree[0]) == str and len(tree) == 1:
+            word = tree[0]
+            if '@' not in word:
+                label = tree.label()
+                outout_list.append('%s=>%s' % (label, word))
+            return word
+
+        output = []
+        for node in tree:
+            node_str = self.recursive_gen(node, outout_list)
+            output.append(node_str)
+        words = ' '.join(output)
+        if '@' not in words:
+            label = tree.label()
+            outout_list.append('%s=>%s' % (label, words))
+        return words
+
     def process_training(self, line_sep='\n'):
+
+        stanford_parser = StanfordParser(
+            path_to_models_jar='/Users/zhaosanqiang916/git/stanford-parser-full-2017-06-09/stanford-parser-3.8.0-models.jar',
+            path_to_jar = '/Users/zhaosanqiang916/git/stanford-parser-full-2017-06-09/stanford-parser.jar'
+        )
         output = ''
         line_idx = 0
-        for line in open(self.model_config.train_dataset_simple, encoding='utf-8'):
+        output_syntax = ''
+        lines = open(self.model_config.train_dataset_simple, encoding='utf-8').readlines()
+        print('Start Pasrsing!')
+        pre_time = time.time()
+        for i, line in enumerate(lines):
+            syntax = list(stanford_parser.parse(line.split()))
+            syntax = self.generate_synatx(syntax)
             line = line.lower()
             rules = ppdb.process_sent(line)
             rules = '\t'.join(rules)
             output = line_sep.join([output, rules])
+            output_syntax = line_sep.join([output_syntax, syntax])
             line_idx += 1
-            if line_idx % 1000 == 0:
-                print('processed %s.' % line_idx)
+            if line_idx % 100 == 0:
+                cur_time = time.time()
+                print('processed %s. in %s' % (line_idx, cur_time - pre_time))
+                pre_time = cur_time
+
         output = output[len(line_sep):]
+        output_syntax = output_syntax[len(line_sep):]
 
         f = open(self.model_config.train_dataset_simple_ppdb, 'w', encoding='utf-8')
         f.write(output)
+        f.close()
+
+        f = open(self.model_config.train_dataset_simple_syntax, 'w', encoding='utf-8')
+        f.write(output_syntax)
         f.close()
 
     def process_sent(self, sent):
@@ -165,7 +212,7 @@ class PPDB:
         rule_tars = [p[0] for p in rule_tars_pairs]
         rule_tars_p = [p[1] for p in rule_tars_pairs]
         if not rule_tars:
-            print('emoty rule_tars')
+            print('empty rule_tars')
         target = choice(rule_tars, p=rule_tars_p, size=1)[0]
         target_p = rule_tars_p[rule_tars.index(target)]
 
@@ -179,7 +226,7 @@ class PPDB:
             wid = vocab.encode(word)
             nsent_idx.append(wid)
             if word in target_list:
-                nsent_weight.append(1.0 + target_p)
+                nsent_weight.append(target_p)
             else:
                 nsent_weight.append(1.0)
 

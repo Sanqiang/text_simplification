@@ -72,6 +72,11 @@ def get_args():
     parser.add_argument('-nh', '--num_heads', default=5, type=int,
                         help='Number of multi-attention heads?')
 
+    # For Experiment
+    parser.add_argument('-exp_penalty_alpha', '--exp_penalty_alpha', default=False,
+                        help='Whether to do penalty alpha experiment')
+
+
 
 
     args = parser.parse_args()
