@@ -2,8 +2,8 @@
 #SBATCH --cluster=gpu
 #SBATCH --gres=gpu:1
 #SBATCH --partition=gtx1080
-#SBATCH --job-name=tdr_lc
-#SBATCH --output=tdr_lc.out
+#SBATCH --job-name=tdr_lcrl
+#SBATCH --output=tdr_lcrl.out
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
 #SBATCH --cpus-per-task=1
@@ -12,4 +12,4 @@
 module restore
 
 # Run the job
-srun python ../model/train.py -fw transformer -out dr_lc -lc True -layer_drop 0.2 -op adagrad -lr 0.1 --mode dress
+srun python ../model/train.py -fw transformer -out dr_lcrl -lc True -layer_drop 0.2 -op adagrad -lr 0.1 --mode dress  --rl_prelenth 3 -rl_bleu 1.0 -rl_sari 0.5
