@@ -125,6 +125,10 @@ class DefaultConfig():
     path_ppdb_refine = get_path(
         '../text_simplification_data/ppdb/ppdb_rules2.simp.rules')
 
+    # For Exp
+    exp_penalty_alpha = args.exp_penalty_alpha
+    penalty_alpha = args.penalty_alpha
+
 
 class DefaultTrainConfig(DefaultConfig):
     beam_search_size = 0
@@ -196,10 +200,6 @@ class WikiDressLargeDefault(DefaultConfig):
         '../text_simplification_data/train/dress/wikilarge/wiki.full.aner.train.dst.vocab.pretrained')
     pretrained_embedding_complex = get_path(
         '../text_simplification_data/train/dress/wikilarge/wiki.full.aner.train.src.vocab.pretrained')
-
-    # For Exp
-    exp_penalty_alpha = args.exp_penalty_alpha
-    penalty_alpha = args.penalty_alpha
 
 
 class WikiDressLargeTrainConfig(WikiDressLargeDefault):
