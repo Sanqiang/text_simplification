@@ -156,7 +156,7 @@ class WikiDressLargeDefault(DefaultConfig):
     train_dataset_simple = get_path('../text_simplification_data/train/dress/wikilarge/wiki.full.aner.train.dst')
     train_dataset_simple_ppdb = get_path('../text_simplification_data/train/dress/wikilarge/wiki.full.aner.train.dst.rules')
     train_dataset_simple_syntax = get_path(
-        '../text_simplification_data/train/dress/wikilarge/wiki.full.aner.train.dst.syntax')
+        '../text_simplification_data/train/dress/wikilarge/wiki.full.aner.train.dst.jsyntax')
     train_dataset_complex = get_path('../text_simplification_data/train/dress/wikilarge/wiki.full.aner.train.src')
     # train_dataset_complex_ppdb = get_path('../text_simplification_data/train/dress/wikilarge/wiki.full.aner.train.src.rules')
     # add .dress extention will be same vocab as dress

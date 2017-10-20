@@ -49,7 +49,7 @@ class TrainData:
     def populate_ppdb(self, data_path):
         rules = []
         for line in open(data_path, encoding='utf-8'):
-            rule = [r for r in line.strip().split('\t') if len(r) > 0]
+            rule = [r.split('=>') for r in line.strip().split('\t') if len(r) > 0]
             rules.append(rule)
         return rules
 

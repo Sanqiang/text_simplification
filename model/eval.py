@@ -118,7 +118,6 @@ def eval(model_config=None, ckpt=None):
     sentence_simples = []
     sentence_complexs = []
     sentence_complexs_raw = []
-    refs = [[] for _ in range(model_config.num_refs)]
 
     it = val_data.get_data_iter()
 

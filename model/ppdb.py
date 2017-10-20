@@ -2,11 +2,8 @@ from model.model_config import get_path, WikiDressLargeDefault
 from data_generator.vocab import Vocab
 from collections import defaultdict
 from model.model_config import DefaultTrainConfig, WikiDressLargeTrainConfig
+from util import constant
 
-import numpy as np
-from queue import Queue
-from nltk.parse.stanford import StanfordParser
-from nltk.tree import Tree
 from util.arguments import get_args
 import random as rd
 from numpy.random import choice
@@ -23,129 +20,111 @@ class PPDB:
         self.model_config = model_config
         self.wnl = WordNetLemmatizer()
         # rules is in structure
-        # ori_words => list of tar words along with its weight
+        # ori_words => tag => list of [tar words, its weight]
         self.rules = defaultdict(dict)
-        # rules_index is for indexing rules
-        self.rules_index = defaultdict(set)
         self.populate_ppdb()
 
     def populate_ppdb(self):
         for line in open(self.model_config.path_ppdb_refine, encoding='utf-8'):
             items = line.split('\t')
             weight = float(items[1])
-            pos = items[2]
+            tag = items[2]
             ori_words = items[3].strip()
             tar_words = items[4].strip()
             if re.match('[a-zA-Z]+', ori_words) or re.match('[a-zA-Z]+', tar_words):
                 if ori_words not in self.rules:
                     self.rules[ori_words] = {}
-                if pos not in self.rules[ori_words]:
-                    self.rules[ori_words][pos] = []
-                self.rules[ori_words][pos].append([tar_words, weight])
-        # Populate rules_index
-        for ori_words in self.rules:
-            ori_words_list = ori_words.split()
-            if len(ori_words_list) > 0:
-                word_index = ori_words_list[0]
-                self.rules_index[word_index].add(ori_words)
+                if tag not in self.rules[ori_words]:
+                    if tag[0] == '[':
+                        tag = tag[1:]
+                    if tag[-1] == ']':
+                        tag = tag[:-1]
+                    self.rules[ori_words][tag] = []
+                self.rules[ori_words][tag].append([tar_words, weight])
+        # # Normalize the weight
+        # for ori_words in self.rules:
+        #     for tag in self.rules[ori_words]:
+        #         norm = sum([p[1] for p in self.rules[ori_words][tag]]) + 1. * 1e7
+        #         self.rules[ori_words][tag] = [[p[0], p[1]/norm] for p in self.rules[ori_words][tag]]
 
-    def generate_synatx(self, syntax):
-        outout_list = []
-        for tree in syntax:
-            if tree.label() == 'ROOT':
-                tree = tree[0]
-            try:
-                self.recursive_gen(tree, outout_list)
-            except Exception:
-                print(syntax)
-        outout_list = '\t'.join(outout_list)
-        return outout_list
 
-    def recursive_gen(self, tree, outout_list):
-        if type(tree[0]) == str and len(tree) == 1:
-            word = tree[0]
-            if '@' not in word:
-                label = tree.label()
-                outout_list.append('%s=>%s' % (label, word))
-            return word
-
-        output = []
-        for node in tree:
-            node_str = self.recursive_gen(node, outout_list)
-            output.append(node_str)
-        words = ' '.join(output)
-        if '@' not in words:
-            label = tree.label()
-            outout_list.append('%s=>%s' % (label, words))
-        return words
+    """generate_synatx and recursive_gen are through NLTK called Stanford NLP tools
+       for faster processing, we use java. script/SyntaxParser.java"""
+    # def generate_synatx(self, syntax):
+    #     outout_list = []
+    #     for tree in syntax:
+    #         if tree.label() == 'ROOT':
+    #             tree = tree[0]
+    #         try:
+    #             self.recursive_gen(tree, outout_list)
+    #         except Exception:
+    #             print(syntax)
+    #     outout_list = '\t'.join(outout_list)
+    #     return outout_list
+    #
+    # def recursive_gen(self, tree, outout_list):
+    #     if type(tree[0]) == str and len(tree) == 1:
+    #         word = tree[0]
+    #         if '@' not in word:
+    #             label = tree.label()
+    #             outout_list.append('%s=>%s' % (label, word))
+    #         return word
+    #
+    #     output = []
+    #     for node in tree:
+    #         node_str = self.recursive_gen(node, outout_list)
+    #         output.append(node_str)
+    #     words = ' '.join(output)
+    #     if '@' not in words:
+    #         label = tree.label()
+    #         outout_list.append('%s=>%s' % (label, words))
+    #     return words
 
     def process_training(self, line_sep='\n'):
-
-        stanford_parser = StanfordParser(
-            path_to_models_jar='/Users/zhaosanqiang916/git/stanford-parser-full-2017-06-09/stanford-parser-3.8.0-models.jar',
-            path_to_jar = '/Users/zhaosanqiang916/git/stanford-parser-full-2017-06-09/stanford-parser.jar'
-        )
         output = ''
         line_idx = 0
-        output_syntax = ''
-        lines = open(self.model_config.train_dataset_simple, encoding='utf-8').readlines()
-        print('Start Pasrsing!')
+        syntaxs = open(self.model_config.train_dataset_simple_syntax, encoding='utf-8').readlines()
         pre_time = time.time()
-        for i, line in enumerate(lines):
-            syntax = list(stanford_parser.parse(line.split()))
-            syntax = self.generate_synatx(syntax)
-            line = line.lower()
-            rules = ppdb.process_sent(line)
+        for i, syntax in enumerate(syntaxs):
+            syntax = syntax.strip()
+            rules = ''
+            if len(syntax) > 0:
+                syntax_pairs = [p.split('=>') for p in syntax.split('\t')]
+                rules = ppdb.process_sent(syntax_pairs)
             rules = '\t'.join(rules)
             output = line_sep.join([output, rules])
-            output_syntax = line_sep.join([output_syntax, syntax])
             line_idx += 1
-            if line_idx % 100 == 0:
+            if line_idx % 1000 == 0:
                 cur_time = time.time()
                 print('processed %s. in %s' % (line_idx, cur_time - pre_time))
                 pre_time = cur_time
 
         output = output[len(line_sep):]
-        output_syntax = output_syntax[len(line_sep):]
 
         f = open(self.model_config.train_dataset_simple_ppdb, 'w', encoding='utf-8')
         f.write(output)
         f.close()
 
-        f = open(self.model_config.train_dataset_simple_syntax, 'w', encoding='utf-8')
-        f.write(output_syntax)
-        f.close()
-
-    def process_sent(self, sent):
+    def process_sent(self, syntax_pairs):
         # PPDB doesn't have am is are but only be
-        sent = sent.replace(' am ', ' be ')
-        sent = sent.replace(' is ', ' be ')
-        sent = sent.replace(' are ', ' be ')
-
-        rules = []
-        words = sent.split()
-        for word in words:
-            postings = self.rules_index[word]
-            for posting in postings:
-                # Verified each posting
-                # avoid sub word by adding space
-                add_rule = ' ' + posting + ' ' in ' ' + sent + ' '
-                if add_rule:
-                    rules.append(posting)
         filter_rules = []
-        for i in range(len(rules)):
-            add_rule = True
-            for j in range(len(rules)):
-                if i != j and rules[i] in rules[j]:
-                    add_rule = False
-                    break
-            if add_rule:
-                filter_rules.append(rules[i])
+        for tag, words in syntax_pairs:
+            words = words.lower()
+            words = words.replace(' am ', ' be ')
+            words = words.replace(' is ', ' be ')
+            words = words.replace(' are ', ' be ')
+
+            if words in self.rules and (tag in self.rules[words] or 'X' in self.rules[words]):
+                if tag in self.rules[words]:
+                    filter_rules.append('%s=>%s' % (tag, words))
+
+                if 'x' in self.rules[words]:
+                    filter_rules.append('%s=>%s' % ('x', words))
         return filter_rules
 
-    def simplify(self, sent, rule_oris, vocab):
+    def simplify(self, sent, pairs, vocab):
         sent = ' '.join(sent)
-        if not rule_oris:
+        if not pairs:
             return None, None
 
         def isplural(word):
@@ -153,9 +132,9 @@ class PPDB:
             plural = True if word is not lemma else False
             return plural, lemma
 
-        def getbe_rule_ori(sent, rule_ori):
+        def ori2be(sent, words):
             be = None
-            rule_ori_list = rule_ori.split()
+            rule_ori_list = words.split()
             if 'be' in rule_ori_list:
                 be_idx = rule_ori_list.index('be')
                 rule_ori_list[be_idx] = 'is'
@@ -174,10 +153,10 @@ class PPDB:
                 be = 'be'
                 if ' '.join(rule_ori_list) in sent:
                     return ' '.join(rule_ori_list), be
-                raise Exception('be parsing error: %s\n%s' % (sent, rule_ori))
+                raise Exception('be parsing error: %s\n%s' % (sent, words))
             return sent, be
 
-        def be2actual(sent, target, be):
+        def be2ori(sent, target, be):
             target_list = target.split()
             if 'be' in target_list:
                 be_idx = target_list.index('be')
@@ -202,33 +181,57 @@ class PPDB:
                 return ' '.join(target_list)
             return target
 
-        idx = int(rd.random() * len(rule_oris))
-        rule_ori = rule_oris[idx]
-        # Use originl (includes be) to check target
-        rule_tars_pairs = self.rules[rule_ori]
-        # Use replaced one (be will changed to am,is,are,be) to check replace
-        sent, be = getbe_rule_ori(sent, rule_ori)
+        num_trials = 5
+        while True:
+            num_trials -= 1
+            if num_trials == 0:
+                return None, None
 
-        rule_tars = [p[0] for p in rule_tars_pairs]
-        rule_tars_p = [p[1] for p in rule_tars_pairs]
-        if not rule_tars:
-            print('empty rule_tars')
-        target = choice(rule_tars, p=rule_tars_p, size=1)[0]
-        target_p = rule_tars_p[rule_tars.index(target)]
+            idx = int(rd.random() * len(pairs))
+            pair = pairs[idx]
+            if len(pair) != 2:
+                print('pairs error! %s in %s.' % (pairs, sent))
+                continue
+            words = pair[1]
+            tag = pair[0]
+            # Use originl (includes be) to check target
+            target_pairs = self.rules[words][tag]
+            if 'X' in self.rules[words]:
+                target_pairs += self.rules[words]['X']
+            # Use replaced one (be will changed to am,is,are,be) to check replace
+            sent, be = ori2be(sent, words)
 
-        target = be2actual(sent, target, be)
-        nsent = sent.lower().replace(rule_ori, target)
+            rule_tars = [p[0] for p in target_pairs]
+            rule_tars_p_norm = sum([p[1] for p in target_pairs])
+            rule_tars_p = [p[1] / rule_tars_p_norm for p in target_pairs]
+            if not rule_tars:
+                print('empty rule_tars')
+                continue
+            target = choice(rule_tars, p=rule_tars_p, size=1)[0]
+            target_p = rule_tars_p[rule_tars.index(target)]
 
-        target_list = target.split()
-        nsent_idx = []
-        nsent_weight = []
-        for word in nsent.split():
-            wid = vocab.encode(word)
-            nsent_idx.append(wid)
-            if word in target_list:
-                nsent_weight.append(target_p)
+            target = be2ori(sent, target, be)
+            nsent = sent.lower().replace(words, target)
+
+            target_list = target.split()
+            nsent_idx = []
+            nsent_weight = []
+            no_unk = True
+            for word in nsent.split():
+                wid = vocab.encode(word)
+                if wid == vocab.encode(constant.SYMBOL_UNK):
+                    no_unk = False
+                    break
+                nsent_idx.append(wid)
+                if word in target_list:
+                    nsent_weight.append(target_p)
+                else:
+                    nsent_weight.append(1.0)
+
+            if no_unk:
+                break
             else:
-                nsent_weight.append(1.0)
+                continue
 
         return nsent_idx, nsent_weight
 
@@ -253,8 +256,8 @@ def get_refine_data():
         if line_idx % 1000 == 0:
             print(line_idx)
         items = line.split('\t')
-        pos = items[2]
-        if pos == '[CD]':
+        tag = items[2]
+        if tag == '[CD]':
             continue
         ori_words = items[3]
         tar_words = items[4]
