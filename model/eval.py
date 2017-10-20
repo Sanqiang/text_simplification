@@ -13,7 +13,7 @@ from util import session
 from util.checkpoint import copy_ckpt_to_modeldir
 from util.sari import SARIsent
 from util.sari import CorpusSARI
-from util.fkgl import get_fkgl
+from util.fkgl import get_fkgl, CorpusFKGL
 from util.decode import decode, decode_to_output, exclude_list, get_exclude_list, truncate_sents
 from model.postprocess import PostProcess
 
@@ -248,8 +248,8 @@ def eval(model_config=None, ckpt=None):
     perplexity = np.mean(perplexitys_all)
     sari = np.mean(saris_all)
     # Compute FKGL in Corpus level
-    fkgl = get_fkgl(
-        '\n'.join([' '.join(target_raw) for target_raw in targets_raw]))
+    fkgl = CorpusFKGL(model_config).get_fkgl_from_joshua(step, targets_raw)
+
     print('Current iBLEU: \t%f' % ibleu)
     print('Current SARI: \t%f' % sari)
     print('Current FKGL: \t%f' % fkgl)

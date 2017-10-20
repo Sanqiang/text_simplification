@@ -1,6 +1,7 @@
 import math
 from nltk.tokenize import RegexpTokenizer
 
+from util.mteval_bleu import MtEval_BLEU
 
 class Readability:
     analyzedVars = {}
@@ -312,6 +313,22 @@ def get_fkgl(text):
         # Large penalty
         fkgl = 100
     return fkgl
+
+
+class CorpusFKGL(MtEval_BLEU):
+
+    def get_fkgl_from_joshua(self, step, targets):
+        path_tar = self.model_config.resultdor + '/joshua_target_%s.txt' % step
+        if not os.path.exists(path_tar):
+            f = open(path_tar, 'w', encoding='utf-8')
+            # joshua require lower case
+            f.write(self.result2txt(targets, lowercase=True))
+            f.close()
+
+        text = open(path_tar).read()
+
+        return get_fkgl(text)
+
 
 
 if __name__ == "__main__":
