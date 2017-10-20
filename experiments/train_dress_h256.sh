@@ -12,4 +12,4 @@
 module restore
 
 # Run the job
-srun python ../model/train.py -fw transformer -out dr_h256 -layer_drop 0.2 -op adagrad -lr 0.1 --mode dress -dim 256 -nh 4
+srun python ../model/train.py -fw transformer -out dr_h256 -layer_drop 0.2 -op adagrad -lr 0.1 --mode dress -dim 256 -nhl 2 -nel 2 -ndl 2
