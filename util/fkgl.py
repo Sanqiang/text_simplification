@@ -325,8 +325,7 @@ class CorpusFKGL(MtEval_BLEU):
             f.write(self.result2txt(targets, lowercase=True))
             f.close()
 
-        text = open(path_tar).read()
-
+        text = open(path_tar, encoding='utf-8').read()
         return get_fkgl(text)
 
 
