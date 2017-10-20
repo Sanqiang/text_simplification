@@ -12,6 +12,7 @@ from util import constant
 from util import session
 from util.checkpoint import copy_ckpt_to_modeldir
 from util.sari import SARIsent
+from util.sari import CorpusSARI
 from util.fkgl import get_fkgl
 from util.decode import decode, decode_to_output, exclude_list, get_exclude_list, truncate_sents
 from model.postprocess import PostProcess
@@ -290,6 +291,14 @@ def eval(model_config=None, ckpt=None):
             step, model_config.val_dataset_simple_folder + model_config.val_dataset_simple_rawlines_file_references,
             targets_raw)
 
+    # Use corpus-level sari
+    corpus_sari = CorpusSARI(model_config)
+    sari_joshua = corpus_sari.get_sari_from_joshua(
+        step, model_config.val_dataset_simple_folder + model_config.val_dataset_simple_rawlines_file_references,
+        model_config.val_dataset_complex_rawlines_file, target_raw
+    )
+
+
     decimal_cnt = 5
     format = "%." + str(decimal_cnt) + "f"
     bleu_raw = format % bleu_raw
@@ -300,7 +309,7 @@ def eval(model_config=None, ckpt=None):
     # bleu_or_decode = format % bleu_or_decode
     ibleu = format % ibleu
     bleu_joshua = format % bleu_joshua
-    sari = format % sari
+    sari_joshua = format % sari_joshua
     fkgl = format % fkgl
     perplexity = format % perplexity
 
@@ -312,7 +321,7 @@ def eval(model_config=None, ckpt=None):
                          # 'bleu_or_decode\t' + str(bleu_or_decode),
                          'ibleu\t' + str(ibleu),
                          'bleu_joshua\t' + str(bleu_joshua),
-                         'sari\t' + str(sari),
+                         'sari\t' + str(sari_joshua),
                          'fkgl\t' + str(fkgl)
                          ])
 
@@ -324,7 +333,7 @@ def eval(model_config=None, ckpt=None):
               '-bleuj' + str(bleu_joshua) +
               '-perplexity' + str(perplexity) +
               '-bleunltk' + str(ibleu) +
-              '-sari' + str(sari) +
+              '-sari' + str(sari_joshua) +
               '-fkgl' + str(fkgl)
               ),
              'w', encoding='utf-8')
@@ -337,7 +346,7 @@ def eval(model_config=None, ckpt=None):
               '-bleuj' + str(bleu_joshua) +
               '-perplexity' + str(perplexity) +
               '-bleunltk' + str(ibleu) +
-              '-sari' + str(sari) +
+              '-sari' + str(sari_joshua) +
               '-fkgl' + str(fkgl)+ '.result'),
              'w', encoding='utf-8')
     f.write('\n'.join(decode_outputs_all))

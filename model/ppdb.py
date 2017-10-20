@@ -35,6 +35,7 @@ class PPDB:
                 if ori_words not in self.rules:
                     self.rules[ori_words] = {}
                 if tag not in self.rules[ori_words]:
+                    # Tag in www.cs.cornell.edu/courses/cs474/2004fa/lec1.pdf
                     if tag[0] == '[':
                         tag = tag[1:]
                     if tag[-1] == ']':

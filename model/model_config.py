@@ -120,6 +120,7 @@ class DefaultConfig():
     mteval_mul_script = get_path('script/multi-bleu.perl')
     joshua_class = get_path('script/ppdb-simplification-release-joshua5.0/joshua/class')
     joshua_script = get_path('script/ppdb-simplification-release-joshua5.0/joshua/bin/bleu')
+    corpus_sari_script = get_path('script/corpus_sari.sh')
 
     add_ppdb_training = args.add_ppdb_training
     path_ppdb_refine = get_path(

@@ -2,6 +2,7 @@ import copy as cp
 import subprocess
 from model.model_config import DefaultConfig
 import re
+import os
 from util import constant
 
 class MtEval_BLEU:
@@ -159,10 +160,11 @@ class MtEval_BLEU:
 
     def get_bleu_from_joshua(self, step, path_ref, targets):
         path_tar = self.model_config.resultdor + '/joshua_target_%s.txt' % step
-        f = open(path_tar, 'w', encoding='utf-8')
-        # joshua require lower case
-        f.write(self.result2txt(targets, lowercase=True))
-        f.close()
+        if not os.path.exists(path_tar):
+            f = open(path_tar, 'w', encoding='utf-8')
+            # joshua require lower case
+            f.write(self.result2txt(targets, lowercase=True))
+            f.close()
 
         return self.get_result_joshua(path_ref, path_tar)
 

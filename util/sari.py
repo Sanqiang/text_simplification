@@ -176,6 +176,44 @@ def SARIsent(ssent, csent, rsents):
 
     return finalscore
 
+
+# Our implementation of corpus-level SARI
+# Align with Dress
+import os
+import re
+import subprocess
+from util.mteval_bleu import MtEval_BLEU
+
+class CorpusSARI(MtEval_BLEU):
+
+    def get_sari_from_joshua(self, step, path_ref, path_src, targets):
+        path_tar = self.model_config.resultdor + '/joshua_target_%s.txt' % step
+        if not os.path.exists(path_tar):
+            f = open(path_tar, 'w', encoding='utf-8')
+            # joshua require lower case
+            f.write(self.result2txt(targets, lowercase=True))
+            f.close()
+
+        return self.get_sari_result_joshua(path_ref, path_src, path_tar)
+
+    def get_sari_result_joshua(self, path_ref, path_src, path_tar):
+        args = ' '.join(['bash', self.model_config.corpus_sari_script,
+                         path_tar, path_ref, path_src,
+                         self.model_config.joshua_class, str(self.model_config.num_refs)])
+
+        pipe = subprocess.Popen(args, stdin=subprocess.PIPE, stdout=subprocess.PIPE, shell=True)
+        mteval_result = pipe.communicate()
+
+        m = re.search(b'STAR = ([\d+\.]+)', mteval_result[0])
+
+        try:
+            result = float(m.group(1))
+        except AttributeError:
+            result = 0
+        return result
+
+
+
 if __name__ == '__main__':
     # fnamenorm = "./turkcorpus/test.8turkers.tok.norm"
     # fnamesimp = "./turkcorpus/test.8turkers.tok.simp"
