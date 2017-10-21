@@ -62,6 +62,13 @@ class DefaultConfig():
     decode_atten_gate = args.decode_atten_gate
     trans_layer_gate = args.trans_layer_gate
     use_quality_model = args.use_quality_model
+    # att_loss: attention reconstruction loss
+    # enc_self:1|dec_self:1|enc_dec:1
+    attn_loss = args.attn_loss
+    if attn_loss:
+        attn_loss = dict([conf[0], float(conf[1])] for conf in
+                         [p.split(':') for p in attn_loss.split('|')])
+
 
     # Seq2seq config
     num_rnn_encoder_layers = 1

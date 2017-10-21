@@ -160,6 +160,43 @@ class Graph:
                                           weights=decode_word_weight,
                                           softmax_loss_function=loss_fn)
 
+                if self.model_config.attn_loss:
+                    if 'enc_self' in self.model_config.attn_loss:
+                        for layer_i in range(self.model_config.num_encoder_layers):
+                            att_dists = tf.get_default_graph().get_operation_by_name(
+                                'model/transformer_encoder/encoder/layer_%s/self_attention/multihead_attention/dot_product_attention/attention_weights'
+                                % layer_i).values()[0]
+                            att_dists_sum = tf.reduce_sum(att_dists, axis=-1)
+                            att_dists_target = tf.ones(tf.shape(att_dists_sum))
+                            att_loss = tf.losses.mean_squared_error(att_dists_target, att_dists_sum) * self.model_config.attn_loss['enc_self']
+                            self.loss = tf.add(self.loss, att_loss)
+                        print('Add Attention Reconstruction loss for enc_self with weight %s.'
+                              % self.model_config.attn_loss['enc_self'])
+
+                    if 'enc_dec' in self.model_config.attn_loss:
+                        for layer_i in range(self.model_config.num_encoder_layers):
+                            att_dists = tf.get_default_graph().get_operation_by_name(
+                                'model/transformer_decoder/decoder/layer_%s/encdec_attention/multihead_attention/dot_product_attention/attention_weights'
+                                % layer_i).values()[0]
+                            att_dists_sum = tf.reduce_sum(att_dists, axis=-1)
+                            att_dists_target = tf.ones(tf.shape(att_dists_sum))
+                            att_loss = tf.losses.mean_squared_error(att_dists_target, att_dists_sum) * self.model_config.attn_loss['enc_dec']
+                            self.loss = tf.add(self.loss, att_loss)
+                        print('Add Attention Reconstruction loss for enc_dec with weight %s.'
+                              % self.model_config.attn_loss['enc_dec'])
+
+                    if 'dec_self' in self.model_config.attn_loss:
+                        for layer_i in range(self.model_config.num_encoder_layers):
+                            att_dists = tf.get_default_graph().get_operation_by_name(
+                                'model/transformer_decoder/decoder/layer_%s/self_attention/multihead_attention/dot_product_attention/attention_weights'
+                                % layer_i).values()[0]
+                            att_dists_sum = tf.reduce_sum(att_dists, axis=-1)
+                            att_dists_target = tf.ones(tf.shape(att_dists_sum))
+                            att_loss = tf.losses.mean_squared_error(att_dists_target, att_dists_sum) * self.model_config.attn_loss['dec_self']
+                            self.loss = tf.add(self.loss, att_loss)
+                        print('Add Attention Reconstruction loss for dec_self with weight %s.'
+                              % self.model_config.attn_loss['dec_self'])
+
 
         with tf.variable_scope('optimization'):
             self.global_step = tf.get_variable(

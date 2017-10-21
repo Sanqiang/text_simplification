@@ -75,6 +75,8 @@ def get_args():
                         help='Number of multi-attention heads?')
     parser.add_argument('-penalty_alpha', '--penalty_alpha', default=0.6, type=float,
                         help='The alpha for length penalty?')
+    parser.add_argument('-aloss', '--attn_loss', default='',
+                        help='Attention Reconstruction loss config?')
 
     # For Experiment
     parser.add_argument('-exp_penalty_alpha', '--exp_penalty_alpha', default=False,
