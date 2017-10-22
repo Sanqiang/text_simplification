@@ -112,7 +112,7 @@ class TrainData:
             pretrained_cnt = 0
             random_cnt = 0
             self.pretrained_emb_complex = np.empty(
-                (len(self.vocab_complex.i2w), self.model_config.dimension), dtype=np.float32)
+                (self.vocab_complex.vocab_size(), self.model_config.dimension), dtype=np.float32)
             for wid, word in enumerate(self.vocab_complex.i2w):
                 if word in self.glove:
                     n_vector = np.array(self.glove[word])
@@ -124,7 +124,7 @@ class TrainData:
                                          for _ in range(self.model_config.dimension)])
                     self.pretrained_emb_complex[wid, :] = n_vector
                     random_cnt += 1
-            assert len(self.vocab_complex.i2w) ==  random_cnt + pretrained_cnt
+            assert self.vocab_complex.vocab_size() ==  random_cnt + pretrained_cnt
             print(
                 'For Vocab Complex, %s words initialized with pretrained vector, '
                 'other %s words initialized randomly. Save to %s.' %
