@@ -111,7 +111,7 @@ def train(model_config=None):
             ignore_missing_vars=True, reshape_variables=False)
 
     def init_fn(session):
-        if model_config.pretrained_embedding is not None:
+        if model_config.pretrained_embedding is not None and model_config.subword_vocab_size > 0:
             input_feed = {graph.embed_simple_placeholder: data.pretrained_emb_simple,
                           graph.embed_complex_placeholder: data.pretrained_emb_complex}
             session.run([graph.replace_emb_complex, graph.replace_emb_simple], input_feed)
