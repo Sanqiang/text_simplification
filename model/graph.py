@@ -49,14 +49,15 @@ class Graph:
             self.embedding = Embedding(self.data.vocab_complex, self.data.vocab_simple, self.model_config)
             self.emb_complex = self.embedding.get_complex_embedding()
             self.emb_simple = self.embedding.get_simple_embedding()
-            if self.is_train and self.model_config.pretrained_embedding is not None:
+            if (self.is_train and self.model_config.pretrained_embedding is not None and
+                        self.model_config.subword_vocab_size > 0):
                 self.embed_complex_placeholder = tf.placeholder(
-                    tf.float32, (len(self.data.vocab_complex.i2w), self.model_config.dimension),
+                    tf.float32, (self.data.vocab_complex.vocab_size(), self.model_config.dimension),
                     'complex_emb')
                 self.replace_emb_complex = self.emb_complex.assign(self.embed_complex_placeholder)
 
                 self.embed_simple_placeholder = tf.placeholder(
-                    tf.float32, (len(self.data.vocab_simple.i2w), self.model_config.dimension),
+                    tf.float32, (self.data.vocab_simple.vocab_size(), self.model_config.dimension),
                     'simple_emb')
                 self.replace_emb_simple = self.emb_simple.assign(self.embed_simple_placeholder)
 
@@ -150,7 +151,7 @@ class Graph:
                 #                 labels=labels,
                 #                 inputs=local_inputs,
                 #                 num_sampled=10,
-                #                 num_classes=len(self.data.vocab_simple.i2w))
+                #                 num_classes=self.data.vocab_simple.vocab_size())
                 #
                 #     loss_fn = _sampled_softmax
 
