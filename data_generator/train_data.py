@@ -94,6 +94,10 @@ class TrainData:
         return data, data_raw
 
     def init_pretrained_embedding(self):
+        if self.model_config.subword_vocab_size > 0:
+            # Subword doesn't need pretrained embedding.
+            return
+
         if self.model_config.pretrained_embedding is None:
             return
 
