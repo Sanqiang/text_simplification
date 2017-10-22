@@ -30,6 +30,8 @@ def get_args():
                         help='Truncate the vocabulary less than equal to the count?')
     parser.add_argument('-ppdb', '--add_ppdb_training', default=False, type=bool,
                         help='Whether add ppdb rules into training data set?')
+    parser.add_argument('-svoc_size', '--subword_vocab_size', default=0, type=int,
+                        help='The size of subword vocabulary? if <= 0, not use subword unit.')
 
     # For Graph
     parser.add_argument('-dim', '--dimension', default=300, type=int,

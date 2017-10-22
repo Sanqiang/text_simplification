@@ -9,9 +9,14 @@ import copy as cp
 class ValData:
     def __init__(self, model_config, ):
         self.model_config = model_config
+
         vocab_simple_path = self.model_config.vocab_simple
         vocab_complex_path = self.model_config.vocab_complex
         vocab_all_path = self.model_config.vocab_all
+        if self.model_config.subword_vocab_size > 0:
+            vocab_simple_path = self.model_config.subword_vocab_simple
+            vocab_complex_path = self.model_config.subword_vocab_complex
+            vocab_all_path = self.model_config.subword_vocab_all
 
         if (self.model_config.tie_embedding == 'none' or
                     self.model_config.tie_embedding == 'dec_out'):
@@ -33,7 +38,6 @@ class ValData:
         # Populate simple references
         self.data_references_raw_lines = []
         for i in range(self.model_config.num_refs):
-
             ref_tmp_rawlines = self.populate_data_rawfile(
                 self.model_config.val_dataset_simple_folder +
                 self.model_config.val_dataset_simple_rawlines_file_references +
@@ -79,9 +83,14 @@ class ValData:
             if need_raw:
                 words_raw = [constant.SYMBOL_START] + words + [constant.SYMBOL_END]
                 data_raw.append(words_raw)
-            words = [vocab.encode(word) for word in words]
-            words = ([self.vocab_simple.encode(constant.SYMBOL_START)] + words +
-                     [self.vocab_simple.encode(constant.SYMBOL_END)])
+
+            if self.model_config.subword_vocab_size > 0:
+                words = [constant.SYMBOL_START] + words + [constant.SYMBOL_END]
+                words = vocab.encode(' '.join(words))
+            else:
+                words = [vocab.encode(word) for word in words]
+                words = ([self.vocab_simple.encode(constant.SYMBOL_START)] + words +
+                         [self.vocab_simple.encode(constant.SYMBOL_END)])
 
             data.append(words)
         return data, data_raw

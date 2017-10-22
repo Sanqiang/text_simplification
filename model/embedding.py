@@ -20,7 +20,7 @@ class Embedding:
         if hasattr(self, 'emb_complex'):
             return self.emb_complex
         self.emb_complex = tf.get_variable(
-            'embedding_complex', [len(self.voc_complex.i2w),self.model_config.dimension], tf.float32,
+            'embedding_complex', [self.voc_complex.vocab_size(),self.model_config.dimension], tf.float32,
             initializer=self.emb_init)
         return self.emb_complex
 
@@ -31,7 +31,7 @@ class Embedding:
         if (self.model_config.tie_embedding == 'none' or
                     self.model_config.tie_embedding == 'dec_out'):
             self.emb_simple = tf.get_variable(
-                'embedding_simple', [len(self.voc_simple.i2w), self.model_config.dimension], tf.float32,
+                'embedding_simple', [self.voc_simple.vocab_size(), self.model_config.dimension], tf.float32,
                 initializer=self.emb_init)
             return self.emb_simple
         else:
@@ -41,12 +41,12 @@ class Embedding:
         if self.model_config.framework == 'transformer':
             if self.model_config.tie_embedding == 'none':
                 self.proj_w = tf.get_variable(
-                    'output_w', [len(self.voc_simple.i2w), self.model_config.dimension], tf.float32,
+                    'output_w', [self.voc_simple.vocab_size(), self.model_config.dimension], tf.float32,
                     initializer=self.w_init)
                 return self.proj_w
             elif self.model_config.tie_embedding == 'enc_dec':
                 self.proj_w = tf.get_variable(
-                    'output_w', [len(self.voc_complex.i2w), self.model_config.dimension], tf.float32,
+                    'output_w', [self.voc_complex.vocab_size(), self.model_config.dimension], tf.float32,
                     initializer=self.w_init)
                 return self.proj_w
             elif self.model_config.tie_embedding == 'dec_out':
@@ -57,7 +57,7 @@ class Embedding:
                 raise NotImplementedError('Not Implemented tie_embedding option.')
         elif self.model_config.framework == 'seq2seq':
             self.proj_w = tf.get_variable(
-                'output_w', [len(self.voc_simple.i2w), self.model_config.dimension], tf.float32,
+                'output_w', [self.voc_simple.vocab_size(), self.model_config.dimension], tf.float32,
                 initializer=self.w_init)
             return self.proj_w
 
@@ -67,15 +67,15 @@ class Embedding:
                         self.model_config.tie_embedding == 'enc_dec' or
                         self.model_config.tie_embedding == 'dec_out'):
                 self.proj_b = tf.get_variable('output_b',
-                                              shape=[len(self.voc_simple.i2w)], initializer=self.w_init)
+                                              shape=[self.voc_simple.vocab_size()], initializer=self.w_init)
                 return self.proj_b
             elif self.model_config.tie_embedding == 'all':
                 self.proj_b = tf.get_variable('output_b',
-                                              shape=[len(self.voc_complex.i2w)], initializer=self.w_init)
+                                              shape=[self.voc_complex.vocab_size()], initializer=self.w_init)
                 return self.proj_b
         elif self.model_config.framework == 'seq2seq':
             self.proj_b = tf.get_variable('output_b',
-                                          shape=[len(self.voc_simple.i2w)], initializer=self.w_init)
+                                          shape=[self.voc_simple.vocab_size()], initializer=self.w_init)
             return self.proj_b
 
 

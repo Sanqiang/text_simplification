@@ -93,7 +93,7 @@ class TransformerGraph(Graph):
                                                        tf.zeros([self.model_config.batch_size], tf.int32),
                                                        self.model_config.beam_search_size,
                                                        self.model_config.max_simple_sentence,
-                                                       len(self.data.vocab_simple.i2w),
+                                                       self.data.vocab_simple.vocab_size(),
                                                        self.model_config.penalty_alpha,
                                                        self.data.vocab_simple.encode(constant.SYMBOL_END))
         top_beam_ids = beam_ids[:, 0, 1:]

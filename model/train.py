@@ -15,7 +15,6 @@ from model.eval import eval, get_ckpt
 
 import tensorflow as tf
 import tensorflow.contrib.slim as slim
-import numpy as np
 from util.arguments import get_args
 
 
@@ -29,7 +28,13 @@ def get_graph_train_data(
         sentence_simple_input_weight,
         model_config):
     input_feed = {}
-    voc = Vocab(model_config)
+    # Reserved section of vocabuary are same.
+    voc = data.vocab_simple
+
+    if model_config.subword_vocab_size > 0:
+        pad_id = voc.encode(constant.SYMBOL_PAD)
+    else:
+        pad_id = [voc.encode(constant.SYMBOL_PAD)]
 
     tmp_sentence_simple, tmp_sentence_complex, tmp_sentence_simple_weight = [], [], []
     for i in range(model_config.batch_size):
@@ -38,13 +43,13 @@ def get_graph_train_data(
         # PAD zeros
         if len(sentence_simple) < model_config.max_simple_sentence:
             num_pad = model_config.max_simple_sentence - len(sentence_simple)
-            sentence_simple.extend(num_pad * [voc.encode(constant.SYMBOL_PAD)])
+            sentence_simple.extend(num_pad * pad_id)
         else:
             sentence_simple = sentence_simple[:model_config.max_simple_sentence]
 
         if len(sentence_complex) < model_config.max_complex_sentence:
             num_pad = model_config.max_complex_sentence - len(sentence_complex)
-            sentence_complex.extend(num_pad * [voc.encode(constant.SYMBOL_PAD)])
+            sentence_complex.extend(num_pad * pad_id)
         else:
             sentence_complex = sentence_complex[:model_config.max_complex_sentence]
 

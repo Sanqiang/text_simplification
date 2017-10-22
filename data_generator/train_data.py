@@ -1,19 +1,26 @@
-import random as rd
 import copy as cp
+import random as rd
+
 import numpy as np
+from nltk import word_tokenize
 
 from data_generator.vocab import Vocab
-from nltk import word_tokenize
-from util import constant
 from model.ppdb import PPDB
+from util import constant
 
 
 class TrainData:
     def __init__(self, model_config):
         self.model_config = model_config
+
         vocab_simple_path = self.model_config.vocab_simple
         vocab_complex_path = self.model_config.vocab_complex
         vocab_all_path = self.model_config.vocab_all
+        if self.model_config.subword_vocab_size > 0:
+            vocab_simple_path = self.model_config.subword_vocab_simple
+            vocab_complex_path = self.model_config.subword_vocab_complex
+            vocab_all_path = self.model_config.subword_vocab_all
+
         data_simple_path = self.model_config.train_dataset_simple
         data_complex_path = self.model_config.train_dataset_complex
 
@@ -57,6 +64,7 @@ class TrainData:
         # Populate data into memory
         data = []
         data_raw = []
+        max_len = -1
         for line in open(data_path, encoding='utf-8'):
             # line = line.split('\t')[2]
             if self.model_config.tokenizer == 'split':
@@ -71,11 +79,18 @@ class TrainData:
             if need_raw:
                 words_raw = [constant.SYMBOL_START] + words + [constant.SYMBOL_END]
                 data_raw.append(words_raw)
-            words = [vocab.encode(word) for word in words]
-            words = ([self.vocab_simple.encode(constant.SYMBOL_START)] + words +
+            if self.model_config.subword_vocab_size > 0:
+                words = [constant.SYMBOL_START] + words + [constant.SYMBOL_END]
+                words = vocab.encode(' '.join(words))
+            else:
+                words = [vocab.encode(word) for word in words]
+                words = ([self.vocab_simple.encode(constant.SYMBOL_START)] + words +
                      [self.vocab_simple.encode(constant.SYMBOL_END)])
 
             data.append(words)
+            if len(words) > max_len:
+                max_len = len(words)
+        print('Max length for data %s is %s.' % (data_path, max_len))
         return data, data_raw
 
     def init_pretrained_embedding(self):

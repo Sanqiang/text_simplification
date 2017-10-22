@@ -19,7 +19,7 @@ class DefaultConfig():
     max_complex_sentence = 20
     max_simple_sentence = 15
     min_simple_sentence = 5 #Used for Beam Search
-    model_eval_freq = 100
+    model_eval_freq = 500
     model_print_freq = 1
     save_model_secs = 60
 
@@ -63,11 +63,11 @@ class DefaultConfig():
     trans_layer_gate = args.trans_layer_gate
     use_quality_model = args.use_quality_model
     # att_loss: attention reconstruction loss
-    # enc_self:1|dec_self:1|enc_dec:1
+    # enc_self@1|dec_self@1|enc_dec@1
     attn_loss = args.attn_loss
     if attn_loss:
         attn_loss = dict([conf[0], float(conf[1])] for conf in
-                         [p.split(':') for p in attn_loss.split('|')])
+                         [p.split('@') for p in attn_loss.split('|')])
 
 
     # Seq2seq config
@@ -104,6 +104,14 @@ class DefaultConfig():
         vocab_complex = vocab_complex + '.lower'
         vocab_all = vocab_all + '.lower'
 
+    subword_vocab_size = args.subword_vocab_size
+    subword_vocab_simple = vocab_simple + str(subword_vocab_size)
+    subword_vocab_complex = vocab_complex + str(subword_vocab_size)
+    subword_vocab_all = vocab_all + str(subword_vocab_size)
+
+    if subword_vocab_size > 0:
+        max_complex_sentence = 100
+        max_simple_sentence = 90
 
     val_dataset_simple_folder = get_path('data/')
     val_dataset_simple_file = 'valid_dummy_simple_dataset'
@@ -167,15 +175,26 @@ class WikiDressLargeDefault(DefaultConfig):
         '../text_simplification_data/train/dress/wikilarge/wiki.full.aner.train.dst.jsyntax')
     train_dataset_complex = get_path('../text_simplification_data/train/dress/wikilarge/wiki.full.aner.train.src')
     # train_dataset_complex_ppdb = get_path('../text_simplification_data/train/dress/wikilarge/wiki.full.aner.train.src.rules')
-    # add .dress extention will be same vocab as dress
-    vocab_simple = get_path('../text_simplification_data/train/dress/wikilarge/wiki.full.aner.train.dst.vocab.dress')
-    vocab_complex = get_path('../text_simplification_data/train/dress/wikilarge/wiki.full.aner.train.src.vocab.dress')
+    # add .dress extention will be same vocab as dress by add .dress in the end
+    vocab_simple = get_path('../text_simplification_data/train/dress/wikilarge/wiki.full.aner.train.dst.vocab')
+    vocab_complex = get_path('../text_simplification_data/train/dress/wikilarge/wiki.full.aner.train.src.vocab')
     # don't have dress version of tied vocab
     vocab_all = get_path('../text_simplification_data/train/dress/wikilarge/wiki.full.aner.train.vocab')
     if args.lower_case:
         vocab_simple = vocab_simple + '.lower'
         vocab_complex = vocab_complex + '.lower'
         vocab_all = vocab_all + '.lower'
+
+    # Sub word config
+    # if >0 using subword
+    subword_vocab_size = args.subword_vocab_size
+    subword_vocab_simple = get_path(
+        '../text_simplification_data/train/dress/wikilarge/wiki.full.aner.train.dst.vocab.subword.' + str(subword_vocab_size))
+    subword_vocab_complex = get_path(
+        '../text_simplification_data/train/dress/wikilarge/wiki.full.aner.train.src.vocab.subword.' + str(subword_vocab_size))
+    subword_vocab_all = get_path(
+        '../text_simplification_data/train/dress/wikilarge/wiki.full.aner.train.vocab.subword.' + str(subword_vocab_size))
+
 
     # num_refs = 0
     # val_dataset_simple_folder = get_path('../text_simplification_data/train/dress/wikilarge/')
@@ -197,8 +216,13 @@ class WikiDressLargeDefault(DefaultConfig):
     num_refs = 8
 
     dimension = args.dimension
+
     max_complex_sentence = 85
     max_simple_sentence = 85
+    if subword_vocab_size > 0:
+        max_complex_sentence = 580
+        max_simple_sentence = 580
+
     min_count = args.min_count
     batch_size = 32
 

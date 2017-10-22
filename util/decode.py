@@ -37,12 +37,15 @@ def decode_to_output(target, sentence_simple, sentence_complex, effective_batch_
     return output
 
 
-def decode(target, voc):
+def decode(target, voc, use_subword=False):
     target = list(target)
     batch_size = len(target)
     decode_results = []
     for i in range(batch_size):
-        decode_result = list(map(voc.describe, target[i]))
+        if use_subword:
+            decode_result = voc.describe(target[i]).split(' ')
+        else:
+            decode_result = list(map(voc.describe, target[i]))
         # decode_result = truncate_sent(decode_result)
         decode_results.append(decode_result)
     return decode_results
@@ -65,17 +68,12 @@ def truncate_sent(decode_result):
     return decode_result
 
 
-def get_exclude_list(results, voc):
+def get_exclude_list(effective_batch_size, batch_size):
     """Get the list of indexs need to eclude(All <go>)."""
     exclude_idxs = []
-    for re_id, result in enumerate(results):
-        is_exclude = True
-        for word_id in result:
-            if word_id != voc.encode(constant.SYMBOL_PAD):
-                is_exclude = False
-                break
-        if is_exclude:
-            exclude_idxs.append(re_id)
+    for i in range(batch_size):
+        if i >= effective_batch_size:
+            exclude_idxs.append(i)
     return exclude_idxs
 
 

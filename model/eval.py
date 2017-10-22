@@ -33,9 +33,15 @@ args = get_args()
 
 
 def get_graph_val_data(sentence_simple_input, sentence_complex_input,
-                       model_config, it):
+                       model_config, it, data):
     input_feed = {}
-    voc = Vocab(model_config)
+    # Reserved section of vocabuary are same.
+    voc = data.vocab_simple
+
+    if model_config.subword_vocab_size > 0:
+        pad_id = voc.encode(constant.SYMBOL_PAD)
+    else:
+        pad_id = [voc.encode(constant.SYMBOL_PAD)]
 
     (tmp_sentence_simple, tmp_sentence_complex,
      tmp_sentence_complex_raw, tmp_sentence_complex_raw_lines) = [], [], [], []
@@ -62,13 +68,13 @@ def get_graph_val_data(sentence_simple_input, sentence_complex_input,
         # PAD zeros
         if len(sentence_simple) < model_config.max_simple_sentence:
             num_pad = model_config.max_simple_sentence - len(sentence_simple)
-            sentence_simple.extend(num_pad * [voc.encode(constant.SYMBOL_PAD)])
+            sentence_simple.extend(num_pad * pad_id)
         else:
             sentence_simple = sentence_simple[:model_config.max_simple_sentence]
 
         if len(sentence_complex) < model_config.max_complex_sentence:
             num_pad = model_config.max_complex_sentence - len(sentence_complex)
-            sentence_complex.extend(num_pad * [voc.encode(constant.SYMBOL_PAD)])
+            sentence_complex.extend(num_pad * pad_id)
         else:
             sentence_complex = sentence_complex[:model_config.max_complex_sentence]
 
@@ -136,7 +142,7 @@ def eval(model_config=None, ckpt=None):
          effective_batch_size, is_end) = get_graph_val_data(
             graph.sentence_simple_input_placeholder,
             graph.sentence_complex_input_placeholder,
-            model_config, it)
+            model_config, it, val_data)
 
         postprocess = PostProcess(model_config, val_data)
         # Replace UNK for sentence_complex_raw and ref_raw
@@ -156,7 +162,7 @@ def eval(model_config=None, ckpt=None):
         batch_perplexity = math.exp(loss)
         perplexitys_all.append(batch_perplexity)
 
-        exclude_idxs = get_exclude_list(sentence_complex, val_data.vocab_complex)
+        exclude_idxs = get_exclude_list(effective_batch_size, model_config.batch_size)
         if exclude_idxs:
             sentence_complex = exclude_list(sentence_complex, exclude_idxs)
             sentence_complex_raw = exclude_list(sentence_complex_raw, exclude_idxs)
@@ -170,7 +176,7 @@ def eval(model_config=None, ckpt=None):
             for ref_i in range(model_config.num_refs):
                 ref_raw_lines[ref_i] = exclude_list(ref_raw_lines[ref_i], exclude_idxs)
 
-        target = decode(target, val_data.vocab_simple)
+        target = decode(target, val_data.vocab_simple, model_config.subword_vocab_size>0)
         target_raw = target
         if model_config.replace_unk_by_attn:
             target_raw = postprocess.replace_unk_by_attn(sentence_complex_raw, None, target_raw)
@@ -182,8 +188,8 @@ def eval(model_config=None, ckpt=None):
         if model_config.replace_ner:
             target_raw = postprocess.replace_ner(target_raw, mapper)
         target_raw = postprocess.replace_others(target_raw)
-        sentence_simple = decode(sentence_simple, val_data.vocab_simple)
-        sentence_complex = decode(sentence_complex, val_data.vocab_complex)
+        sentence_simple = decode(sentence_simple, val_data.vocab_simple, model_config.subword_vocab_size>0)
+        sentence_complex = decode(sentence_complex, val_data.vocab_complex, model_config.subword_vocab_size>0)
         sentence_complex_raw = truncate_sents(sentence_complex_raw)
 
         # Truncate decode results
