@@ -220,8 +220,8 @@ class WikiDressLargeDefault(DefaultConfig):
     max_complex_sentence = 85
     max_simple_sentence = 85
     if subword_vocab_size > 0:
-        max_complex_sentence = 580
-        max_simple_sentence = 580
+        max_complex_sentence = 610
+        max_simple_sentence = 610
 
     min_count = args.min_count
     batch_size = 32
