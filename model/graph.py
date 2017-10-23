@@ -23,11 +23,16 @@ class Graph:
         print('Batch Size:\t%d.' % self.model_config.batch_size)
         self.rand_unif_init = tf.random_uniform_initializer(-0,.08, 0.08)
 
+        self.device_config = '/gpu:0'
+        if self.model_config.use_cpu:
+            self.device_config = '/cpu:0'
+
     def embedding_fn(self, inputs, embedding):
-        if not inputs:
-            return []
-        else:
-            return [tf.nn.embedding_lookup(embedding, inp) for inp in inputs]
+        with tf.device(self.device_config):
+            if not inputs:
+                return []
+            else:
+                return [tf.nn.embedding_lookup(embedding, inp) for inp in inputs]
 
     def create_model(self):
         with tf.variable_scope('variables'):
@@ -47,8 +52,9 @@ class Graph:
                     tf.zeros(self.model_config.batch_size, tf.int32, name='complex_input'))
 
             self.embedding = Embedding(self.data.vocab_complex, self.data.vocab_simple, self.model_config)
-            self.emb_complex = self.embedding.get_complex_embedding()
-            self.emb_simple = self.embedding.get_simple_embedding()
+            with tf.device(self.device_config):
+                self.emb_complex = self.embedding.get_complex_embedding()
+                self.emb_simple = self.embedding.get_simple_embedding()
             if (self.is_train and self.model_config.pretrained_embedding is not None and
                         self.model_config.subword_vocab_size > 0):
                 self.embed_complex_placeholder = tf.placeholder(

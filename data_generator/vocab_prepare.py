@@ -61,7 +61,8 @@ class VocabPrepare:
             writer.close()
             print('Processed vocab with size %d' % len(c))
         else:
-            sub_word = SubwordTextEncoder.build_to_target_size(self.model_config.subword_vocab_size, c, 1, 1e3)
+            sub_word = SubwordTextEncoder.build_to_target_size(self.model_config.subword_vocab_size, c, 1, 1e3,
+                                                               num_iterations=100)
             for i, subtoken_string in enumerate(sub_word._all_subtoken_strings):
                 if subtoken_string in text_encoder.RESERVED_TOKENS_DICT:
                     sub_word._all_subtoken_strings[i] = subtoken_string + "_"

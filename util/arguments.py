@@ -11,6 +11,8 @@ def get_args():
                         help='Path for warm start checkpoint?')
     parser.add_argument('-upr', '--use_partial_restore', default=True, type=bool,
                         help='Whether to use partial restore?')
+    parser.add_argument('-cpu', '--use_cpu', default=False, type=bool,
+                        help='Whether to use cpu for large memory, e.g. embedding?')
 
     parser.add_argument('-mode', '--mode', default='dress',
                         help='The Usage Model?')

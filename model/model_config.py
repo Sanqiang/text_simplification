@@ -127,8 +127,9 @@ class DefaultConfig():
     modeldir = get_path('../' + output_folder + '/model/')
     resultdor = get_path('../' + output_folder + '/result/')
 
-    allow_growth = False
+    allow_growth = True
     # per_process_gpu_memory_fraction = 1.0
+    use_cpu = args.use_cpu
 
     use_mteval = True
     mteval_script = get_path('script/mteval-v13a.pl')
@@ -220,8 +221,8 @@ class WikiDressLargeDefault(DefaultConfig):
     max_complex_sentence = 85
     max_simple_sentence = 85
     if subword_vocab_size > 0:
-        max_complex_sentence = 610
-        max_simple_sentence = 610
+        max_complex_sentence = 300
+        max_simple_sentence = 300
 
     min_count = args.min_count
     batch_size = 32

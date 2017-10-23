@@ -64,7 +64,9 @@ class TrainData:
         # Populate data into memory
         data = []
         data_raw = []
-        max_len = -1
+        # max_len = -1
+        # from collections import Counter
+        # len_report = Counter()
         for line in open(data_path, encoding='utf-8'):
             # line = line.split('\t')[2]
             if self.model_config.tokenizer == 'split':
@@ -87,10 +89,11 @@ class TrainData:
                 words = ([self.vocab_simple.encode(constant.SYMBOL_START)] + words +
                      [self.vocab_simple.encode(constant.SYMBOL_END)])
 
-            data.append(words)
-            if len(words) > max_len:
-                max_len = len(words)
-        print('Max length for data %s is %s.' % (data_path, max_len))
+            # len_report.update([len(words)])
+            # if len(words) > max_len:
+            #     max_len = len(words)
+        # print('Max length for data %s is %s.' % (data_path, max_len))
+        # print('counter:%s' % len_report)
         return data, data_raw
 
     def init_pretrained_embedding(self):

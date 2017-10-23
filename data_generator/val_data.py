@@ -71,6 +71,9 @@ class ValData:
         # Populate data into memory
         data = []
         data_raw = []
+        # max_len = -1
+        # from collections import Counter
+        # len_report = Counter()
         for line in open(data_path, encoding='utf-8'):
             if self.model_config.tokenizer == 'split':
                 words = line.split()
@@ -92,7 +95,12 @@ class ValData:
                 words = ([self.vocab_simple.encode(constant.SYMBOL_START)] + words +
                          [self.vocab_simple.encode(constant.SYMBOL_END)])
 
-            data.append(words)
+            # data.append(words)
+            # len_report.update([len(words)])
+            # if len(words) > max_len:
+            #     max_len = len(words)
+        # print('Max length for data %s is %s.' % (data_path, max_len))
+        # print('counter:%s' % len_report)
         return data, data_raw
 
     def get_data_iter(self):
