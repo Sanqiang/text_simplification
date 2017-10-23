@@ -95,7 +95,7 @@ class ValData:
                 words = ([self.vocab_simple.encode(constant.SYMBOL_START)] + words +
                          [self.vocab_simple.encode(constant.SYMBOL_END)])
 
-            # data.append(words)
+            data.append(words)
             # len_report.update([len(words)])
             # if len(words) > max_len:
             #     max_len = len(words)
