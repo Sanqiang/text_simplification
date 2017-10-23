@@ -163,7 +163,7 @@ def train(model_config=None):
             print('Perplexity:\t%f at step %d with lr %s' % (perplexity, step, lr))
             perplexitys.clear()
 
-        if step % model_config.model_eval_freq == 0:
+        if model_config.model_eval_freq > 0 and step % model_config.model_eval_freq == 0:
             from model.model_config import SubValWikiEightRefConfig, SubTestWikiEightRefConfig
             from model.model_config import DefaultTestConfig, DefaultTestConfig2
             ckpt = get_ckpt(model_config.modeldir, model_config.logdir)

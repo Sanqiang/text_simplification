@@ -12,7 +12,7 @@ def get_args():
     parser.add_argument('-upr', '--use_partial_restore', default=True, type=bool,
                         help='Whether to use partial restore?')
     parser.add_argument('-cpu', '--use_cpu', default=False, type=bool,
-                        help='Whether to use cpu for large memory, e.g. embedding?')
+                        help='Whether to use cpu for large memory part, e.g. embedding?')
 
     parser.add_argument('-mode', '--mode', default='dress',
                         help='The Usage Model?')
@@ -34,6 +34,8 @@ def get_args():
                         help='Whether add ppdb rules into training data set?')
     parser.add_argument('-svoc_size', '--subword_vocab_size', default=0, type=int,
                         help='The size of subword vocabulary? if <= 0, not use subword unit.')
+    parser.add_argument('-eval_freq', '--model_eval_freq', default=10000, type=int,
+                        help='The frequency of evaluation at training? not use if = 0.')
 
     # For Graph
     parser.add_argument('-dim', '--dimension', default=300, type=int,
