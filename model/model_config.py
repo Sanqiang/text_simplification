@@ -182,8 +182,10 @@ class WikiDressLargeDefault(DefaultConfig):
     # don't have dress version of tied vocab
     vocab_all = get_path('../text_simplification_data/train/dress/wikilarge/wiki.full.aner.train.vocab')
     if args.lower_case:
-        vocab_simple = vocab_simple + '.lower'
-        vocab_complex = vocab_complex + '.lower'
+        vocab_simple = get_path(
+            '../text_simplification_data/train/dress/wikilarge/wiki.full.aner.train.dst.vocab.lower')
+        vocab_complex = get_path(
+            '../text_simplification_data/train/dress/wikilarge/wiki.full.aner.train.src.vocab.lower')
         vocab_all = vocab_all + '.lower'
 
     # Sub word config
