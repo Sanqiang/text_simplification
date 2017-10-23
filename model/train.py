@@ -117,6 +117,9 @@ def train(model_config=None):
             session.run([graph.replace_emb_complex, graph.replace_emb_simple], input_feed)
             print('Replace Pretrained Word Embedding.')
 
+            del data.pretrained_emb_simple
+            del data.pretrained_emb_complex
+
         # Restore ckpt either from warm start or automatically get when changing optimizer
         ckpt_path = None
         if model_config.warm_start:

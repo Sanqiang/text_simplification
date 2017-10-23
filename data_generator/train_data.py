@@ -136,7 +136,7 @@ class TrainData:
                 'For Vocab Complex, %s words initialized with pretrained vector, '
                 'other %s words initialized randomly. Save to %s.' %
                 (pretrained_cnt, random_cnt, self.model_config.pretrained_embedding_complex))
-            np.save(self.model_config.pretrained_embedding_complex, self.pretrained_emb_complex)
+            # np.save(self.model_config.pretrained_embedding_complex, self.pretrained_emb_complex)
 
             # For vocabulary simple
             pretrained_cnt = 0
@@ -158,7 +158,9 @@ class TrainData:
                 'For Vocab Simple, %s words initialized with pretrained vector, '
                 'other %s words initialized randomly. Save to %s.' %
                 (pretrained_cnt, random_cnt, self.model_config.pretrained_embedding_simple))
-            np.save(self.model_config.pretrained_embedding_simple, self.pretrained_emb_simple)
+            # np.save(self.model_config.pretrained_embedding_simple, self.pretrained_emb_simple)
+
+            del self.glove
 
     def get_data_sample(self):
         i = rd.sample(range(self.size), 1)[0]
