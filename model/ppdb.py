@@ -123,7 +123,7 @@ class PPDB:
                     filter_rules.append('%s=>%s' % ('x', words))
         return filter_rules
 
-    def simplify(self, sent, pairs, vocab):
+    def simplify(self, sent, pairs, vocab, smooth_factor=1e-7):
         sent = ' '.join(sent)
         if not pairs:
             return None, None
@@ -203,8 +203,8 @@ class PPDB:
             sent, be = ori2be(sent, words)
 
             rule_tars = [p[0] for p in target_pairs]
-            rule_tars_p_norm = sum([p[1] for p in target_pairs])
-            rule_tars_p = [p[1] / rule_tars_p_norm for p in target_pairs]
+            rule_tars_p_norm = sum([p[1] + smooth_factor for p in target_pairs])
+            rule_tars_p = [p[1] + smooth_factor / rule_tars_p_norm for p in target_pairs]
             if not rule_tars:
                 print('empty rule_tars')
                 continue
