@@ -28,11 +28,11 @@ class Graph:
         #     self.device_config = '/cpu:0'
 
     def embedding_fn(self, inputs, embedding):
-        with tf.device(self.device_config):
-            if not inputs:
-                return []
-            else:
-                return [tf.nn.embedding_lookup(embedding, inp) for inp in inputs]
+        # with tf.device(self.device_config):
+        if not inputs:
+            return []
+        else:
+            return [tf.nn.embedding_lookup(embedding, inp) for inp in inputs]
 
     def create_model(self):
         with tf.variable_scope('variables'):
