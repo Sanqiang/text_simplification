@@ -107,7 +107,7 @@ class TrainData:
 
             if self.model_config.add_ppdb_training:
                 nwords_simple, data_weight = self.ppdb.simplify(
-                    words_raw_simple, self.ppdb_rules[i], words_simple)
+                    words_raw_simple, self.ppdb_rules[i], self.vocab_simple)
                 if nwords_simple:
                     yield nwords_simple, words_complex, data_weight
                 else:
