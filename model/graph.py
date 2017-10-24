@@ -44,7 +44,7 @@ class Graph:
             self.sentence_simple_input_prior_placeholder = []
             for step in range(self.model_config.max_simple_sentence):
                 self.sentence_simple_input_prior_placeholder.append(
-                    tf.ones(self.model_config.batch_size, tf.float32, name='simple_input_prior'))
+                    tf.zeros(self.model_config.batch_size, tf.float32, name='simple_input_prior'))
 
             self.sentence_complex_input_placeholder = []
             for step in range(self.model_config.max_complex_sentence):

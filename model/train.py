@@ -59,13 +59,12 @@ def get_graph_train_data(
         tmp_sentence_simple.append(sentence_simple)
         tmp_sentence_complex.append(sentence_complex)
 
-        if sentence_simple_weight is not None:
-            if len(sentence_simple_weight) < model_config.max_simple_sentence:
-                num_pad = model_config.max_simple_sentence - len(sentence_simple_weight)
-                sentence_simple_weight.extend(num_pad * [voc.encode(constant.SYMBOL_PAD)])
-            else:
-                sentence_simple_weight = sentence_simple[:model_config.max_simple_sentence]
-            tmp_sentence_simple_weight.append(sentence_simple_weight)
+        if len(sentence_simple_weight) < model_config.max_simple_sentence:
+            num_pad = model_config.max_simple_sentence - len(sentence_simple_weight)
+            sentence_simple_weight.extend(num_pad * [voc.encode(constant.SYMBOL_PAD)])
+        else:
+            sentence_simple_weight = sentence_simple[:model_config.max_simple_sentence]
+        tmp_sentence_simple_weight.append(sentence_simple_weight)
 
     for step in range(model_config.max_simple_sentence):
         input_feed[sentence_simple_input[step].name] = [tmp_sentence_simple[batch_idx][step]
@@ -73,11 +72,10 @@ def get_graph_train_data(
     for step in range(model_config.max_complex_sentence):
         input_feed[sentence_complex_input[step].name] = [tmp_sentence_complex[batch_idx][step]
                                                          for batch_idx in range(model_config.batch_size)]
+    for step in range(model_config.max_simple_sentence):
+        input_feed[sentence_simple_input_weight[step].name] = [tmp_sentence_simple_weight[batch_idx][step]
+                                                               for batch_idx in range(model_config.batch_size)]
 
-    if tmp_sentence_simple_weight:
-        for step in range(model_config.max_simple_sentence):
-            input_feed[sentence_simple_input_weight[step].name] = [tmp_sentence_simple_weight[batch_idx][step]
-                                                                   for batch_idx in range(model_config.batch_size)]
     return input_feed, tmp_sentence_simple, tmp_sentence_complex
 
 

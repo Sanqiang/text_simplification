@@ -209,6 +209,6 @@ class TrainData:
             data_simple, data_weight = self.ppdb.simplify(
                 self.data_simple_raw[i], self.ppdb_rules[i], self.vocab_simple)
             if data_simple:
-                return cp.deepcopy(data_simple), cp.deepcopy(self.data_complex[i]), data_weight
+                return cp.deepcopy(data_simple), cp.deepcopy(self.data_complex[i]), cp.deepcopy(data_weight)
 
-        return cp.deepcopy(self.data_simple[i]), cp.deepcopy(self.data_complex[i]), None
+        return cp.deepcopy(self.data_simple[i]), cp.deepcopy(self.data_complex[i]), cp.deepcopy([1.0] * len(self.data_simple[i]))

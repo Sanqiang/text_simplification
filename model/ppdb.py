@@ -215,24 +215,22 @@ class PPDB:
             nsent = sent.lower().replace(words, target)
 
             target_list = target.split()
+            # Check whether simplified phrase contain UNK
+            for word in target_list:
+                if not vocab.contain(word):
+                    continue
+
             nsent_idx = []
             nsent_weight = []
-            no_unk = True
             for word in nsent.split():
                 wid = vocab.encode(word)
-                if wid == vocab.encode(constant.SYMBOL_UNK):
-                    no_unk = False
-                    break
                 nsent_idx.append(wid)
                 if word in target_list:
                     nsent_weight.append(target_p)
                 else:
                     nsent_weight.append(1.0)
 
-            if no_unk:
-                break
-            else:
-                continue
+            break
 
         return nsent_idx, nsent_weight
 

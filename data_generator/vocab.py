@@ -39,6 +39,7 @@ class Vocab:
             self.w2i[reserved_vocab] = i
             self.i2w.append(reserved_vocab)
 
+
     def populate_vocab(self, mincount=-1):
         mincount = max(mincount, self.model_config.min_count)
 
