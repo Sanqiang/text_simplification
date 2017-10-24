@@ -36,6 +36,8 @@ def get_args():
                         help='The size of subword vocabulary? if <= 0, not use subword unit.')
     parser.add_argument('-eval_freq', '--model_eval_freq', default=10000, type=int,
                         help='The frequency of evaluation at training? not use if = 0.')
+    parser.add_argument('-itrain', '--it_train', default=False, type=bool,
+                        help='Whether to iterate train data set?')
 
     # For Graph
     parser.add_argument('-dim', '--dimension', default=300, type=int,

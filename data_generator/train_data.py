@@ -33,15 +33,20 @@ class TrainData:
             self.vocab_simple = Vocab(model_config, vocab_all_path)
             self.vocab_complex = Vocab(model_config, vocab_all_path)
 
+        self.size = self.get_size(data_complex_path)
         # Populate basic complex simple pairs
-        self.data_simple, self.data_simple_raw = self.populate_data(
-            data_simple_path, self.vocab_simple, need_raw=True)
-        self.data_complex, _ = self.populate_data(data_complex_path, self.vocab_complex)
+        if not self.model_config.it_train:
+            self.data_simple, self.data_simple_raw = self.populate_data(
+                data_simple_path, self.vocab_simple, need_raw=True)
+            self.data_complex, _ = self.populate_data(data_complex_path, self.vocab_complex)
+            assert len(self.data_complex) == self.size
+            assert len(self.data_simple) == self.size
+            assert len(self.data_simple_raw) == self.size
+        else:
+            self.data_it = self.get_data_sample_it(data_simple_path, data_complex_path)
 
-        self.size = len(self.data_simple)
-        assert len(self.data_complex) == self.size
-        assert len(self.data_simple) == self.size
-        assert len(self.data_simple_raw) == self.size
+        print('Use Train Dataset: \n Simple\t %s. \n Complex\t %s. \n Size\t %d.'
+              % (data_simple_path, data_complex_path, self.size))
 
         if self.model_config.add_ppdb_training:
             self.ppdb = PPDB(model_config)
@@ -49,8 +54,6 @@ class TrainData:
             self.ppdb_rules = self.populate_ppdb(ppdb_path)
             assert len(self.ppdb_rules) == self.size
 
-        print('Use Train Dataset: \n Simple\t %s. \n Complex\t %s. \n Size\t %d'
-              % (data_simple_path, data_complex_path, self.size))
         self.init_pretrained_embedding()
 
     def populate_ppdb(self, data_path):
@@ -60,6 +63,61 @@ class TrainData:
             rules.append(rule)
         return rules
 
+    def process_line(self, line, vocab, need_raw=False):
+        if self.model_config.tokenizer == 'split':
+            words = line.split()
+        elif self.model_config.tokenizer == 'nltk':
+            words = word_tokenize(line)
+        else:
+            raise Exception('Unknown tokenizer.')
+
+        words = [Vocab.process_word(word, self.model_config)
+                 for word in words]
+        if need_raw:
+            words_raw = [constant.SYMBOL_START] + words + [constant.SYMBOL_END]
+        else:
+            words_raw = None
+
+        if self.model_config.subword_vocab_size > 0:
+            words = [constant.SYMBOL_START] + words + [constant.SYMBOL_END]
+            words = vocab.encode(' '.join(words))
+        else:
+            words = [vocab.encode(word) for word in words]
+            words = ([self.vocab_simple.encode(constant.SYMBOL_START)] + words +
+                     [self.vocab_simple.encode(constant.SYMBOL_END)])
+
+        return words, words_raw
+
+    def get_size(self, data_complex_path):
+        return len(open(data_complex_path, encoding='utf-8').readlines())
+
+    def get_data_sample_it(self, data_simple_path, data_complex_path):
+        f_simple = open(data_simple_path, encoding='utf-8')
+        f_complex = open(data_complex_path, encoding='utf-8')
+        i = 0
+        while True:
+            if i == self.size:
+                f_simple = open(data_simple_path, encoding='utf-8')
+                f_complex = open(data_complex_path, encoding='utf-8')
+                i = 0
+            line_complex = f_complex.readline()
+            line_simple = f_simple.readline()
+            words_complex, _ = self.process_line(line_complex, self.vocab_complex)
+            words_simple, words_raw_simple = self.process_line(line_simple, self.vocab_simple, need_raw=True)
+
+            if self.model_config.add_ppdb_training:
+                nwords_simple, data_weight = self.ppdb.simplify(
+                    words_raw_simple, self.ppdb_rules[i], words_simple)
+                if nwords_simple:
+                    yield nwords_simple, words_complex, data_weight
+                else:
+                    yield words_simple, words_complex, None
+            else:
+                yield words_simple, words_complex, None
+
+            i += 1
+
+
     def populate_data(self, data_path, vocab, need_raw=False):
         # Populate data into memory
         data = []
@@ -68,26 +126,9 @@ class TrainData:
         # from collections import Counter
         # len_report = Counter()
         for line in open(data_path, encoding='utf-8'):
-            # line = line.split('\t')[2]
-            if self.model_config.tokenizer == 'split':
-                words = line.split()
-            elif self.model_config.tokenizer == 'nltk':
-                words = word_tokenize(line)
-            else:
-                raise Exception('Unknown tokenizer.')
-
-            words = [Vocab.process_word(word, self.model_config)
-                     for word in words]
+            words, words_raw = self.process_line(line, vocab, need_raw)
             if need_raw:
-                words_raw = [constant.SYMBOL_START] + words + [constant.SYMBOL_END]
                 data_raw.append(words_raw)
-            if self.model_config.subword_vocab_size > 0:
-                words = [constant.SYMBOL_START] + words + [constant.SYMBOL_END]
-                words = vocab.encode(' '.join(words))
-            else:
-                words = [vocab.encode(word) for word in words]
-                words = ([self.vocab_simple.encode(constant.SYMBOL_START)] + words +
-                     [self.vocab_simple.encode(constant.SYMBOL_END)])
             data.append(words)
             # len_report.update([len(words)])
             # if len(words) > max_len:

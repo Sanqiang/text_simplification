@@ -38,7 +38,10 @@ def get_graph_train_data(
 
     tmp_sentence_simple, tmp_sentence_complex, tmp_sentence_simple_weight = [], [], []
     for i in range(model_config.batch_size):
-        sentence_simple, sentence_complex, sentence_simple_weight = data.get_data_sample()
+        if not model_config.it_train:
+            sentence_simple, sentence_complex, sentence_simple_weight = data.get_data_sample()
+        else:
+            sentence_simple, sentence_complex, sentence_simple_weight = next(data.data_it)
 
         # PAD zeros
         if len(sentence_simple) < model_config.max_simple_sentence:
