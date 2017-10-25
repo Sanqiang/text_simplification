@@ -44,6 +44,13 @@ SYMBOL_UNK = constant.SYMBOL_UNK
 SYMBOL_START = constant.SYMBOL_START
 SYMBOL_END = constant.SYMBOL_END
 RESERVED_TOKENS = [SYMBOL_GO, SYMBOL_PAD, SYMBOL_UNK, SYMBOL_START, SYMBOL_END]
+RESERVED_NE = ['NUMBER', 'LOCATION', 'ORGANIZATION', 'PERSON']
+RESERVED_NE_CNT = 20
+for cnt in range(1, RESERVED_NE_CNT):
+    for ne in RESERVED_NE:
+        RESERVED_TOKENS.append(ne + '@' + str(cnt))
+
+
 NUM_RESERVED_TOKENS = len(RESERVED_TOKENS)
 RESERVED_TOKENS_DICT = {}
 token_idx = 0
@@ -54,9 +61,10 @@ for token in RESERVED_TOKENS:
 if six.PY2:
   RESERVED_TOKENS_BYTES = RESERVED_TOKENS
 else:
-  RESERVED_TOKENS_BYTES = [bytes(SYMBOL_GO, "ascii"), bytes(SYMBOL_PAD, "ascii"),
-                           bytes(SYMBOL_UNK, "ascii"), bytes(SYMBOL_START, "ascii"),
-                           bytes(SYMBOL_END, "ascii")]
+  RESERVED_TOKENS_BYTES = [bytes(w, 'ascii') for w in RESERVED_TOKENS]
+  # RESERVED_TOKENS_BYTES = [bytes(SYMBOL_GO, "ascii"), bytes(SYMBOL_PAD, "ascii"),
+  #                          bytes(SYMBOL_UNK, "ascii"), bytes(SYMBOL_START, "ascii"),
+  #                          bytes(SYMBOL_END, "ascii")]
 
 # Regular expression for unescaping token strings.
 # '\u' is converted to '_'
