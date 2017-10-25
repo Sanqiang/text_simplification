@@ -61,7 +61,7 @@ def get_graph_train_data(
 
         if len(sentence_simple_weight) < model_config.max_simple_sentence:
             num_pad = model_config.max_simple_sentence - len(sentence_simple_weight)
-            sentence_simple_weight.extend(num_pad * [voc.encode(constant.SYMBOL_PAD)])
+            sentence_simple_weight.extend(num_pad * pad_id)
         else:
             sentence_simple_weight = sentence_simple[:model_config.max_simple_sentence]
         tmp_sentence_simple_weight.append(sentence_simple_weight)

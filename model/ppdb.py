@@ -2,7 +2,6 @@ from model.model_config import get_path, WikiDressLargeDefault
 from data_generator.vocab import Vocab
 from collections import defaultdict
 from model.model_config import DefaultTrainConfig, WikiDressLargeTrainConfig
-from util import constant
 
 from util.arguments import get_args
 import random as rd
