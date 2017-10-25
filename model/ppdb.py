@@ -225,7 +225,7 @@ class PPDB:
                 wid = vocab.encode(word)
                 nsent_idx.append(wid)
                 if word in target_list:
-                    nsent_weight.append(target_p)
+                    nsent_weight.append(1.0 + target_p)
                 else:
                     nsent_weight.append(1.0)
 
