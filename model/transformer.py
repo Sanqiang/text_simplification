@@ -35,6 +35,7 @@ class TransformerGraph(Graph):
                 encoder_outputs = transformer.transformer_encoder(
                     encoder_embed_inputs, encoder_attn_bias, self.hparams)
 
+        encoder_embed_inputs_list = tf.unstack(encoder_embed_inputs, axis=1)
         with tf.variable_scope('transformer_decoder'):
             if self.is_train:
                 # General train
@@ -48,12 +49,14 @@ class TransformerGraph(Graph):
             else:
                 # Beam Search
                 print('Use Beam Search with Beam Search Size %d.' % self.model_config.beam_search_size)
-                return self.transformer_beam_search(encoder_outputs, encoder_attn_bias)
+                return self.transformer_beam_search(encoder_outputs, encoder_attn_bias, encoder_embed_inputs_list)
 
         output = ModelOutput(
             decoder_outputs=decoder_output_list,
             decoder_logit_list=decoder_logit_list,
-            gt_target_list=gt_target_list)
+            gt_target_list=gt_target_list,
+            encoder_embed_inputs_list=tf.unstack(encoder_embed_inputs, axis=1)
+        )
         return output
 
     def decode_step(self, decode_input_list, encoder_outputs, encoder_attn_bias):
@@ -70,7 +73,7 @@ class TransformerGraph(Graph):
             for d in tf.split(decoder_output, target_length, axis=1)]
         return decoder_output_list
 
-    def transformer_beam_search(self, encoder_outputs, encoder_attn_bias):
+    def transformer_beam_search(self, encoder_outputs, encoder_attn_bias, encoder_embed_inputs_list):
         # Use Beam Search in evaluation stage
         # Update [a, b, c] to [a, a, a, b, b, b, c, c, c] if beam_search_size == 3
         encoder_beam_outputs = tf.concat(
@@ -112,7 +115,9 @@ class TransformerGraph(Graph):
         output = ModelOutput(
             decoder_outputs=decoder_outputs,
             decoder_score=decoder_score,
-            decoder_target_list=decoder_target_list)
+            decoder_target_list=decoder_target_list,
+            encoder_embed_inputs_list=encoder_embed_inputs_list
+        )
         return output
 
     def output_to_logit(self, prev_out):

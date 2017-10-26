@@ -82,9 +82,10 @@ class Graph:
 
             if not self.is_train and self.model_config.replace_unk_by_emb:
                 # Get output list matrix for replacement by embedding
-                self.encoder_embs = tf.stack(
-                    self.embedding_fn(self.sentence_complex_input_placeholder, self.emb_complex),
-                    axis=1)
+                # self.encoder_embs = tf.stack(
+                #     self.embedding_fn(self.sentence_complex_input_placeholder, self.emb_complex),
+                #     axis=1)
+                self.encoder_embs = tf.stack(output.encoder_embed_inputs_list, axis=1)
                 if type(output.decoder_outputs) == list:
                     self.decoder_outputs = tf.stack(output.decoder_outputs, axis=1)
                 else:
@@ -277,12 +278,18 @@ class Graph:
 
 class ModelOutput:
     def __init__(self, decoder_outputs=None, decoder_logit_list=None, decoder_target_list=None,
-                 decoder_score=None, gt_target_list=None):
+                 decoder_score=None, gt_target_list=None, encoder_embed_inputs_list=None):
         self._decoder_outputs = decoder_outputs
         self._decoder_logit_list = decoder_logit_list
         self._decoder_target_list = decoder_target_list
         self._decoder_score = decoder_score
         self._gt_target_list = gt_target_list
+        self._encoder_embed_inputs_list = encoder_embed_inputs_list
+
+    @property
+    def encoder_embed_inputs_list(self):
+        """The final embedding input before model."""
+        return self._encoder_embed_inputs_list
 
     @property
     def decoder_outputs(self):
