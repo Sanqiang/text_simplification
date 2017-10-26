@@ -7,6 +7,7 @@ from util.arguments import get_args
 import random as rd
 from numpy.random import choice
 from nltk.stem import WordNetLemmatizer
+import copy as cp
 import re
 import time
 
@@ -195,7 +196,7 @@ class PPDB:
             words = pair[1]
             tag = pair[0]
             # Use originl (includes be) to check target
-            target_pairs = self.rules[words][tag]
+            target_pairs = cp.deepcopy(self.rules[words][tag])
             if 'X' in self.rules[words]:
                 target_pairs += self.rules[words]['X']
             # Use replaced one (be will changed to am,is,are,be) to check replace
