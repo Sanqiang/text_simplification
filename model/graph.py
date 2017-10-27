@@ -133,13 +133,16 @@ class Graph:
                 if self.model_config.use_quality_model:
                     sentence_simple_input_mat = tf.stack(self.sentence_simple_input_placeholder, axis=1)
                     sentence_complex_input_mat = tf.stack(self.sentence_complex_input_placeholder, axis=1)
-                    weight_quality = tf.py_func(metric.length_ratio,
-                                                [sentence_simple_input_mat,
-                                                 sentence_complex_input_mat],
-                                                [tf.float32], stateful=False, name='quality_weight')
-                    weight_quality[0].set_shape([self.model_config.batch_size])
-                    weight_quality = tf.stack(
-                        [weight_quality[0] for _ in range(self.model_config.max_complex_sentence)], axis=-1)
+                    weight_quality = tf.py_func(metric.lm_quality,
+                                                [
+                                                    sentence_simple_input_mat,
+                                                    # sentence_complex_input_mat
+                                                 ],
+                                                tf.float32, stateful=False, name='quality_weight')
+                    weight_quality.set_shape([self.model_config.batch_size])
+                    weight_quality =tf.expand_dims(weight_quality, axis=-1)
+                    # weight_quality = tf.stack(
+                    #     [weight_quality[0] for _ in range(self.model_config.max_simple_sentence)], axis=-1)
 
                     decode_word_weight = tf.multiply(decode_word_weight, weight_quality)
 

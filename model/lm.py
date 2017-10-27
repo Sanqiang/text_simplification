@@ -14,6 +14,25 @@ class GoogleLM:
     def __init__(self):
         self.vocab = CharsVocabulary(BASE_PATH + 'vocab-2016-09-10.txt', MAX_WORD_LEN)
         self.sess, self.t = self.load_model()
+        print('Init GoogleLM Session .')
+
+    def get_weight(self, sentence):
+        inputs, targets, weights, char_inputs = self.get_data(sentence)
+        output_weights = []
+        for inp, target, weight, char_input in zip(
+                inputs[:-2], targets[:-2], weights[:-2], char_inputs[:-2]):
+            input_dict = {
+                self.t['inputs_in']: inp,
+                self.t['targets_in']: target,
+                self.t['target_weights_in']: weight}
+            if 'char_inputs_in' in self.t:
+                input_dict[self.t['char_inputs_in']] = char_input
+            log_perp = self.sess.run(self.t['log_perplexity_out'], feed_dict=input_dict)
+            output_weight = 1 + 1 / log_perp
+            if output_weight > 5:
+                output_weight = 5
+            output_weights.append(output_weight)
+        return np.mean(output_weights)
 
     def assess(self, sentence):
         inputs, targets, weights, char_inputs = self.get_data(sentence)
@@ -28,7 +47,7 @@ class GoogleLM:
                 input_dict[self.t['char_inputs_in']] = char_input
             log_perp = self.sess.run(self.t['log_perplexity_out'], feed_dict=input_dict)
 
-            perplexity = log_perp
+            perplexity = 1 + 1 / log_perp
 
             print('Assess step %d, Barrier Value for word %s is %s' %
                   (step, self.vocab.id_to_word(target[0][0]), perplexity))
@@ -237,4 +256,5 @@ class CharsVocabulary(Vocabulary):
 
 if __name__ == '__main__':
     lm = GoogleLM()
-    lm.assess_interactive()
+    # lm.assess_interactive()
+    lm.get_weight('i am a sanqiang .')

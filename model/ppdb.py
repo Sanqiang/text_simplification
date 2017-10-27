@@ -84,7 +84,7 @@ class PPDB:
     def process_training(self, line_sep='\n'):
         output = ''
         line_idx = 0
-        syntaxs = open(self.model_config.train_dataset_simple_syntax, encoding='utf-8').readlines()
+        syntaxs = open(self.model_config.train_dataset_simple_ppdb, encoding='utf-8').readlines()
         pre_time = time.time()
         for i, syntax in enumerate(syntaxs):
             syntax = syntax.strip()
@@ -123,8 +123,8 @@ class PPDB:
                     filter_rules.append('%s=>%s' % ('x', words))
         return filter_rules
 
-    def simplify(self, sent, pairs, vocab, smooth_factor=1e-7):
-        sent = ' '.join(sent)
+    def simplify(self, sent_simp, sent_comp, pairs, vocab, smooth_factor=1e-7):
+        sent_simp = ' '.join(sent_simp)
         if not pairs:
             return None, None
 
@@ -191,7 +191,7 @@ class PPDB:
             idx = int(rd.random() * len(pairs))
             pair = pairs[idx]
             if len(pair) != 2:
-                print('pairs error! %s in %s.' % (pairs, sent))
+                print('pairs error! %s in %s.' % (pairs, sent_simp))
                 continue
             words = pair[1]
             tag = pair[0]
@@ -200,7 +200,7 @@ class PPDB:
             if 'X' in self.rules[words]:
                 target_pairs += self.rules[words]['X']
             # Use replaced one (be will changed to am,is,are,be) to check replace
-            sent, be = ori2be(sent, words)
+            sent_simp, be = ori2be(sent_simp, words)
 
             rule_tars = [p[0] for p in target_pairs]
             rule_tars_p_norm = sum([p[1] + smooth_factor for p in target_pairs])
@@ -211,8 +211,8 @@ class PPDB:
             target = choice(rule_tars, p=rule_tars_p, size=1)[0]
             target_p = rule_tars_p[rule_tars.index(target)]
 
-            target = be2ori(sent, target, be)
-            nsent = sent.lower().replace(words, target)
+            target = be2ori(sent_simp, target, be)
+            nsent = sent_simp.lower().replace(words, target)
 
             target_list = target.split()
             # Check whether simplified phrase contain UNK
@@ -226,7 +226,7 @@ class PPDB:
                 wid = vocab.encode(word)
                 nsent_idx.append(wid)
                 if word in target_list:
-                    nsent_weight.append(1.0 + target_p)
+                    nsent_weight.append(target_p)
                 else:
                     nsent_weight.append(1.0)
 

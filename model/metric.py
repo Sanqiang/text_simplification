@@ -3,6 +3,7 @@ from util import constant
 from util.sari import SARIsent
 from util.fkgl import get_fkgl
 from util.decode import truncate_sent
+from model.lm import GoogleLM
 
 from nltk.translate.bleu_score import sentence_bleu
 
@@ -11,6 +12,7 @@ class Metric:
     def __init__(self, model_config, data):
         self.model_config = model_config
         self.data = data
+        self.lm = GoogleLM()
 
     """Used for training weight."""
     def rl_process(self, sentence_complex_input, sentence_simple_input, sentence_generation):
@@ -114,7 +116,7 @@ class Metric:
         return 1.0 + np.mean(weights)
 
     """Used for Data quality."""
-    def bleu(self, sentence_simple_input, sentence_complex_input):
+    def bleu_quality(self, sentence_simple_input, sentence_complex_input):
         batch_size = np.shape(sentence_simple_input)[0]
         bleus = []
 
@@ -150,13 +152,28 @@ class Metric:
 
         return np.array(len_ratios, dtype=np.float32)
 
+    def lm_quality(self, sentence_simple_input):
+        batch_size = np.shape(sentence_simple_input)[0]
+        lm_weights = []
+
+        for batch_i in range(batch_size):
+            sent_simple = [self.data.vocab_simple.describe(wid)
+                           for wid in sentence_simple_input[batch_i, :]]
+            sent_simple = truncate_sent(sent_simple)
+            sent_simple = ' '.join(sent_simple)
+            lm_weight = self.lm.get_weight(sent_simple)
+            lm_weights.append(lm_weight)
+
+        return np.array(lm_weights, dtype=np.float32)
+
+
 
 if __name__ == '__main__':
     from model.model_config import DefaultConfig
     from data_generator.train_data import TrainData
     sentence_complex_input = [[3, 16, 11, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [3, 16, 11, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]]
-    sentence_simple_input = [[3, 11, 12 ,1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],[3, 11, 12 ,1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]]
-    sentence_generation = [[3, 11, 12 ,1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],[3, 11, 12 ,1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]]
+    sentence_simple_input = [[3, 11, 12 ,1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [3, 11, 12 ,1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]]
+    sentence_generation = [[3, 11, 12 ,1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [3, 11, 12 ,1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]]
     config = DefaultConfig()
     config.rl_bleu = 1.0
     config.rl_fkgl = 1.5

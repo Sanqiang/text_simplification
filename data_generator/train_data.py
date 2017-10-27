@@ -38,10 +38,12 @@ class TrainData:
         if not self.model_config.it_train:
             self.data_simple, self.data_simple_raw = self.populate_data(
                 data_simple_path, self.vocab_simple, need_raw=True)
-            self.data_complex, _ = self.populate_data(data_complex_path, self.vocab_complex)
+            self.data_complex, self.data_complex_raw = self.populate_data(
+                data_complex_path, self.vocab_complex, need_raw=True)
             assert len(self.data_complex) == self.size
             assert len(self.data_simple) == self.size
             assert len(self.data_simple_raw) == self.size
+            assert len(self.data_complex_raw) == self.size
         else:
             self.data_it = self.get_data_sample_it(data_simple_path, data_complex_path)
 
@@ -207,7 +209,7 @@ class TrainData:
         i = rd.sample(range(self.size), 1)[0]
         if self.model_config.add_ppdb_training:
             data_simple, data_weight = self.ppdb.simplify(
-                self.data_simple_raw[i], self.ppdb_rules[i], self.vocab_simple)
+                self.data_simple_raw[i], self.data_complex_raw[i], self.ppdb_rules[i], self.vocab_simple)
             if data_simple:
                 return data_simple, cp.deepcopy(self.data_complex[i]), data_weight
 
