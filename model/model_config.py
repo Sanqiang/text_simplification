@@ -178,7 +178,7 @@ class WikiDressLargeDefault(DefaultConfig):
     train_dataset_complex = get_path('../text_simplification_data/train/dress/wikilarge/wiki.full.aner.train.src')
     # train_dataset_complex_ppdb = get_path('../text_simplification_data/train/dress/wikilarge/wiki.full.aner.train.src.rules')
     # add .dress extention will be same vocab as dress by add .dress in the end
-    if args.uour_vocab:
+    if args.our_vocab:
         vocab_simple = get_path('../text_simplification_data/train/dress/wikilarge/wiki.full.aner.train.dst.vocab')
         vocab_complex = get_path('../text_simplification_data/train/dress/wikilarge/wiki.full.aner.train.src.vocab')
     else:
