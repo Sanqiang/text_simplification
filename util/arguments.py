@@ -30,6 +30,8 @@ def get_args():
                         help='Whether to lowercase the vocabulary?')
     parser.add_argument('-mc', '--min_count', default=5, type=int,
                         help='Truncate the vocabulary less than equal to the count?')
+    parser.add_argument('-ovoc', '--our_vocab', default=False, type=bool,
+                        help='Whether to use our own vocab')
     parser.add_argument('-ppdb', '--add_ppdb_training', default=False, type=bool,
                         help='Whether add ppdb rules into training data set?')
     parser.add_argument('-svoc_size', '--subword_vocab_size', default=0, type=int,
