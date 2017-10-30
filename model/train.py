@@ -164,6 +164,20 @@ def train(model_config=None):
             print('Perplexity:\t%f at step %d with lr %s' % (perplexity, step, lr))
             perplexitys.clear()
 
+        if step % 20 == 0:
+            import tracemalloc
+
+            tracemalloc.start()
+
+            # ... run your application ...
+
+            snapshot = tracemalloc.take_snapshot()
+            top_stats = snapshot.statistics('lineno')
+
+            print("[ Top 10 ]")
+            for stat in top_stats[:10]:
+                print(stat)
+
         if model_config.model_eval_freq > 0 and step % model_config.model_eval_freq == 0:
             from model.model_config import SubValWikiEightRefConfig, SubTestWikiEightRefConfig
             from model.model_config import DefaultTestConfig, DefaultTestConfig2

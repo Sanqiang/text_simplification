@@ -50,11 +50,12 @@ class TrainData:
         print('Use Train Dataset: \n Simple\t %s. \n Complex\t %s. \n Size\t %d.'
               % (data_simple_path, data_complex_path, self.size))
 
-        if self.model_config.add_ppdb_training:
+        if self.model_config.ppdb_mode != 'none':
             self.ppdb = PPDB(model_config)
-            ppdb_path = self.model_config.train_dataset_simple_ppdb
-            self.ppdb_rules = self.populate_ppdb(ppdb_path)
-            assert len(self.ppdb_rules) == self.size
+            self.ppdb_simp_rules = self.populate_ppdb(self.model_config.train_dataset_simple_ppdb)
+            self.ppdb_comp_rules = self.populate_ppdb(self.model_config.train_dataset_complex_ppdb)
+            assert len(self.ppdb_simp_rules) == self.size
+            assert len(self.ppdb_comp_rules) == self.size
 
         self.init_pretrained_embedding()
 
@@ -93,31 +94,31 @@ class TrainData:
     def get_size(self, data_complex_path):
         return len(open(data_complex_path, encoding='utf-8').readlines())
 
-    def get_data_sample_it(self, data_simple_path, data_complex_path):
-        f_simple = open(data_simple_path, encoding='utf-8')
-        f_complex = open(data_complex_path, encoding='utf-8')
-        i = 0
-        while True:
-            if i == self.size:
-                f_simple = open(data_simple_path, encoding='utf-8')
-                f_complex = open(data_complex_path, encoding='utf-8')
-                i = 0
-            line_complex = f_complex.readline()
-            line_simple = f_simple.readline()
-            words_complex, _ = self.process_line(line_complex, self.vocab_complex)
-            words_simple, words_raw_simple = self.process_line(line_simple, self.vocab_simple, need_raw=True)
-
-            if self.model_config.add_ppdb_training:
-                nwords_simple, data_weight = self.ppdb.simplify(
-                    words_raw_simple, self.ppdb_rules[i], self.vocab_simple)
-                if nwords_simple:
-                    yield nwords_simple, words_complex, data_weight
-                else:
-                    yield words_simple, words_complex, None
-            else:
-                yield words_simple, words_complex, None
-
-            i += 1
+    # def get_data_sample_it(self, data_simple_path, data_complex_path):
+    #     f_simple = open(data_simple_path, encoding='utf-8')
+    #     f_complex = open(data_complex_path, encoding='utf-8')
+    #     i = 0
+    #     while True:
+    #         if i == self.size:
+    #             f_simple = open(data_simple_path, encoding='utf-8')
+    #             f_complex = open(data_complex_path, encoding='utf-8')
+    #             i = 0
+    #         line_complex = f_complex.readline()
+    #         line_simple = f_simple.readline()
+    #         words_complex, _ = self.process_line(line_complex, self.vocab_complex)
+    #         words_simple, words_raw_simple = self.process_line(line_simple, self.vocab_simple, need_raw=True)
+    #
+    #         if self.model_config.add_ppdb_training:
+    #             nwords_simple, data_weight = self.ppdb.simplify(
+    #                 words_raw_simple, self.ppdb_simp_rules[i], self.vocab_simple)
+    #             if nwords_simple:
+    #                 yield nwords_simple, words_complex, data_weight
+    #             else:
+    #                 yield words_simple, words_complex, None
+    #         else:
+    #             yield words_simple, words_complex, None
+    #
+    #         i += 1
 
 
     def populate_data(self, data_path, vocab, need_raw=False):
@@ -207,9 +208,9 @@ class TrainData:
 
     def get_data_sample(self):
         i = rd.sample(range(self.size), 1)[0]
-        if self.model_config.add_ppdb_training:
+        if self.model_config.ppdb_mode != 'none':
             data_simple, data_weight = self.ppdb.simplify(
-                self.data_simple_raw[i], self.data_complex_raw[i], self.ppdb_rules[i], self.vocab_simple)
+                self.data_simple[i], self.data_complex[i], self.ppdb_simp_rules[i], self.ppdb_comp_rules[i], self.vocab_simple)
             if data_simple:
                 return data_simple, cp.deepcopy(self.data_complex[i]), data_weight
 

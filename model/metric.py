@@ -12,7 +12,8 @@ class Metric:
     def __init__(self, model_config, data):
         self.model_config = model_config
         self.data = data
-        self.lm = GoogleLM()
+        if model_config.use_quality_model:
+            self.lm = GoogleLM()
 
     """Used for training weight."""
     def rl_process(self, sentence_complex_input, sentence_simple_input, sentence_generation):

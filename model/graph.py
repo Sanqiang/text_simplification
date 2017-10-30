@@ -22,6 +22,7 @@ class Graph:
         self.model_fn = None
         print('Batch Size:\t%d.' % self.model_config.batch_size)
         self.rand_unif_init = tf.random_uniform_initializer(-0,.08, 0.08)
+        self.metric = Metric(self.model_config, self.data)
 
         # self.device_config = '/gpu:0'
         # if self.model_config.use_cpu:
@@ -104,8 +105,6 @@ class Graph:
                 prior_weight = tf.stack(self.sentence_simple_input_prior_placeholder, axis=1)
                 decode_word_weight = tf.multiply(prior_weight, decode_word_weight)
 
-                metric = Metric(self.model_config, self.data)
-
                 # Get gt_target (either original one or from rl process)
                 if self.is_train and (
                                 self.model_config.rl_bleu or
@@ -114,7 +113,7 @@ class Graph:
                     # Use RL
                     decoder_word_list = [tf.argmax(logit, axis=-1)
                                          for logit in output.decoder_logit_list]
-                    gt_target, weight_rl = tf.py_func(metric.rl_process,
+                    gt_target, weight_rl = tf.py_func(self.metric.rl_process,
                                                            [
                                                                tf.stack(self.sentence_complex_input_placeholder, axis=1),
                                                                tf.stack(self.sentence_simple_input_placeholder, axis=1),
@@ -133,7 +132,7 @@ class Graph:
                 if self.model_config.use_quality_model:
                     sentence_simple_input_mat = tf.stack(self.sentence_simple_input_placeholder, axis=1)
                     sentence_complex_input_mat = tf.stack(self.sentence_complex_input_placeholder, axis=1)
-                    weight_quality = tf.py_func(metric.lm_quality,
+                    weight_quality = tf.py_func(self.metric.lm_quality,
                                                 [
                                                     sentence_simple_input_mat,
                                                     # sentence_complex_input_mat
