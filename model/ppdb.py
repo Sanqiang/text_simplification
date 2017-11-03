@@ -285,7 +285,8 @@ class PPDB:
             word = vocab.describe(wid)
             nsent_idx.append(wid)
             if 'comp' in self.model_config.ppdb_mode and word in prob_mapper:
-                nsent_weight.append(1.0 + prob_mapper[word])
+                # nsent_weight.append(1.0 + prob_mapper[word])
+                nsent_weight.append(2.0)
             else:
                 nsent_weight.append(1.0)
 
