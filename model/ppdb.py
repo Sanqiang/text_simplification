@@ -173,7 +173,9 @@ class PPDB:
 
         return filter_rules
 
-    def simplify(self, sent_simp, sent_comp, pairs_simp, pairs_comp, vocab, smooth_factor=1e-7):
+    def simplify(self, sent_simp, sent_comp,
+                 pairs_simp, pairs_comp,
+                 vocab_simple, vocab_complex, smooth_factor=1e-7):
         def isplural(word):
             lemma = self.wnl.lemmatize(word, 'n')
             plural = True if word is not lemma else False
@@ -234,8 +236,19 @@ class PPDB:
                 target_words = pair_comp[2]
                 prob = float(pair_comp[3])
                 for target_word in target_words.split():
-                    prob_mapper[target_word] = prob
+                    if self.model_config.ppdb_args is None:
+                        prob_mapper[target_word] = prob
+                    else:
+                        # Because the weight is supposed to be larger than 1 and it already increment 1 below
+                        prob_mapper[target_word] = self.model_config.ppdb_args[0] - 1.0
 
+        if self.model_config.ppdb_args is not None and len(self.model_config.ppdb_args) >= 2:
+            sent_comp_wds = set([vocab_complex.describe(wid).lower() for wid in sent_comp
+                                 if wid > config.REVERED_VOCAB_SIZE])
+            sent_simp_wds = set([vocab_simple.describe(wid).lower() for wid in sent_simp
+                                 if wid > config.REVERED_VOCAB_SIZE])
+            for word in sent_comp_wds & sent_simp_wds:
+                prob_mapper[word] = self.model_config.ppdb_args[1] - 1.0
 
         #TODO(sanqiang) Simp mode need to improved
         if 'simp' in self.model_config.ppdb_mode and pairs_simp:
@@ -274,7 +287,7 @@ class PPDB:
                 simp_target_list = target.split()
                 # Check whether simplified phrase contain UNK
                 for word in simp_target_list:
-                    if not vocab.contain(word):
+                    if not vocab_simple.contain(word):
                         continue
                 sent_simp = nsent
                 break
@@ -282,11 +295,11 @@ class PPDB:
         nsent_idx = []
         nsent_weight = []
         for wid in sent_simp:
-            word = vocab.describe(wid)
+            word = vocab_simple.describe(wid)
+            word = word.lower()
             nsent_idx.append(wid)
-            if 'comp' in self.model_config.ppdb_mode and word in prob_mapper:
-                # nsent_weight.append(1.0 + prob_mapper[word])
-                nsent_weight.append(2.0)
+            if word in prob_mapper:
+                nsent_weight.append(1.0 + prob_mapper[word])
             else:
                 nsent_weight.append(1.0)
 
