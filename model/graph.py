@@ -45,12 +45,17 @@ class Graph:
             self.sentence_simple_input_prior_placeholder = []
             for step in range(self.model_config.max_simple_sentence):
                 self.sentence_simple_input_prior_placeholder.append(
-                    tf.zeros(self.model_config.batch_size, tf.float32, name='simple_input_prior'))
+                    tf.ones(self.model_config.batch_size, tf.float32, name='simple_input_prior'))
 
             self.sentence_complex_input_placeholder = []
             for step in range(self.model_config.max_complex_sentence):
                 self.sentence_complex_input_placeholder.append(
                     tf.zeros(self.model_config.batch_size, tf.int32, name='complex_input'))
+
+            self.sentence_complex_attn_prior_input_placeholder = []
+            for step in range(self.model_config.max_complex_sentence):
+                self.sentence_complex_attn_prior_input_placeholder.append(
+                    tf.ones(self.model_config.batch_size, tf.float32, name='complex_input'))
 
             self.embedding = Embedding(self.data.vocab_complex, self.data.vocab_simple, self.model_config)
             # with tf.device(self.device_config):
@@ -176,7 +181,14 @@ class Graph:
                             att_dists = tf.get_default_graph().get_operation_by_name(
                                 'model/transformer_encoder/encoder/layer_%s/self_attention/multihead_attention/dot_product_attention/attention_weights'
                                 % layer_i).values()[0]
-                            att_dists_sum = tf.reduce_sum(att_dists, axis=-1)
+                            if self.model_config.ppdb_args and len(self.model_config.ppdb_args) >= 3:
+                                self.model_config.attn_loss['enc_self'] *= self.model_config.ppdb_args[2]
+                                attn_prior_input_placeholder = tf.expand_dims(tf.stack(
+                                    self.sentence_complex_attn_prior_input_placeholder, axis=1), axis=1)
+                                att_dists_sum = tf.reduce_sum(att_dists, axis=-1)
+                                att_dists_sum *= attn_prior_input_placeholder
+                            else:
+                                att_dists_sum = tf.reduce_sum(att_dists, axis=-1)
                             att_dists_target = tf.ones(tf.shape(att_dists_sum))
                             att_loss = tf.losses.mean_squared_error(att_dists_target, att_dists_sum) * self.model_config.attn_loss['enc_self']
                             self.loss = tf.add(self.loss, att_loss)
@@ -188,7 +200,14 @@ class Graph:
                             att_dists = tf.get_default_graph().get_operation_by_name(
                                 'model/transformer_decoder/decoder/layer_%s/encdec_attention/multihead_attention/dot_product_attention/attention_weights'
                                 % layer_i).values()[0]
-                            att_dists_sum = tf.reduce_sum(att_dists, axis=-1)
+                            if self.model_config.ppdb_args and len(self.model_config.ppdb_args) >= 3:
+                                self.model_config.attn_loss['enc_dec'] *= self.model_config.ppdb_args[2]
+                                attn_prior_input_placeholder = tf.expand_dims(tf.stack(
+                                    self.sentence_complex_attn_prior_input_placeholder, axis=1), axis=1)
+                                att_dists_sum = tf.reduce_sum(att_dists, axis=-1)
+                                att_dists_sum *= attn_prior_input_placeholder
+                            else:
+                                att_dists_sum = tf.reduce_sum(att_dists, axis=-1)
                             att_dists_target = tf.ones(tf.shape(att_dists_sum))
                             att_loss = tf.losses.mean_squared_error(att_dists_target, att_dists_sum) * self.model_config.attn_loss['enc_dec']
                             self.loss = tf.add(self.loss, att_loss)

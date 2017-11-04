@@ -209,11 +209,11 @@ class TrainData:
     def get_data_sample(self):
         i = rd.sample(range(self.size), 1)[0]
         if self.model_config.ppdb_mode != 'none':
-            data_simple, data_weight = self.ppdb.simplify(
+            data_simple, data_weight, attn_weight = self.ppdb.simplify(
                 self.data_simple[i], self.data_complex[i],
                 self.ppdb_simp_rules[i], self.ppdb_comp_rules[i],
                 self.vocab_simple, self.vocab_complex)
             if data_simple:
-                return data_simple, cp.deepcopy(self.data_complex[i]), data_weight
+                return data_simple, cp.deepcopy(self.data_complex[i]), data_weight, attn_weight
 
-        return cp.deepcopy(self.data_simple[i]), cp.deepcopy(self.data_complex[i]), cp.deepcopy([1.0] * len(self.data_simple[i]))
+        return cp.deepcopy(self.data_simple[i]), cp.deepcopy(self.data_complex[i]), cp.deepcopy([1.0] * len(self.data_simple[i])), cp.deepcopy([1.0] * len(self.data_complex[i]))

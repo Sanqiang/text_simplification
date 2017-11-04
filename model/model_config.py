@@ -75,6 +75,7 @@ class DefaultConfig():
     # ppdb_args: arguments for ppdb
     # for comp mode, empty uses rule weight
     # or 2.0|1.5 indicates 2.0 weight for SARI simple words and 1.5 weight for SARI keep words
+    # or 2.0|1.5|1.0 the last 1.0 indicate enc_dec attention loss
     ppdb_mode = args.ppdb_mode
     ppdb_args = args.ppdb_args
     if ppdb_mode == 'comp':

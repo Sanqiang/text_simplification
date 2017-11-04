@@ -26,6 +26,7 @@ def get_graph_train_data(
         sentence_simple_input,
         sentence_complex_input,
         sentence_simple_input_weight,
+        sentence_complex_attn_weight,
         model_config):
     input_feed = {}
     # Reserved section of vocabuary are same.
@@ -36,12 +37,12 @@ def get_graph_train_data(
     else:
         pad_id = [voc.encode(constant.SYMBOL_PAD)]
 
-    tmp_sentence_simple, tmp_sentence_complex, tmp_sentence_simple_weight = [], [], []
+    tmp_sentence_simple, tmp_sentence_complex, tmp_sentence_simple_weight, tmp_attn_weight = [], [], [], []
     for i in range(model_config.batch_size):
         if not model_config.it_train:
-            sentence_simple, sentence_complex, sentence_simple_weight = data.get_data_sample()
+            sentence_simple, sentence_complex, sentence_simple_weight, attn_weight = data.get_data_sample()
         else:
-            sentence_simple, sentence_complex, sentence_simple_weight = next(data.data_it)
+            sentence_simple, sentence_complex, sentence_simple_weight, attn_weight = next(data.data_it)
 
         # PAD zeros
         if len(sentence_simple) < model_config.max_simple_sentence:
@@ -66,6 +67,13 @@ def get_graph_train_data(
             sentence_simple_weight = sentence_simple[:model_config.max_simple_sentence]
         tmp_sentence_simple_weight.append(sentence_simple_weight)
 
+        if len(attn_weight) < model_config.max_complex_sentence:
+            num_pad = model_config.max_complex_sentence - len(attn_weight)
+            attn_weight.extend(num_pad * pad_id)
+        else:
+            attn_weight = attn_weight[:model_config.max_complex_sentence]
+        tmp_attn_weight.append(attn_weight)
+
     for step in range(model_config.max_simple_sentence):
         input_feed[sentence_simple_input[step].name] = [tmp_sentence_simple[batch_idx][step]
                                                         for batch_idx in range(model_config.batch_size)]
@@ -74,6 +82,9 @@ def get_graph_train_data(
                                                          for batch_idx in range(model_config.batch_size)]
     for step in range(model_config.max_simple_sentence):
         input_feed[sentence_simple_input_weight[step].name] = [tmp_sentence_simple_weight[batch_idx][step]
+                                                               for batch_idx in range(model_config.batch_size)]
+    for step in range(model_config.max_complex_sentence):
+        input_feed[sentence_complex_attn_weight[step].name] = [tmp_attn_weight[batch_idx][step]
                                                                for batch_idx in range(model_config.batch_size)]
 
     return input_feed, tmp_sentence_simple, tmp_sentence_complex
@@ -153,6 +164,7 @@ def train(model_config=None):
             graph.sentence_simple_input_placeholder,
             graph.sentence_complex_input_placeholder,
             graph.sentence_simple_input_prior_placeholder,
+            graph.sentence_complex_attn_prior_input_placeholder,
             model_config)
 
         fetches = [graph.train_op, graph.loss, graph.global_step, graph.decoder_target_list,

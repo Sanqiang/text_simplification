@@ -2,6 +2,7 @@ from model.model_config import get_path, WikiDressLargeDefault
 from data_generator.vocab import Vocab
 from collections import defaultdict
 from model.model_config import DefaultTrainConfig, WikiDressLargeTrainConfig
+from util import constant
 
 from util.arguments import get_args
 import random as rd
@@ -230,25 +231,30 @@ class PPDB:
                 return ' '.join(target_list)
             return target
 
-        prob_mapper = {}
+        prob_simp_mapper = {}
+        prob_comp_mapper = {}
         if 'comp' in self.model_config.ppdb_mode and pairs_comp:
             for pair_comp in pairs_comp:
+                origin_words = pair_comp[1]
                 target_words = pair_comp[2]
                 prob = float(pair_comp[3])
                 for target_word in target_words.split():
                     if self.model_config.ppdb_args is None:
-                        prob_mapper[target_word] = prob
+                        prob_simp_mapper[target_word] = prob
                     else:
                         # Because the weight is supposed to be larger than 1 and it already increment 1 below
-                        prob_mapper[target_word] = self.model_config.ppdb_args[0] - 1.0
+                        prob_simp_mapper[target_word] = self.model_config.ppdb_args[0] - 1.0
+                        for origin_word in origin_words:
+                            prob_comp_mapper[origin_word] = self.model_config.ppdb_args[0] - 1.0
 
         if self.model_config.ppdb_args is not None and len(self.model_config.ppdb_args) >= 2:
             sent_comp_wds = set([vocab_complex.describe(wid).lower() for wid in sent_comp
-                                 if wid > config.REVERED_VOCAB_SIZE])
+                                 if wid > constant.REVERED_VOCAB_SIZE])
             sent_simp_wds = set([vocab_simple.describe(wid).lower() for wid in sent_simp
-                                 if wid > config.REVERED_VOCAB_SIZE])
+                                 if wid > constant.REVERED_VOCAB_SIZE])
             for word in sent_comp_wds & sent_simp_wds:
-                prob_mapper[word] = self.model_config.ppdb_args[1] - 1.0
+                prob_simp_mapper[word] = self.model_config.ppdb_args[1] - 1.0
+                prob_comp_mapper[word] = self.model_config.ppdb_args[1] - 1.0
 
         #TODO(sanqiang) Simp mode need to improved
         if 'simp' in self.model_config.ppdb_mode and pairs_simp:
@@ -294,16 +300,25 @@ class PPDB:
 
         nsent_idx = []
         nsent_weight = []
+        attn_weight = []
         for wid in sent_simp:
             word = vocab_simple.describe(wid)
             word = word.lower()
             nsent_idx.append(wid)
-            if word in prob_mapper:
-                nsent_weight.append(1.0 + prob_mapper[word])
+            if word in prob_simp_mapper:
+                nsent_weight.append(1.0 + prob_simp_mapper[word])
             else:
                 nsent_weight.append(1.0)
 
-        return nsent_idx, nsent_weight
+        for wid in sent_comp:
+            word = vocab_complex.describe(wid)
+            word = word.lower()
+            if word in prob_comp_mapper:
+                attn_weight.append(prob_comp_mapper[word])
+            else:
+                attn_weight.append(0.0)
+
+        return nsent_idx, nsent_weight, attn_weight
 
 
 def get_refine_data():
