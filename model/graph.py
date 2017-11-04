@@ -187,6 +187,7 @@ class Graph:
                                     self.sentence_complex_attn_prior_input_placeholder, axis=1), axis=1)
                                 att_dists_sum = tf.reduce_sum(att_dists, axis=-1)
                                 att_dists_sum *= attn_prior_input_placeholder
+                                print('Use PPDB Attention Loss for enc_self.')
                             else:
                                 att_dists_sum = tf.reduce_sum(att_dists, axis=-1)
                             att_dists_target = tf.ones(tf.shape(att_dists_sum))
@@ -206,6 +207,7 @@ class Graph:
                                     self.sentence_complex_attn_prior_input_placeholder, axis=1), axis=1)
                                 att_dists_sum = tf.reduce_sum(att_dists, axis=-1)
                                 att_dists_sum *= attn_prior_input_placeholder
+                                print('Use PPDB Attention Loss for enc_dec.')
                             else:
                                 att_dists_sum = tf.reduce_sum(att_dists, axis=-1)
                             att_dists_target = tf.ones(tf.shape(att_dists_sum))
