@@ -49,6 +49,10 @@ class DefaultConfig():
     rl_sari = args.rl_sari
     rl_fkgl = args.rl_fkgl
 
+    # RL2 weight
+    rl_keep = args.rl_keep
+    rl_simp = args.rl_simp
+
     # Overwrite transformer config
     # timing: use positional encoding
     hparams_pos = args.hparams_pos

@@ -4,6 +4,7 @@ from util.sari import SARIsent
 from util.fkgl import get_fkgl
 from util.decode import truncate_sent
 from model.lm import GoogleLM
+from model.ppdb import PPDB
 
 from nltk.translate.bleu_score import sentence_bleu
 
@@ -14,8 +15,17 @@ class Metric:
         self.data = data
         if model_config.use_quality_model:
             self.lm = GoogleLM()
+        if model_config.rl_simp:
+            self.ppdb = PPDB(model_config)
+            # Copied from data_generator/train_data.py
+            self.syntaxs = []
+            for line in open(self.model_config.train_dataset_complex_ppdb, encoding='utf-8'):
+                syntax = [r.split('=>') for r in line.strip().split('\t') if len(r) > 0]
+                self.syntaxs.append(syntax)
 
     """Used for training weight."""
+    """RL version 1: automatically pick up words and give weight"""
+    # todo(sanqiang): reword function need to improved
     def rl_process(self, sentence_complex_input, sentence_simple_input, sentence_generation):
         batch_size = np.shape(sentence_simple_input)[0]
         nsents = []
@@ -116,6 +126,60 @@ class Metric:
                 print('ignore bleu weight: %s' % sentence_cand_str)
         return 1.0 + np.mean(weights)
 
+    """RL version 2: only weight words"""
+    def rl_process2(self, sentence_complex_input, sentence_simple_input, sentence_generation, idxs):
+        batch_size = np.shape(sentence_simple_input)[0]
+        nsent_weights = []
+        for batch_i in range(batch_size):
+            idx = idxs[batch_i]
+            syntax = self.syntaxs[idx]
+            cur_sentence_generation_list = [self.data.vocab_simple.describe(wid)
+                                            for wid in list(sentence_generation[batch_i])]
+            prob_mapper = {}
+            nsent_weight = []
+            if self.model_config.rl_simp:
+                for quad in syntax:
+                    target_words = quad[2]
+                    for target_word in target_words.split():
+                        prob_mapper[target_word] = self.model_config.rl_simp
+                    # print('==========Debug Info: Simp==========')
+                    # print('target_word')
+                    # print(target_word)
+
+            if self.model_config.rl_keep:
+                cur_sent_simp_set = set(cur_sentence_generation_list)
+                cur_sent_somp_set = set([self.data.vocab_complex.describe(wid)
+                                               for wid in list(sentence_complex_input[batch_i])
+                                               if wid >= constant.REVERED_VOCAB_SIZE])
+                # print('==========Debug Info: Keep==========')
+                # print('cur_sent_simp_set & cur_sent_somp_set')
+                # print(cur_sent_simp_set & cur_sent_somp_set)
+                for word in (cur_sent_simp_set & cur_sent_somp_set):
+                    prob_mapper[word] = self.model_config.rl_keep
+
+            for word in cur_sentence_generation_list:
+                if word in prob_mapper:
+                    nsent_weight.append(prob_mapper[word])
+                else:
+                    nsent_weight.append(1.0)
+
+            nsent_weights.append(nsent_weight)
+            # print('==========Debug Info==========')
+            # print('idx')
+            # print(idx)
+            # print('prob_mapper')
+            # print(prob_mapper)
+            # print('sentence_complex_input')
+            # print(sentence_complex_input)
+            # print('sentence_simple_input')
+            # print(sentence_simple_input)
+            # print('sentence_generation')
+            # print(sentence_generation)
+            # print('syntax')
+            # print(syntax)
+
+        return np.array(sentence_simple_input, dtype=np.int32), np.array(nsent_weights, dtype=np.float32)
+
     """Used for Data quality."""
     def bleu_quality(self, sentence_simple_input, sentence_complex_input):
         batch_size = np.shape(sentence_simple_input)[0]
@@ -166,7 +230,6 @@ class Metric:
             lm_weights.append(lm_weight)
 
         return np.array(lm_weights, dtype=np.float32)
-
 
 
 if __name__ == '__main__':

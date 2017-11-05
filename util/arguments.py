@@ -66,6 +66,10 @@ def get_args():
     parser.add_argument('-rl_fkgl', '--rl_fkgl', default=0.0, type=float,
                         help='The weight for FKGL in RL?')
 
+    parser.add_argument('-rl_simp', '--rl_simp', default=0.0, type=float,
+                        help='The weight for SARI simple in RL?')
+    parser.add_argument('-rl_keep', '--rl_keep', default=0.0, type=float,
+                        help='The weight for SARI keep in RL?')
 
     # For Transformer
     parser.add_argument('-pos', '--hparams_pos', default='timing',

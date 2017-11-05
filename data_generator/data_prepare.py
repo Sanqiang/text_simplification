@@ -1,53 +1,73 @@
-"""DEPRECATED: I plan to move the data into memory that ease the shuffle as well as access.
-    Convert the raw text file into TFRecords"""
-from util import constant
-import tensorflow as tf
+"""
+
+"""
+from model.lm import GoogleLM
+from collections import defaultdict
+import re
+
 
 class DataPrepareBase:
-    def __init__(self, data_simple, data_complex, output):
-        self.data_simple = data_simple
-        self.data_complex = data_complex
-        self.output = output
+    def __init__(self, model_config):
+        self.model_config = model_config
+        self.language_model = GoogleLM()
 
-    def count(self, add_assert=False):
-        count = 0
-        for _ in open(self.data_simple):
-            count += 1
-        if add_assert:
-            for _ in open(self.data_complex):
-                count -= 1
-            assert count == 0
-        return count
+    def init_ppdb(self):
+        return None
 
-    def _byte_feature(self, value):
-        return tf.train.Feature(bytes_list=tf.train.BytesList(value=[value]))
+    def init_ppdb_simple(self):
+        self.ppdb_simple_rules = defaultdict(dict)
+        for line in open(self.model_config.path_ppdb_refine, encoding='utf-8'):
+            items = line.split('\t')
+            weight = float(items[1])
+            ori_words = items[3].strip()
+            tar_words = items[4].strip()
+            tags = items[2]
+            for tag in tags.split('\\'):
+                # Tag in www.cs.cornell.edu/courses/cs474/2004fa/lec1.pdf
+                if tag[0] == '[':
+                    tag = tag[1:]
+                if tag[-1] == ']':
+                    tag = tag[:-1]
 
-    def convert(self, num_examples=-1):
-        f_simple = open(self.data_simple)
-        f_complex = open(self.data_complex)
-        if num_examples == -1:
-            num_examples = self.count()
+                if re.match('[a-zA-Z]+', ori_words) or re.match('[a-zA-Z]+', tar_words):
+                    if ori_words not in self.ppdb_simple_rules:
+                        self.ppdb_simple_rules[ori_words] = {}
+                    if tag not in self.ppdb_simple_rules[ori_words]:
+                        self.ppdb_simple_rules[ori_words][tag] = {}
+                    if tar_words in self.ppdb_simple_rules[ori_words][tag]:
+                        self.ppdb_simple_rules[ori_words][tag][tar_words] = max(weight, self.ppdb_simple_rules[ori_words][tag][tar_words])
+                    else:
+                        self.ppdb_simple_rules[ori_words][tag][tar_words] = weight
 
-        writer = tf.python_io.TFRecordWriter(self.output)
-        for index in range(num_examples):
-            line_simple = next(f_simple, None)
-            line_complex = next(f_complex, None)
-            if line_simple is None:
-                assert line_complex is None and num_examples == 0
-                break
+    def get_candidate_sent(self):
+        self.init_ppdb_simple()
+        syntaxs = open(self.model_config.train_dataset_complex_syntax, encoding='utf-8').readlines()
+        sents_simp = open(self.model_config.train_dataset_simple, encoding='utf-8').readlines()
+        sents_comp = open(self.model_config.train_dataset_complex, encoding='utf-8').readlines()
+        for i, syntax in enumerate(syntaxs):
+            sent_comp = sents_comp[i]
+            rules = [r.split('=>') for r in syntax.strip().split('\t') if len(r) > 0]
+            for rule in rules:
+                origin_words = rule[1].lower()
+                if origin_words in self.ppdb_simple_rules:
+                    best_perplexity = self.language_model.get_weight(sent_comp)
+                    best_target_words = None
+                    for tag, target_words_list in self.ppdb_simple_rules[origin_words].items():
+                        for target_words in target_words_list:
+                            perplexity = self.language_model.get_weight(sent_comp.replace(origin_words, target_words))
+                            if perplexity < best_perplexity:
+                                best_perplexity = perplexity
+                                best_target_words = target_words
+                    if best_target_words is not None:
+                        sent_comp = sent_comp.replace(origin_words, best_target_words)
+            print('Process %s' % i)
 
-            example = tf.train.Example(features=tf.train.Features(feature={
-                constant.SIMPLE_SENTENCE_LABEL:
-                    self._byte_feature(line_simple.strip().encode()),
-                constant.COMPLEX_SENTENCE_LABEL:
-                    self._byte_feature(line_complex.strip().encode())}))
-            writer.write(example.SerializeToString())
-        writer.close()
+
 
 if __name__ == '__main__':
-    data = DataPrepareBase('../data/dummy_simple_dataset', '../data/dummy_complex_dataset',
-                           '../data/dummy_dataset')
-    data.convert()
+    from model.model_config import WikiDressLargeDefault
+    DataPrepareBase(WikiDressLargeDefault()).get_candidate_sent()
+
 
 
 

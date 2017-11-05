@@ -57,6 +57,8 @@ class Graph:
                 self.sentence_complex_attn_prior_input_placeholder.append(
                     tf.ones(self.model_config.batch_size, tf.float32, name='complex_input'))
 
+            self.sentence_idxs = tf.zeros(self.model_config.batch_size, tf.int32, name='complex_input')
+
             self.embedding = Embedding(self.data.vocab_complex, self.data.vocab_simple, self.model_config)
             # with tf.device(self.device_config):
             self.emb_complex = self.embedding.get_complex_embedding()
@@ -130,7 +132,23 @@ class Graph:
                     gt_target.set_shape([self.model_config.batch_size, self.model_config.max_simple_sentence])
                     weight_rl.set_shape([self.model_config.batch_size, self.model_config.max_simple_sentence])
                     decode_word_weight = weight_rl
-
+                elif self.is_train and (self.model_config.rl_simp or self.model_config.rl_simp):
+                    # Use RL 2
+                    decoder_word_list = [tf.argmax(logit, axis=-1)
+                                         for logit in output.decoder_logit_list]
+                    gt_target, weight_rl = tf.py_func(self.metric.rl_process2,
+                                                           [
+                                                               tf.stack(self.sentence_complex_input_placeholder, axis=1),
+                                                               tf.stack(self.sentence_simple_input_placeholder, axis=1),
+                                                               tf.stack(decoder_word_list, axis=1),
+                                                               self.sentence_idxs
+                                                            ],
+                                                           [tf.int32, tf.float32],
+                                                           stateful=False,
+                                                           name='rl_process2')
+                    gt_target.set_shape([self.model_config.batch_size, self.model_config.max_simple_sentence])
+                    weight_rl.set_shape([self.model_config.batch_size, self.model_config.max_simple_sentence])
+                    decode_word_weight = weight_rl
                 else:
                     gt_target = tf.stack(output.gt_target_list, axis=1)
 

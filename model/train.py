@@ -23,6 +23,7 @@ args = get_args()
 
 def get_graph_train_data(
         data,
+        sentence_idxs,
         sentence_simple_input,
         sentence_complex_input,
         sentence_simple_input_weight,
@@ -37,12 +38,15 @@ def get_graph_train_data(
     else:
         pad_id = [voc.encode(constant.SYMBOL_PAD)]
 
-    tmp_sentence_simple, tmp_sentence_complex, tmp_sentence_simple_weight, tmp_attn_weight = [], [], [], []
+    (tmp_sentence_simple, tmp_sentence_complex,
+     tmp_sentence_simple_weight, tmp_attn_weight,
+     tmp_idxs) = [], [], [], [], []
+
     for i in range(model_config.batch_size):
         if not model_config.it_train:
-            sentence_simple, sentence_complex, sentence_simple_weight, attn_weight = data.get_data_sample()
+            idx, sentence_simple, sentence_complex, sentence_simple_weight, attn_weight = data.get_data_sample()
         else:
-            sentence_simple, sentence_complex, sentence_simple_weight, attn_weight = next(data.data_it)
+            idx, sentence_simple, sentence_complex, sentence_simple_weight, attn_weight = next(data.data_it)
 
         # PAD zeros
         if len(sentence_simple) < model_config.max_simple_sentence:
@@ -74,6 +78,8 @@ def get_graph_train_data(
             attn_weight = attn_weight[:model_config.max_complex_sentence]
         tmp_attn_weight.append(attn_weight)
 
+        tmp_idxs.append(idx)
+
     for step in range(model_config.max_simple_sentence):
         input_feed[sentence_simple_input[step].name] = [tmp_sentence_simple[batch_idx][step]
                                                         for batch_idx in range(model_config.batch_size)]
@@ -86,6 +92,7 @@ def get_graph_train_data(
     for step in range(model_config.max_complex_sentence):
         input_feed[sentence_complex_attn_weight[step].name] = [tmp_attn_weight[batch_idx][step]
                                                                for batch_idx in range(model_config.batch_size)]
+    input_feed[sentence_idxs.name] = [tmp_idxs[batch_idx] for batch_idx in range(model_config.batch_size)]
 
     return input_feed, tmp_sentence_simple, tmp_sentence_complex
 
@@ -161,6 +168,7 @@ def train(model_config=None):
     while True:
         input_feed, sentence_simple, sentence_complex = get_graph_train_data(
             data,
+            graph.sentence_idxs,
             graph.sentence_simple_input_placeholder,
             graph.sentence_complex_input_placeholder,
             graph.sentence_simple_input_prior_placeholder,

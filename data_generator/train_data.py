@@ -214,6 +214,6 @@ class TrainData:
                 self.ppdb_simp_rules[i], self.ppdb_comp_rules[i],
                 self.vocab_simple, self.vocab_complex)
             if data_simple:
-                return data_simple, cp.deepcopy(self.data_complex[i]), data_weight, attn_weight
+                return i, data_simple, cp.deepcopy(self.data_complex[i]), data_weight, attn_weight
 
-        return cp.deepcopy(self.data_simple[i]), cp.deepcopy(self.data_complex[i]), cp.deepcopy([1.0] * len(self.data_simple[i])), cp.deepcopy([1.0] * len(self.data_complex[i]))
+        return i, cp.deepcopy(self.data_simple[i]), cp.deepcopy(self.data_complex[i]), cp.deepcopy([1.0] * len(self.data_simple[i])), cp.deepcopy([1.0] * len(self.data_complex[i]))
