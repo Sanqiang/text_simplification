@@ -82,7 +82,7 @@ class DefaultConfig():
     # or 2.0|1.5|1.0 the last 1.0 indicate enc_dec attention loss
     ppdb_mode = args.ppdb_mode
     ppdb_args = args.ppdb_args
-    if ppdb_mode == 'comp':
+    if ppdb_mode == 'comp' and ppdb_args is not None:
         ppdb_args = [float(w) for w in ppdb_args.split('|')]
 
     # Seq2seq config
