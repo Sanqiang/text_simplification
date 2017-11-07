@@ -400,16 +400,12 @@ def combine_ppdb_rules():
         get_path('../text_simplification_data/train/dress/wikilarge/wiki.full.aner.train.src.rules.comb'),
         'w', encoding='utf-8')
     for i in range(len(lines1)):
-        line1 = lines1[i]
-        line2 = lines2[i]
+        line1 = lines1[i].strip()
+        line2 = lines2[i].strip()
         rule1 = set(line1.split('\t'))
         rule2 = set(line2.split('\t'))
         combine_rule = [r for r in rule1 | rule2]
         nlines.append('\t'.join(combine_rule))
-        if len(nlines) > 10000:
-            f.write('\n'.join(nlines))
-            f.flush()
-            nlines = []
     f.write('\n'.join(nlines))
     f.close()
 
