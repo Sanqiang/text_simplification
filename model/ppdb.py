@@ -82,6 +82,7 @@ class PPDB:
     #     return words
 
     def process_training(self, line_sep='\n', is_comp=False):
+        """From Java-generated words|pos to rules for each training sentnece."""
         output = ''
         line_idx = 0
         if is_comp:
@@ -98,9 +99,9 @@ class PPDB:
             if len(syntax) > 0:
                 syntax_pairs = [p.split('=>') for p in syntax.split('\t')]
                 if is_comp:
-                    rules = ppdb.process_sent(syntax_pairs, sents_simp[i], sents_comp[i])
+                    rules = self.process_sent(syntax_pairs, sents_simp[i], sents_comp[i])
                 else:
-                    rules = ppdb.process_sent(syntax_pairs)
+                    rules = self.process_sent(syntax_pairs)
             rules = '\t'.join(rules)
             output = line_sep.join([output, rules])
             line_idx += 1
@@ -360,15 +361,70 @@ def get_refine_data():
     f_simp.close()
 
 
+def get_ppdbd_data():
+    """Get New PPDB file from PPDB (rathet than PPDB simple)"""
+    nlines = []
+    f = open('/Volumes/Storage/XU_PPDB', 'w', encoding='utf-8')
+    for path in [
+        '/Volumes/Storage/ppdb-1.0-xl-all-simp',
+        '/Volumes/Storage/ppdb-1.0-xxxl-lexical-self-simp']:
+        for line in open(path, encoding='utf-8'):
+            items = line.split('|||')
+            if len(items) < 3:
+                print(line)
+            origin_words = items[1].strip()
+            target_wrods = items[2].strip()
+            if '[' in origin_words or ']' in origin_words or origin_words.isnumeric():
+                continue
+            nline = '\t'.join(['5.0', '1.0', '[X]', origin_words, target_wrods])
+            nlines.append(nline)
+            if len(nlines) > 10000:
+                f.write('\n'.join(nlines))
+                f.flush()
+                nlines = []
+    f.write('\n'.join(nlines))
+    f.close()
+
+
+def combine_ppdb_rules():
+    """Combine two train_dataset_complex_ppdb into one"""
+    lines1 = open(
+        get_path('../text_simplification_data/train/dress/wikilarge/wiki.full.aner.train.src.rules.large'),
+        encoding='utf-8').readlines()
+    lines2 = open(
+        get_path('../text_simplification_data/train/dress/wikilarge/wiki.full.aner.train.src.rules'),
+        encoding='utf-8').readlines()
+    assert len(lines1) == len(lines2)
+    nlines = []
+    f = open(
+        get_path('../text_simplification_data/train/dress/wikilarge/wiki.full.aner.train.src.rules.comb'),
+        'w', encoding='utf-8')
+    for i in range(len(lines1)):
+        line1 = lines1[i]
+        line2 = lines2[i]
+        rule1 = set(line1.split('\t'))
+        rule2 = set(line2.split('\t'))
+        combine_rule = [r for r in rule1 | rule2]
+        nlines.append('\t'.join(combine_rule))
+        if len(nlines) > 10000:
+            f.write('\n'.join(nlines))
+            f.flush()
+            nlines = []
+    f.write('\n'.join(nlines))
+    f.close()
+
+
 if __name__ == '__main__':
-    config = None
-    if args.mode == 'dummy':
-        config = DefaultTrainConfig()
-    elif args.mode == 'dress':
-        config = WikiDressLargeTrainConfig()
-    # get_refine_data()
-    ppdb = PPDB(config)
-    ppdb.process_training(is_comp=True)
+    # get_ppdbd_data()
+    combine_ppdb_rules()
+    # config = None
+    # if args.mode == 'dummy':
+    #     config = DefaultTrainConfig()
+    # elif args.mode == 'dress':
+    #     config = WikiDressLargeTrainConfig()
+    # # get_refine_data()
+    # ppdb = PPDB(config)
+    # ppdb.process_training(is_comp=True)
     # ppdb.simplify(
     #     'There is manuscript evidence that PERSON@1 continued to work on these pieces as late as the period NUMBER@1 â '' NUMBER@2 , and that her niece and nephew , PERSON@2 and PERSON@3 , made further additions as late as NUMBER@3 .',
     #     'manuscript	evidence that	continued	to work on	the period	niece	further')

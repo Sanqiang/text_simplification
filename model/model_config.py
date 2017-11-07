@@ -110,7 +110,7 @@ class DefaultConfig():
     train_dataset_simple_ppdb = get_path('data/train_dummy_simple_dataset.rules')
     train_dataset_simple_syntax = get_path('data/train_dummy_simple_dataset.syntax')
     train_dataset_complex = get_path('data/train_dummy_complex_dataset')
-    train_dataset_complex_ppdb = get_path('data/train_dummy_complex_dataset.rules')
+    train_dataset_complex_ppdb = get_path('data/train_dummy_complex_dataset.rules2')
     vocab_simple = get_path('data/dummy_simple_vocab')
     vocab_complex = get_path('data/dummy_complex_vocab')
     vocab_all = get_path('data/dummy_vocab')
@@ -153,8 +153,11 @@ class DefaultConfig():
     joshua_script = get_path('script/ppdb-simplification-release-joshua5.0/joshua/bin/bleu')
     corpus_sari_script = get_path('script/corpus_sari.sh')
 
-    path_ppdb_refine = get_path(
-        '../text_simplification_data/ppdb/SimplePPDB.enrich')
+    path_ppdb_refine = get_path(args.path_ppdb_refine)
+    # path_ppdb_refine = get_path(
+    #     '../text_simplification_data/ppdb/XU_PPDB')
+    # path_ppdb_refine = get_path(
+    #     '../text_simplification_data/ppdb/SimplePPDB.enrich')
 
     # For Exp
     exp_penalty_alpha = args.exp_penalty_alpha
@@ -191,7 +194,8 @@ class WikiDressLargeDefault(DefaultConfig):
     train_dataset_complex_syntax = get_path(
         '../text_simplification_data/train/dress/wikilarge/wiki.full.aner.train.src.jsyntax')
     train_dataset_complex = get_path('../text_simplification_data/train/dress/wikilarge/wiki.full.aner.train.src')
-    train_dataset_complex_ppdb = get_path('../text_simplification_data/train/dress/wikilarge/wiki.full.aner.train.src.rules')
+    train_dataset_complex_ppdb = get_path(args.train_dataset_complex_ppdb)
+    # train_dataset_complex_ppdb = get_path('../text_simplification_data/train/dress/wikilarge/wiki.full.aner.train.src.rules')
     # add .dress extention will be same vocab as dress by add .dress in the end
     if args.our_vocab:
         vocab_simple = get_path('../text_simplification_data/train/dress/wikilarge/wiki.full.aner.train.dst.vocab')
