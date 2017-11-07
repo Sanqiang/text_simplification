@@ -209,6 +209,7 @@ def train(model_config=None):
                 elif args.mode == 'dress' or args.mode == 'all':
                     # eval(SubValWikiEightRefConfig(), ckpt)
                     eval(SubTestWikiEightRefConfig(), ckpt)
+                    eval(SubValWikiEightRefConfig(), ckpt)
 
 
 if __name__ == '__main__':
