@@ -88,6 +88,8 @@ def get_args():
                         help='Whether to use gate in decode attention?')
     parser.add_argument('-tlg', '--trans_layer_gate', default=False,
                         help='Whether to use gate in each layer of Transformer?')
+    parser.add_argument('-eaf', '--encoder_attn_flatten', default=False,
+                        help='Whether to use each layer output from encoder?')
 
     parser.add_argument('-nhl', '--num_hidden_layers', default=6, type=int,
                         help='Number of hidden layer?')

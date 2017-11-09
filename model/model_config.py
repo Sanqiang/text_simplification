@@ -66,6 +66,7 @@ class DefaultConfig():
     decode_input_gate = args.decode_input_gate
     decode_atten_gate = args.decode_atten_gate
     trans_layer_gate = args.trans_layer_gate
+    encoder_attn_flatten = args.encoder_attn_flatten
     use_quality_model = args.use_quality_model
     # att_loss: attention reconstruction loss
     # enc_self@1|dec_self@1|enc_dec@1

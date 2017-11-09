@@ -28,7 +28,13 @@ class TransformerGraph(Graph):
         with tf.variable_scope('transformer_encoder'):
             encoder_embed_inputs = tf.nn.dropout(encoder_embed_inputs,
                                                  1.0 - self.hparams.layer_prepostprocess_dropout)
-            if self.model_config.trans_layer_gate:
+            if self.model_config.encoder_attn_flatten:
+                encoder_outputs = transformer.transformer_encoder_attn_flatten(
+                    encoder_embed_inputs, encoder_attn_bias, self.hparams)
+                encoder_attn_bias = tf.concat(
+                    [encoder_attn_bias for _ in range(self.model_config.num_hidden_layers)],
+                    axis=-1)
+            elif self.model_config.trans_layer_gate:
                 encoder_outputs = transformer.transformer_encoder_gate(
                     encoder_embed_inputs, encoder_attn_bias, self.hparams)
             else:

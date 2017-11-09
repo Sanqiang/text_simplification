@@ -758,6 +758,57 @@ def transformer_decoder_gate(decoder_input,
     return common_layers.layer_preprocess(x, hparams)
 
 
+def transformer_encoder_attn_flatten(encoder_input,
+                        encoder_self_attention_bias,
+                        hparams,
+                        name="encoder"):
+  """A stack of transformer layers.
+
+  Args:
+    encoder_input: a Tensor
+    encoder_self_attention_bias: bias Tensor for self-attention
+       (see common_attention.attention_bias())
+    hparams: hyperparameters for model
+    name: a string
+
+  Returns:
+    y: a Tensors
+  """
+  encoder_outputs = []
+  x = encoder_input
+  with tf.variable_scope(name):
+    pad_remover = None
+    if hparams.use_pad_remover:
+      pad_remover = expert_utils.PadRemover(
+          common_attention.attention_bias_to_padding(
+              encoder_self_attention_bias))
+    for layer in xrange(hparams.num_encoder_layers or
+                        hparams.num_hidden_layers):
+      with tf.variable_scope("layer_%d" % layer):
+        with tf.variable_scope("self_attention"):
+          y = common_attention.multihead_attention(
+              common_layers.layer_preprocess(x, hparams),
+              None,
+              encoder_self_attention_bias,
+              hparams.attention_key_channels or hparams.hidden_size,
+              hparams.attention_value_channels or hparams.hidden_size,
+              hparams.hidden_size,
+              hparams.num_heads,
+              hparams.attention_dropout,
+              attention_type=hparams.self_attention_type,
+              max_relative_position=hparams.max_relative_position)
+          x = common_layers.layer_postprocess(x, y, hparams)
+        with tf.variable_scope("ffn"):
+          y = transformer_ffn_layer(
+              common_layers.layer_preprocess(x, hparams), hparams, pad_remover)
+          x = common_layers.layer_postprocess(x, y, hparams)
+          encoder_outputs.append(common_layers.layer_preprocess(x, hparams))
+    # if normalization is done in layer_preprocess, then it shuold also be done
+    # on the output, since the output can grow very large, being the sum of
+    # a whole stack of unnormalized layer outputs.
+    return tf.concat(encoder_outputs, axis=1)
+
+
 def transformer_ffn_layer(x, hparams, pad_remover=None):
   """Feed-forward layer in the transformer.
 
