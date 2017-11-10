@@ -443,7 +443,7 @@ class Extractor(object):
         url = get_url(self.id)
         header = '<doc id="%s" url="%s" title="%s">\n' % (self.id, url, self.title)
         # Separate header from text with a newline.
-        header += self.title + '\n\n'
+        # header += self.title + '\n\n'
         header = header.encode('utf-8')
         self.magicWords['pagename'] = self.title
         self.magicWords['fullpagename'] = self.title
@@ -2534,8 +2534,9 @@ def process_dump(input_file, template_file, out_file, file_size, file_compress,
             if delay:
                 logging.info('Delay %ds', delay)
             job = (id, title, page, page_num)
-            jobs_queue.put(job)  # goes to any available extract_process
-            page_num += 1
+            if title[:len('User')] != 'User' and title[:len('Talk')] != 'Talk':
+                jobs_queue.put(job)  # goes to any available extract_process
+                page_num += 1
         page = None  # free memory
 
     input.close()
@@ -2662,7 +2663,7 @@ def main():
     groupO = parser.add_argument_group('Output')
     groupO.add_argument("-o", "--output", default="text",
                         help="directory for extracted files (or '-' for dumping to stdout)")
-    groupO.add_argument("-b", "--bytes", default="1M",
+    groupO.add_argument("-b", "--bytes", default="1G",
                         help="maximum bytes per output file (default %(default)s)",
                         metavar="n[KMG]")
     groupO.add_argument("-c", "--compress", action="store_true",
