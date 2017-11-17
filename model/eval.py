@@ -395,12 +395,12 @@ if __name__ == '__main__':
                 # eval(SubValWikiEightRefConfigBeam4(), ckpt)
                 eval(SubTestWikiEightRefConfigBeam4(), ckpt)
 
-                if model_config.exp_penalty_alpha:
-                    config = SubTestWikiEightRefConfig()
-                    for i in range(10):
-                        alpha = i/10
-                        config.penalty_alpha = alpha
-                        config.output_folder = args.output_folder
-                        config.resultdor = get_path('../' + config.output_folder + '/result/eightref_test_alpha%s' % alpha)
-                        eval(config, ckpt)
+                # if model_config.exp_penalty_alpha:
+                #     config = SubTestWikiEightRefConfig()
+                #     for i in range(10):
+                #         alpha = i/10
+                #         config.penalty_alpha = alpha
+                #         config.output_folder = args.output_folder
+                #         config.resultdor = get_path('../' + config.output_folder + '/result/eightref_test_alpha%s' % alpha)
+                #         eval(config, ckpt)
 

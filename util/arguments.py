@@ -110,6 +110,9 @@ def get_args():
 
 
 
+    # For Test
+    parser.add_argument('-test_ckpt', '--test_ckpt', default='',
+                        help='Path for test ckpt checkpoint?')
 
     args = parser.parse_args()
     return args
