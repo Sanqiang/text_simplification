@@ -97,7 +97,7 @@ class WikiGenerator:
                     cands_simp.append(line)
                 append_before = len(line) >= 1 and line[-1] != '.' and line[-1] != '?' and line[-1] != '!'
 
-        f = open('/Volumes/Storage/wiki/text_pairsl.txt', 'w')
+        f = open('/Volumes/Storage/wiki/text_pairs.txt', 'w')
         for i in range(len(nlines_scores)):
             f.write(nlines_comp[i])
             f.write('\n')
@@ -110,10 +110,10 @@ class WikiGenerator:
             f.write('=========================')
             f.write('\n')
         f.close()
-        f_simp = open('/Volumes/Storage/wiki/text_simp_pairsl.txt', 'w')
-        f_comp = open('/Volumes/Storage/wiki/text_comp_pairsl.txt', 'w')
-        f_score = open('/Volumes/Storage/wiki/text_score_pairsl.txt', 'w')
-        f_title = open('/Volumes/Storage/wiki/text_title_pairsl.txt', 'w')
+        f_simp = open('/Volumes/Storage/wiki/text_simp_pairs.txt', 'w')
+        f_comp = open('/Volumes/Storage/wiki/text_comp_pairs.txt', 'w')
+        f_score = open('/Volumes/Storage/wiki/text_score_pairs.txt', 'w')
+        f_title = open('/Volumes/Storage/wiki/text_title_pairs.txt', 'w')
         f_simp.write('\n'.join(nlines_simp))
         f_comp.write('\n'.join(nlines_comp))
         f_title.write('\n'.join(nlines_title))
@@ -135,7 +135,7 @@ class WikiGenerator:
         for id_simp in range(len(cands_simp)):
             id_comp = np.argmax(tab[id_simp])
             score = tab[id_simp][id_comp]
-            if id_comp in assign_comp and False:
+            if id_comp in assign_comp:
                 post_simps.append(id_simp)
                 post_comps.append(id_comp)
 
@@ -216,10 +216,66 @@ class WikiGenerator:
             score += 3 * self.tfidf[shared_word] if is_ner else self.tfidf[shared_word]
         return score
 
+    def remove_dup(self):
+        def find_sim(query, collections):
+            scores = [-1 for _ in range(len(collections))]
+            query_set = set(query)
+            for coll_id, collection in enumerate(collections):
+                coll_set = set(collection)
+                score = len(query_set & coll_set) / len(query_set | coll_set)
+                scores[coll_id] = score
+            return np.argmax(scores)
+
+        path_val_comp = '/Users/zhaosanqiang916/git/text_simplification_data/val/wiki.full.aner.valid.src'
+        path_val_simp = '/Users/zhaosanqiang916/git/text_simplification_data/val/wiki.full.aner.valid.dst'
+        path_test_comp = '/Users/zhaosanqiang916/git/text_simplification_data/test/wiki.full.aner.test.src'
+        path_test_simp = '/Users/zhaosanqiang916/git/text_simplification_data/test/wiki.full.aner.test.dst'
+
+        res_comp = [l.strip().split() for l in open(path_val_comp, encoding='utf-8').readlines()] + [
+            l.strip() for l in open(path_test_comp, encoding='utf-8').readlines()]
+        res_simp = [l.strip().split() for l in open(path_val_simp, encoding='utf-8').readlines()] + [
+            l.strip() for l in open(path_test_simp, encoding='utf-8').readlines()]
+
+        lines_simp = [l.strip().split() for l in
+                      open('/Volumes/Storage/wiki/text_simp_pairs.txt', encoding='utf-8').readlines()]
+        lines_comp = [l.strip().split() for l in
+                      open('/Volumes/Storage/wiki/text_comp_pairs.txt', encoding='utf-8').readlines()]
+        lines_score =  open('/Volumes/Storage/wiki/text_score_pairs.txt', encoding='utf-8').readlines()
+        lines_title = open('/Volumes/Storage/wiki/text_title_pairs.txt', encoding='utf-8').readlines()
+        removed_ids = set()
+        for i in range(len(res_comp)):
+            print('Processed %s.' % i)
+            id_comp = find_sim(res_comp[i], lines_comp)
+            removed_ids.add(id_comp)
+            id_simp = find_sim(res_simp[i], lines_simp)
+            removed_ids.add(id_simp)
+
+        print('removed %s sample.' % len(removed_ids))
+        nlines_simp, nlines_comp, nlines_score, nlines_title = [], [], [], []
+        for i in range(len(lines_score)):
+            if i not in removed_ids:
+                nlines_comp.append(' '.join(lines_comp[i]))
+                nlines_simp.append(' '.join(lines_simp[i]))
+                nlines_title.append(lines_title[i].strip())
+                nlines_score.append(lines_score[i].strip())
+        f_simp = open('/Volumes/Storage/wiki/text_simp_pairs.dup.txt', 'w')
+        f_comp = open('/Volumes/Storage/wiki/text_comp_pairs.dup.txt', 'w')
+        f_score = open('/Volumes/Storage/wiki/text_score_pairs.dup.txt', 'w')
+        f_title = open('/Volumes/Storage/wiki/text_title_pairs.dup.txt', 'w')
+        f_simp.write('\n'.join(nlines_simp))
+        f_comp.write('\n'.join(nlines_comp))
+        f_title.write('\n'.join(nlines_title))
+        f_score.write('\n'.join(([str(s) for s in nlines_score])))
+        f_simp.close()
+        f_comp.close()
+        f_score.close()
+        f_title.close()
+
 
 if __name__ == '__main__':
     wikigen = WikiGenerator()
-    wikigen.generate_doc()
+    # wikigen.generate_doc()
+    wikigen.remove_dup()
     # wikigen.find_pairs(
     #     ['xx bb xx' for _ in range(100)],
     #     ['xx bb dd' for _ in range(100)])

@@ -15,7 +15,7 @@ import edu.stanford.nlp.ling.SentenceUtils;
 import edu.stanford.nlp.parser.lexparser.LexicalizedParser;
 import edu.stanford.nlp.trees.Tree;
 
-public class Test {
+public class SyntaxParser {
 
 	private String generate_tree(Tree node, StringBuilder sb_output) {
 		if (node.children().length == 0) {
@@ -42,11 +42,11 @@ public class Test {
 		LexicalizedParser lp = LexicalizedParser.loadModel(parserModel);
 		
 		BufferedWriter writer = new BufferedWriter(new FileWriter(new File(
-				"/Users/zhaosanqiang916/git/text_simplification_data/train/dress/wikilarge/wiki.full.aner.train.dst.jsyntax")));
+				"/Users/zhaosanqiang916/git/text_simplification_data/train/dress/wikilarge/wiki.full.aner.train.src.jsyntax")));
 		BufferedReader reader = new BufferedReader(new FileReader(new File(
-				"/Users/zhaosanqiang916/git/text_simplification_data/train/dress/wikilarge/wiki.full.aner.train.dst")));
+				"/Users/zhaosanqiang916/git/text_simplification_data/train/dress/wikilarge/wiki.full.aner.train.src")));
 		String line = null;
-		Test test = new Test();
+		SyntaxParser test = new SyntaxParser();
 		int cnt = 0;
 		StringBuilder output = new StringBuilder();
 		long pre_time = System.currentTimeMillis();

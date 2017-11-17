@@ -1,5 +1,6 @@
 """Prepare NER-parsed dataset.
    Preruned locally, so don't need to install lib in server."""
+"""Deprecated: Move the code to java: script/NERDataPrepare.java"""
 from nltk.tag import StanfordNERTagger, SennaNERTagger
 import copy as cp
 from os.path import exists
@@ -20,6 +21,8 @@ class DataNERPrepareBase:
         self.replace_tag_set = set(['PERSON', 'LOCATION', 'ORGANIZATION', 'NUMBER'])
 
     def process(self):
+        """Process NER for original files: Contains reference splitter."""
+        """Deprecated: for val and test, we use benchmark."""
         for stage in ['eval', 'test']:
             # For wiki 8 ref
             if stage == 'eval':
@@ -167,6 +170,8 @@ class DataNERPrepareBase:
             map_util.dump_mappers(mappers, out_mapper_path)
 
     def process_dress(self):
+        """Process NER for DRESS files."""
+        """Deprecated: for val and test, we use benchmark."""
         for stage in ['evall', 'testl', 'eval', 'test']:
             # For wiki dress
             if stage == 'eval':
@@ -401,7 +406,6 @@ class DataNERPrepareBase:
         except ValueError:
             return False
         return True
-
 
 
 if __name__ == '__main__':
