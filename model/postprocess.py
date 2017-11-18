@@ -110,9 +110,13 @@ class PostProcess:
             self.best_assignment = None
             min_mover_dist([], 0, 0, queries_is,
                            decoder_outputs, encoder_embs, word_exclude, batch_i)
-            for idx, queries_i in enumerate(queries_is):
-                target_word = encoder_words[batch_i][self.best_assignment[idx]]
-                ndecoder_targets[batch_i][queries_i] = target_word
+            if self.best_assignment is None:
+                ndecoder_targets[batch_i] = self.replace_unk_by_emb(
+                    encoder_words[batch_i], encoder_embs[batch_i], decoder_outputs[batch_i], decoder_targets[batch_i])
+            else:
+                for idx, queries_i in enumerate(queries_is):
+                    target_word = encoder_words[batch_i][self.best_assignment[idx]]
+                    ndecoder_targets[batch_i][queries_i] = target_word
         return ndecoder_targets
 
     def replace_unk_by_emb(self, encoder_words, encoder_embs, decoder_outputs, decoder_targets):
