@@ -93,7 +93,8 @@ class Graph:
                 # self.encoder_embs = tf.stack(
                 #     self.embedding_fn(self.sentence_complex_input_placeholder, self.emb_complex),
                 #     axis=1)
-                self.encoder_embs = tf.stack(output.encoder_embed_inputs_list, axis=1)
+                # self.encoder_embs = tf.stack(output.encoder_embed_inputs_list, axis=1)
+                self.encoder_embs = output.encoder_outputs
                 if type(output.decoder_outputs) == list:
                     self.decoder_outputs = tf.stack(output.decoder_outputs, axis=1)
                 else:
@@ -319,13 +320,18 @@ class Graph:
 
 class ModelOutput:
     def __init__(self, decoder_outputs=None, decoder_logit_list=None, decoder_target_list=None,
-                 decoder_score=None, gt_target_list=None, encoder_embed_inputs_list=None):
+                 decoder_score=None, gt_target_list=None, encoder_embed_inputs_list=None, encoder_outputs=None):
         self._decoder_outputs = decoder_outputs
         self._decoder_logit_list = decoder_logit_list
         self._decoder_target_list = decoder_target_list
         self._decoder_score = decoder_score
         self._gt_target_list = gt_target_list
         self._encoder_embed_inputs_list = encoder_embed_inputs_list
+        self._encoder_outputs = encoder_outputs
+
+    @property
+    def encoder_outputs(self):
+        return self._encoder_outputs
 
     @property
     def encoder_embed_inputs_list(self):

@@ -58,6 +58,7 @@ class TransformerGraph(Graph):
                 return self.transformer_beam_search(encoder_outputs, encoder_attn_bias, encoder_embed_inputs_list)
 
         output = ModelOutput(
+            encoder_outputs=encoder_outputs,
             decoder_outputs=decoder_output_list,
             decoder_logit_list=decoder_logit_list,
             gt_target_list=gt_target_list,
@@ -119,6 +120,7 @@ class TransformerGraph(Graph):
         decoder_outputs = self.decode_inputs_to_outputs(decode_input_embs, encoder_outputs, encoder_attn_bias)
 
         output = ModelOutput(
+            encoder_outputs=encoder_outputs,
             decoder_outputs=decoder_outputs,
             decoder_score=decoder_score,
             decoder_target_list=decoder_target_list,

@@ -114,7 +114,7 @@ def test(model_config=None, ckpt=None):
         if model_config.replace_unk_by_attn:
             target_raw = postprocess.replace_unk_by_attn(sentence_complex_raw, None, target_raw)
         elif model_config.replace_unk_by_emb:
-            target_raw = postprocess.replace_unk_by_emb(
+            target_raw = postprocess.replace_unk_by_emb_dfs(
                 sentence_complex_raw, encoder_embs, decoder_outputs, target_raw)
         elif model_config.replace_unk_by_cnt:
             target_raw = postprocess.replace_unk_by_cnt(sentence_complex_raw, target_raw)
@@ -289,19 +289,9 @@ def test(model_config=None, ckpt=None):
              'w', encoding='utf-8')
     f.write('\n'.join(decode_outputs_all))
     f.close()
+    print('Final SARI:%s' % sari_joshua)
+    print('Final BLEU:%s' % bleu_joshua)
 
-
-def get_ckpt(modeldir, logdir, wait_second=60):
-    while True:
-        try:
-            ckpt = copy_ckpt_to_modeldir(modeldir, logdir)
-            return ckpt
-        except FileNotFoundError as exp:
-            if wait_second:
-                print(str(exp) + '\nWait for 1 minutes.')
-                time.sleep(wait_second)
-            else:
-                return None
 
 if __name__ == '__main__':
     from model.model_config import WikiDressLargeDefault
@@ -310,4 +300,4 @@ if __name__ == '__main__':
 
     ckpt = args.test_ckpt
     test(SubTestWikiEightRefConfig(), ckpt)
-    test(SubTestWikiEightRefConfigBeam4(), ckpt)
+    # test(SubTestWikiEightRefConfigBeam4(), ckpt)

@@ -181,7 +181,7 @@ def eval(model_config=None, ckpt=None):
         if model_config.replace_unk_by_attn:
             target_raw = postprocess.replace_unk_by_attn(sentence_complex_raw, None, target_raw)
         elif model_config.replace_unk_by_emb:
-            target_raw = postprocess.replace_unk_by_emb(
+            target_raw = postprocess.replace_unk_by_emb_dfs(
                 sentence_complex_raw, encoder_embs, decoder_outputs, target_raw)
         elif model_config.replace_unk_by_cnt:
             target_raw = postprocess.replace_unk_by_cnt(sentence_complex_raw, target_raw)

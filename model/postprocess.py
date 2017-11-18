@@ -3,6 +3,10 @@ from util import constant
 from scipy.spatial.distance import cosine
 from scipy import stats
 import copy as cp
+from nltk.corpus import stopwords
+
+
+stopWords = set(stopwords.words('english'))
 
 
 class PostProcess:
@@ -62,6 +66,54 @@ class PostProcess:
                 nword = encoder_word[attn_dist[len_i]]
                 ndecoder_target[len_i] = nword
         return ndecoder_target
+
+    def replace_unk_by_emb_dfs(self, encoder_words, encoder_embs, decoder_outputs, decoder_targets):
+        def min_mover_dist(assignment, cur_dist, cur_query_id, queries_is,
+                           decoder_outputs, encoder_embs, word_exclude, batch_i):
+            if cur_query_id == len(queries_is):
+                if cur_dist < self.best_dist:
+                    self.best_dist = cur_dist
+                    self.best_assignment = cp.deepcopy(assignment)
+                return
+
+            assignment_tmp = cp.deepcopy(assignment)
+            word_exclude_tmp = cp.deepcopy(word_exclude)
+            for cand_id in range(len(encoder_words[batch_i])):
+                if encoder_words[batch_i][cand_id] in word_exclude_tmp:
+                    continue
+                assignment_tmp.append(cand_id)
+                word_exclude_tmp.add(encoder_words[batch_i][cand_id])
+                dist = cosine(encoder_embs[batch_i, cand_id, :],
+                              decoder_outputs[batch_i, queries_is[cur_query_id], :])
+                cur_dist += dist
+                min_mover_dist(assignment_tmp, cur_dist, cur_query_id+1,
+                               queries_is, decoder_outputs, encoder_embs, word_exclude_tmp, batch_i)
+                word_exclude_tmp.remove(encoder_words[batch_i][cand_id])
+                cur_dist -= dist
+                del assignment_tmp[-1]
+
+        batch_size = np.shape(decoder_targets)[0]
+
+        ndecoder_targets = cp.deepcopy(decoder_targets)
+        for batch_i in range(batch_size):
+            queries_is = []
+            for len_i in range(len(decoder_targets[batch_i])):
+                target = decoder_targets[batch_i][len_i]
+                if target == constant.SYMBOL_UNK or target == constant.SYMBOL_NUM:
+                    queries_is.append(len_i)
+            word_exclude = set(ndecoder_targets[batch_i])
+            word_exclude.update([
+                constant.SYMBOL_START, constant.SYMBOL_END, constant.SYMBOL_UNK,
+                constant.SYMBOL_PAD, constant.SYMBOL_GO, constant.SYMBOL_NUM])
+            word_exclude.update(stopWords)
+            self.best_dist = 99999
+            self.best_assignment = None
+            min_mover_dist([], 0, 0, queries_is,
+                           decoder_outputs, encoder_embs, word_exclude, batch_i)
+            for idx, queries_i in enumerate(queries_is):
+                target_word = encoder_words[batch_i][self.best_assignment[idx]]
+                ndecoder_targets[batch_i][queries_i] = target_word
+        return ndecoder_targets
 
     def replace_unk_by_emb(self, encoder_words, encoder_embs, decoder_outputs, decoder_targets):
         batch_size = np.shape(decoder_targets)[0]
