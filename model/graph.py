@@ -93,8 +93,8 @@ class Graph:
                 # self.encoder_embs = tf.stack(
                 #     self.embedding_fn(self.sentence_complex_input_placeholder, self.emb_complex),
                 #     axis=1)
-                # self.encoder_embs = tf.stack(output.encoder_embed_inputs_list, axis=1)
-                self.encoder_embs = output.encoder_outputs
+                self.encoder_embs = tf.stack(output.encoder_embed_inputs_list, axis=1)
+                # self.encoder_embs = output.encoder_outputs
                 if type(output.decoder_outputs) == list:
                     self.decoder_outputs = tf.stack(output.decoder_outputs, axis=1)
                 else:
