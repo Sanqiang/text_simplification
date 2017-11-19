@@ -200,7 +200,7 @@ def train(model_config=None):
 
         if model_config.model_eval_freq > 0 and step % model_config.model_eval_freq == 0:
             from model.model_config import SubValWikiEightRefConfig, SubTestWikiEightRefConfig
-            from model.model_config import SubValWikiEightRefPPDBConfigConfig, SubTestWikiEightRefPPDBConfig
+            from model.model_config import SubValWikiEightRefPPDBConfig, SubTestWikiEightRefPPDBConfig
             from model.model_config import DefaultTestConfig, DefaultTestConfig2
             ckpt = get_ckpt(model_config.modeldir, model_config.logdir)
             if ckpt:
