@@ -85,6 +85,14 @@ class DefaultConfig():
     ppdb_args = args.ppdb_args
     if ppdb_mode == 'comp' and ppdb_args is not None:
         ppdb_args = [float(w) for w in ppdb_args.split('|')]
+    # ppdb_emode: incorporate ppdb in our model eval
+    # none: no ppdb eval
+    # weight: augment weight in logit
+    # for weight ppdb eval mode args defines the weight to augment
+    ppdb_emode = args.ppdb_emode
+    ppdb_emode_args = args.ppdb_emode_args
+    if ppdb_emode == 'weight':
+        ppdb_emode_args = float(ppdb_emode_args)
 
     # Seq2seq config
     num_rnn_encoder_layers = 1
@@ -298,6 +306,14 @@ class SubValWikiEightRefConfig(SubTest):
     val_dataset_simple_rawlines_file = 'tune.8turkers.tok.simp'
     num_refs = 8
 
+
+class SubValWikiEightRefPPDBConfig(SubValWikiEightRefConfig):
+    output_folder = args.output_folder
+    resultdor = get_path('../' + output_folder + '/result/eightref_val_ppdbe')
+    ppdb_emode = 'weight'
+    ppdb_emode_args = 1.5
+
+
 class SubValWikiEightRefConfigBeam4(SubValWikiEightRefConfig):
     beam_search_size = 4
     output_folder = args.output_folder
@@ -319,6 +335,13 @@ class SubTestWikiEightRefConfig(SubTest):
     val_dataset_simple_rawlines_file_references = 'test.8turkers.tok.turk.'
     val_dataset_simple_rawlines_file = 'test.8turkers.tok.simp'
     num_refs = 8
+
+
+class SubTestWikiEightRefPPDBConfig(SubTestWikiEightRefConfig):
+    output_folder = args.output_folder
+    resultdor = get_path('../' + output_folder + '/result/eightref_test_ppdbe')
+    ppdb_emode = 'weight'
+    ppdb_emode_args = 1.5
 
 
 class SubTestWikiEightRefConfigBeam4(SubTestWikiEightRefConfig):

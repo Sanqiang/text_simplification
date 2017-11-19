@@ -21,6 +21,10 @@ from __future__ import print_function
 
 # Dependency imports
 import tensorflow as tf
+import numpy as np
+from util import constant
+from collections import defaultdict
+import math
 
 # Assuming EOS_ID is 1
 EOS_ID = 1
@@ -116,7 +120,10 @@ def beam_search(symbols_to_logits_fn,
                 decode_length,
                 vocab_size,
                 alpha,
-                eos_id=EOS_ID):
+                data,
+                model_config,
+                encoder_input_list,
+                eos_id=EOS_ID,):
   """Beam search with length penalties.
 
   Requires a function that can take the currently decoded sybmols and return
@@ -238,6 +245,41 @@ def beam_search(symbols_to_logits_fn,
                                        curr_finished, beam_size, batch_size,
                                        "grow_alive")
 
+  encoder_input = tf.stack(encoder_input_list, axis=1)
+  def top_k(flat_curr_scores, k=beam_size * 2):
+      flat_curr_scores.set_shape(
+          (model_config.batch_size, model_config.beam_search_size*len(data.vocab_simple.i2w)))
+
+      def augment_score(flat_curr_scores, encoder_input):
+          for batch_i in range(model_config.batch_size):
+              ppdb_cands = {}
+              cands = set(encoder_input[batch_i])
+              for cand_wid in cands:
+                  cand_word = data.vocab_complex.describe(cand_wid)
+                  if cand_word in data.ppdb.rules:
+                      for tag in data.ppdb.rules[cand_word]:
+                          for word in data.ppdb.rules[cand_word][tag]:
+                              wid = data.vocab_simple.encode(word)
+                              if wid != data.vocab_simple.encode(constant.SYMBOL_UNK):
+                                ppdb_cands[wid] = data.ppdb.rules[cand_word][tag][word]
+              for cand_id in ppdb_cands:
+                  for beam_id in range(model_config.beam_search_size):
+                      flat_curr_scores[batch_i][beam_id*len(data.vocab_simple.i2w) + cand_id] += (
+                          model_config.ppdb_emode_args * ppdb_cands[cand_id])
+              # for res_id in [data.vocab_simple.encode(constant.SYMBOL_UNK)]:
+              #     for beam_id in range(model_config.beam_search_size):
+              #         flat_curr_scores[batch_i][beam_id * len(data.vocab_simple.i2w) + res_id] += 1.5
+          return np.array(flat_curr_scores, dtype=np.float32)
+
+      flat_curr_scores = tf.py_func(augment_score, [flat_curr_scores, encoder_input],
+                                    tf.float32,
+                                    stateful=False,
+                                    name='augment_score')
+      flat_curr_scores.set_shape(
+          (model_config.batch_size, model_config.beam_search_size*len(data.vocab_simple.i2w)))
+      topk_scores, topk_ids = tf.nn.top_k(flat_curr_scores, k=k)
+      return topk_scores, topk_ids
+
   def grow_topk(i, alive_seq, alive_log_probs):
     r"""Inner beam seach loop.
 
@@ -282,7 +324,10 @@ def beam_search(symbols_to_logits_fn,
     # Flatten out (beam_size, vocab_size) probs in to a list of possibilites
     flat_curr_scores = tf.reshape(curr_scores, [-1, beam_size * vocab_size])
 
-    topk_scores, topk_ids = tf.nn.top_k(flat_curr_scores, k=beam_size * 2)
+    if model_config.ppdb_emode == 'none':
+        topk_scores, topk_ids = tf.nn.top_k(flat_curr_scores, k=beam_size * 2)
+    else:
+        topk_scores, topk_ids = top_k(flat_curr_scores, k=beam_size * 2)
 
     # Recovering the log probs because we will need to send them back
     topk_log_probs = topk_scores * length_penalty

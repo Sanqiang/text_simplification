@@ -2,6 +2,7 @@ from data_generator.vocab import Vocab
 from nltk import word_tokenize
 from util import constant
 from util.map_util import load_mappers
+from model.ppdb import PPDB
 
 import copy as cp
 
@@ -59,6 +60,9 @@ class ValData:
         print('Use Val Dataset: \n Simple\t %s. \n Complex\t %s. \n Size\t %d'
               % (self.model_config.val_dataset_simple_folder + self.model_config.val_dataset_simple_file,
                  self.model_config.val_dataset_complex, self.size))
+
+        if model_config.ppdb_emode != 'none':
+            self.ppdb = PPDB(model_config)
 
     def populate_data_rawfile(self, data_path):
         """Populate data raw lines into memory"""

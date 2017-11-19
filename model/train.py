@@ -200,6 +200,7 @@ def train(model_config=None):
 
         if model_config.model_eval_freq > 0 and step % model_config.model_eval_freq == 0:
             from model.model_config import SubValWikiEightRefConfig, SubTestWikiEightRefConfig
+            from model.model_config import SubValWikiEightRefPPDBConfigConfig, SubTestWikiEightRefPPDBConfig
             from model.model_config import DefaultTestConfig, DefaultTestConfig2
             ckpt = get_ckpt(model_config.modeldir, model_config.logdir)
             if ckpt:
@@ -209,6 +210,8 @@ def train(model_config=None):
                 elif args.mode == 'dress' or args.mode == 'all':
                     # eval(SubValWikiEightRefConfig(), ckpt)
                     eval(SubTestWikiEightRefConfig(), ckpt)
+                    # eval(SubValWikiEightRefPPDBConfigConfig(), ckpt)
+                    eval(SubTestWikiEightRefPPDBConfig(), ckpt)
 
 
 if __name__ == '__main__':

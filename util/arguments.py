@@ -36,6 +36,10 @@ def get_args():
                         help='PPDB mode?')
     parser.add_argument('-ppdbw', '--ppdb_args', default=None,
                         help='PPDB arguments?')
+    parser.add_argument('-ppdbe', '--ppdb_emode', default='none',
+                        help='PPDB mode for eval?')
+    parser.add_argument('-ppdbew', '--ppdb_emode_args', default=None,
+                        help='PPDB eval arguments?')
     parser.add_argument('-svoc_size', '--subword_vocab_size', default=0, type=int,
                         help='The size of subword vocabulary? if <= 0, not use subword unit.')
     parser.add_argument('-eval_freq', '--model_eval_freq', default=10000, type=int,
