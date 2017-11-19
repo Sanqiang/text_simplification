@@ -24,7 +24,19 @@ import tensorflow as tf
 import numpy as np
 from util import constant
 from collections import defaultdict
+from model.model_config import get_path
+from util.decode import truncate_sent
 import math
+
+
+import os
+from nltk.parse import stanford
+os.environ['STANFORD_PARSER'] = get_path(
+    '../text_simplification_data/stanford-parser-full-2017-06-09/stanford-parser.jar')
+os.environ['STANFORD_MODELS'] = get_path(
+    '../text_simplification_data/stanford-parser-full-2017-06-09/stanford-parser-3.8.0-models.jar')
+parser = stanford.StanfordParser()
+cache = {}
 
 # Assuming EOS_ID is 1
 EOS_ID = 1
@@ -246,6 +258,7 @@ def beam_search(symbols_to_logits_fn,
                                        "grow_alive")
 
   encoder_input = tf.stack(encoder_input_list, axis=1)
+
   def top_k(flat_curr_scores, k=beam_size * 2):
       flat_curr_scores.set_shape(
           (model_config.batch_size, model_config.beam_search_size*len(data.vocab_simple.i2w)))
@@ -253,15 +266,62 @@ def beam_search(symbols_to_logits_fn,
       def augment_score(flat_curr_scores, encoder_input):
           for batch_i in range(model_config.batch_size):
               ppdb_cands = {}
-              cands = set(encoder_input[batch_i])
-              for cand_wid in cands:
-                  cand_word = data.vocab_complex.describe(cand_wid)
-                  if cand_word in data.ppdb.rules:
-                      for tag in data.ppdb.rules[cand_word]:
-                          for word in data.ppdb.rules[cand_word][tag]:
-                              wid = data.vocab_simple.encode(word)
-                              if wid != data.vocab_simple.encode(constant.SYMBOL_UNK):
-                                ppdb_cands[wid] = data.ppdb.rules[cand_word][tag][word]
+
+              ###
+              # Adapted from generate_synatx in ppdb.generate_synatx
+              def generate_synatx(syntax):
+                  outout_list = []
+                  for tree in syntax:
+                      if tree.label() == 'ROOT':
+                          tree = tree[0]
+                      try:
+                          recursive_gen(tree, outout_list)
+                      except Exception:
+                          print(syntax)
+                  return outout_list
+
+              def recursive_gen(tree, outout_list):
+                  if type(tree[0]) == str and len(tree) == 1:
+                      word = tree[0]
+                      if '@' not in word:
+                          label = tree.label()
+                          outout_list.append((label, word))
+                      return word
+
+                  output = []
+                  for node in tree:
+                      node_str = recursive_gen(node, outout_list)
+                      output.append(node_str)
+                  words = ' '.join(output)
+                  if '@' not in words:
+                      label = tree.label()
+                      outout_list.append((label, words))
+                  return words
+              complex_sent = [data.vocab_complex.describe(wid) for wid in encoder_input[batch_i]]
+              complex_sent = ' '.join(truncate_sent(complex_sent))
+              if complex_sent in cache:
+                  syntax_tree = cache[complex_sent]
+              else:
+                  syntax_tree = parser.raw_parse(complex_sent)
+                  cache[complex_sent] = syntax_tree
+              cand_pairs = generate_synatx(syntax_tree)
+              for cand_label, cand_word in cand_pairs:
+                  if cand_word in data.ppdb.rules and cand_label in data.ppdb.rules[cand_word]:
+                      tar_word_list = data.ppdb.rules[cand_word][cand_label]
+                      for tar_word in tar_word_list:
+                          wid = data.vocab_simple.encode(tar_word)
+                          if wid != data.vocab_simple.encode(constant.SYMBOL_UNK):
+                              ppdb_cands[wid] = data.ppdb.rules[cand_word][cand_label][tar_word]
+              ###
+              # cands = set(encoder_input[batch_i])
+              # for cand_wid in cands:
+              #     cand_word = data.vocab_complex.describe(cand_wid)
+              #     if cand_word in data.ppdb.rules:
+              #         for tag in data.ppdb.rules[cand_word]:
+              #             for word in data.ppdb.rules[cand_word][tag]:
+              #                 wid = data.vocab_simple.encode(word)
+              #                 if wid != data.vocab_simple.encode(constant.SYMBOL_UNK):
+              #                   ppdb_cands[wid] = data.ppdb.rules[cand_word][tag][word]
               for cand_id in ppdb_cands:
                   for beam_id in range(model_config.beam_search_size):
                       flat_curr_scores[batch_i][beam_id*len(data.vocab_simple.i2w) + cand_id] += (
