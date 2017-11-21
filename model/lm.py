@@ -1,6 +1,8 @@
 import tensorflow as tf
 import numpy as np
+from collections import defaultdict
 from google.protobuf import text_format
+import time
 
 from model.model_config import get_path
 
@@ -18,7 +20,7 @@ class GoogleLM:
 
     def get_weight(self, sentence):
         inputs, targets, weights, char_inputs = self.get_data(sentence)
-        output_weights = []
+        log_perps = []
         for inp, target, weight, char_input in zip(
                 inputs[:-2], targets[:-2], weights[:-2], char_inputs[:-2]):
             input_dict = {
@@ -28,15 +30,13 @@ class GoogleLM:
             if 'char_inputs_in' in self.t:
                 input_dict[self.t['char_inputs_in']] = char_input
             log_perp = self.sess.run(self.t['log_perplexity_out'], feed_dict=input_dict)
-            output_weight = 1 + 1 / log_perp
-            if output_weight > 5:
-                output_weight = 5
-            output_weights.append(output_weight)
-        return np.mean(output_weights)
+            log_perps.append(log_perp)
+        return np.mean(log_perps)
 
     def assess(self, sentence):
         inputs, targets, weights, char_inputs = self.get_data(sentence)
         step = 1
+        perplexitys = []
         for inp, target, weight, char_input in zip(
                 inputs[:-1], targets[:-1], weights[:-1], char_inputs[:-1]):
             input_dict = {
@@ -47,11 +47,13 @@ class GoogleLM:
                 input_dict[self.t['char_inputs_in']] = char_input
             log_perp = self.sess.run(self.t['log_perplexity_out'], feed_dict=input_dict)
 
-            perplexity = 1 + 1 / log_perp
+            perplexity = log_perp
+            perplexitys.append(perplexity)
 
             print('Assess step %d, Barrier Value for word %s is %s' %
                   (step, self.vocab.id_to_word(target[0][0]), perplexity))
             step += 1
+        print('Final Loss\t%s.' % np.mean(perplexitys))
 
     def assess_interactive(self):
         while True:
@@ -110,8 +112,6 @@ class GoogleLM:
             sess.run(t['states_init'])
 
         return sess, t
-
-
 
 
 class Vocabulary(object):
@@ -254,7 +254,46 @@ class CharsVocabulary(Vocabulary):
         return np.vstack([self.bos_chars] + chars_ids + [self.eos_chars])
 
 
+class NgramLM:
+    def __init__(self):
+        self.generate_data_file()
+
+    def generate_data_file(self, file='googlebooks-eng-all-3gram-20120701-en'):
+        grams = defaultdict(list)
+        gram_path = get_path(
+            '../text_simplification_data/wiki/' + file)
+        idx = 0
+        pre_time = time.time()
+        for line in open(gram_path, encoding='utf-8'):
+            items = line.split('\t')
+            ngram = '|'.join([word.split('_')[0] for word in items[0].split(' ')])
+            # year = int(items[1])
+            cnt = int(items[2])
+            grams[ngram].append(cnt)
+            idx += 1
+            if idx % 1000000 == 0:
+                cur_time = time.time()
+                print('processed %s. in %s' % (idx, cur_time - pre_time))
+                pre_time = cur_time
+
+        output_file = get_path(
+            '../text_simplification_data/wiki/' + file + '.processed')
+        f = open(output_file, 'w', encoding='utf-8')
+        outputs = []
+        for ngram in grams:
+            output = '\t'.join([ngram, str(np.mean(grams[ngram]))])
+            outputs.append(output)
+            if len(outputs) == 100000:
+                f.write('\n'.join(outputs))
+                f.flush()
+                outputs = []
+        f.write('\n'.join(outputs))
+        f.flush()
+        f.close()
+
 if __name__ == '__main__':
-    lm = GoogleLM()
+    lm = NgramLM()
+
+    # lm = GoogleLM()
     # lm.assess_interactive()
-    lm.get_weight('i am a sanqiang .')
+    # lm.get_weight('i am a sanqiang .')
