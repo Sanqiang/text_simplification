@@ -386,6 +386,7 @@ class SubTestWikiSmallConfig(WikiDressSmallDefault):
         '../text_simplification_data/train/dress/wikismall/PWKP_108016.tag.80.aner.ori.test.src')
     val_dataset_simple_rawlines_file = 'PWKP_108016.tag.80.aner.ori.test.dst'
     num_refs = 0
+    beam_search_size = 1
 
 
 class SubTestWikiSmallPPDBConfig(SubTestWikiSmallConfig):
