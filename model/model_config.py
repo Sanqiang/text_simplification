@@ -370,7 +370,7 @@ class WikiDressSmallTrainConfig(WikiDressSmallDefault):
     beam_search_size = 0
 
 
-class SubTestWikiSmallConfig(SubTest):
+class SubTestWikiSmallConfig(WikiDressSmallDefault):
     output_folder = args.output_folder
     resultdor = get_path('../' + output_folder + '/result/small_test')
 

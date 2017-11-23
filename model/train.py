@@ -208,12 +208,12 @@ def train(model_config=None):
                 if args.mode == 'dummy':
                     eval(DefaultTestConfig(), ckpt)
                     eval(DefaultTestConfig2(), ckpt)
-                elif args.mode == 'dress' or args.mode == 'all' or args.mode == 'dress2':
+                elif args.mode == 'dress' or args.mode == 'all' :
                     # eval(SubValWikiEightRefConfig(), ckpt)
                     eval(SubTestWikiEightRefConfig(), ckpt)
                     # eval(SubValWikiEightRefPPDBConfigConfig(), ckpt)
                     eval(SubTestWikiEightRefPPDBConfig(), ckpt)
-
+                elif args.mode == 'dress2':
                     eval(SubTestWikiSmallConfig(), ckpt)
                     eval(SubTestWikiSmallPPDBConfig(), ckpt)
 
