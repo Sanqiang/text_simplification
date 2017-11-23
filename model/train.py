@@ -6,7 +6,7 @@ sys.path.insert(0,'/ihome/hdaqing/saz31/sanqiang/text_simplification')
 from data_generator.train_data import TrainData
 from model.transformer import TransformerGraph
 from model.seq2seq import Seq2SeqGraph
-from model.model_config import DefaultConfig, DefaultTrainConfig, WikiDressLargeTrainConfig, list_config
+from model.model_config import DefaultConfig, DefaultTrainConfig, WikiDressLargeTrainConfig, WikiDressSmallTrainConfig, list_config
 from data_generator.vocab import Vocab
 from util import session
 from util import constant
@@ -202,6 +202,7 @@ def train(model_config=None):
             from model.model_config import SubValWikiEightRefConfig, SubTestWikiEightRefConfig
             from model.model_config import SubValWikiEightRefPPDBConfig, SubTestWikiEightRefPPDBConfig
             from model.model_config import DefaultTestConfig, DefaultTestConfig2
+            from model.model_config import SubTestWikiSmallConfig, SubTestWikiSmallPPDBConfig
             ckpt = get_ckpt(model_config.modeldir, model_config.logdir)
             if ckpt:
                 if args.mode == 'dummy':
@@ -213,6 +214,9 @@ def train(model_config=None):
                     # eval(SubValWikiEightRefPPDBConfigConfig(), ckpt)
                     eval(SubTestWikiEightRefPPDBConfig(), ckpt)
 
+                    eval(SubTestWikiSmallConfig(), ckpt)
+                    eval(SubTestWikiSmallPPDBConfig(), ckpt)
+
 
 if __name__ == '__main__':
     config = None
@@ -220,5 +224,7 @@ if __name__ == '__main__':
         config = DefaultTrainConfig()
     elif args.mode == 'dress':
         config = WikiDressLargeTrainConfig()
+    elif args.mode == 'dress2':
+        config = WikiDressSmallTrainConfig()
     print(list_config(config))
     train(config)

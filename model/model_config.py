@@ -350,6 +350,52 @@ class SubTestWikiEightRefConfigBeam4(SubTestWikiEightRefConfig):
     resultdor = get_path('../' + output_folder + '/result/eightref_test_bm')
 
 
+class WikiDressSmallDefault(WikiDressLargeDefault):
+    train_dataset_simple = get_path('../text_simplification_data/train/dress/wikismall/PWKP_108016.tag.80.aner.train.dst')
+    train_dataset_simple_ppdb = get_path(
+        '../text_simplification_data/train/dress/wikismall/PWKP_108016.tag.80.aner.train.dst.rules')
+    train_dataset_simple_syntax = get_path(
+        '../text_simplification_data/train/dress/wikismall/PWKP_108016.tag.80.aner.train.dst.jsyntax')
+    train_dataset_complex_syntax = get_path(
+        '../text_simplification_data/train/dress/wikismall/PWKP_108016.tag.80.aner.train.src.jsyntax')
+    train_dataset_complex = get_path('../text_simplification_data/train/dress/wikismall/PWKP_108016.tag.80.aner.train.src')
+    # ../ text_simplification_data / train / dress / wikilarge / wiki.full.aner.train.src.rules
+    train_dataset_complex_ppdb = get_path(
+        '../text_simplification_data/train/dress/wikismall/PWKP_108016.tag.80.aner.train.src.rules')
+    vocab_simple = get_path('../text_simplification_data/train/dress/wikismall/PWKP_108016.tag.80.aner.train.dst.vocab')
+    vocab_complex = get_path('../text_simplification_data/train/dress/wikismall/PWKP_108016.tag.80.aner.train.src.vocab')
+
+
+class WikiDressSmallTrainConfig(WikiDressSmallDefault):
+    beam_search_size = 0
+
+
+class SubTestWikiSmallConfig(SubTest):
+    output_folder = args.output_folder
+    resultdor = get_path('../' + output_folder + '/result/small_test')
+
+    val_dataset_simple_folder = get_path(
+        '../text_simplification_data/train/dress/wikismall/')
+    # use the original dress
+    val_dataset_simple_file = 'PWKP_108016.tag.80.aner.test.dst'
+    val_dataset_complex = get_path(
+        '../text_simplification_data/train/dress/wikismall/PWKP_108016.tag.80.aner.test.src')
+    val_mapper = get_path('../text_simplification_data/train/dress/wikismall/PWKP_108016.tag.80.aner.ori.test.map')
+    # wiki.full.aner.ori.test.dst is uppercase whereas test.8turkers.tok.simp is lowercase
+    val_dataset_complex_rawlines_file = get_path(
+        '../text_simplification_data/train/dress/wikismall/PWKP_108016.tag.80.aner.ori.test.src')
+    val_dataset_simple_rawlines_file = 'PWKP_108016.tag.80.aner.ori.test.dst'
+    num_refs = 0
+
+
+class SubTestWikiSmallPPDBConfig(SubTestWikiSmallConfig):
+    output_folder = args.output_folder
+    resultdor = get_path('../' + output_folder + '/result/eightref_test_ppdbe')
+    ppdb_emode = 'weight'
+    ppdb_emode_args = 1.5
+
+
+
 def list_config(config):
     attrs = [attr for attr in dir(config)
                if not callable(getattr(config, attr)) and not attr.startswith("__")]

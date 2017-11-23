@@ -4,7 +4,7 @@ from util.vocab_util import is_numeric, data_parse
 
 
 class Vocab:
-    def __init__(self, model_config, vocab_path=None):
+    def __init__(self, model_config, vocab_path=None, lower=False):
         self.model_config = model_config
         self.vocab_path = vocab_path
         if self.model_config.subword_vocab_size <= 0:
@@ -46,7 +46,11 @@ class Vocab:
         for line in open(self.vocab_path, encoding='utf-8'):
             items = line.strip().split('\t')
             w = items[0]
-            cnt = int(items[1])
+            if len(items) > 1:
+                cnt = int(items[1])
+            else:
+                # Accept all words
+                cnt = 99999
             if cnt >= mincount:
                 self.w2i[w] = len(self.i2w)
                 self.i2w.append(w)

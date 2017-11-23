@@ -1,7 +1,7 @@
 from model.model_config import get_path, WikiDressLargeDefault
 from data_generator.vocab import Vocab
 from collections import defaultdict
-from model.model_config import DefaultTrainConfig, WikiDressLargeTrainConfig
+from model.model_config import DefaultTrainConfig, WikiDressLargeTrainConfig, WikiDressSmallTrainConfig
 from util import constant
 
 from util.arguments import get_args
@@ -412,15 +412,16 @@ def combine_ppdb_rules():
 
 if __name__ == '__main__':
     # get_ppdbd_data()
-    combine_ppdb_rules()
+    # combine_ppdb_rules()
     # config = None
     # if args.mode == 'dummy':
     #     config = DefaultTrainConfig()
     # elif args.mode == 'dress':
     #     config = WikiDressLargeTrainConfig()
-    # # get_refine_data()
-    # ppdb = PPDB(config)
-    # ppdb.process_training(is_comp=True)
+    # get_refine_data()
+    config = WikiDressSmallTrainConfig()
+    ppdb = PPDB(config)
+    ppdb.process_training(is_comp=True)
     # ppdb.simplify(
     #     'There is manuscript evidence that PERSON@1 continued to work on these pieces as late as the period NUMBER@1 â '' NUMBER@2 , and that her niece and nephew , PERSON@2 and PERSON@3 , made further additions as late as NUMBER@3 .',
     #     'manuscript	evidence that	continued	to work on	the period	niece	further')

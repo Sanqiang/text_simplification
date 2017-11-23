@@ -6,7 +6,7 @@ sys.path.insert(0, '/ihome/hdaqing/saz31/sanqiang/text_simplification')
 from data_generator.val_data import ValData
 from model.transformer import TransformerGraph
 from model.seq2seq import Seq2SeqGraph
-from model.model_config import DefaultConfig, DefaultTestConfig, DefaultTestConfig2, list_config
+from model.model_config import DefaultConfig, DefaultTestConfig, DefaultTestConfig2, SubTestWikiSmallConfig, list_config
 from data_generator.vocab import Vocab
 from util import constant
 from util import session
@@ -299,5 +299,6 @@ if __name__ == '__main__':
     from model.model_config import SubValWikiEightRefConfigBeam4, SubTestWikiEightRefConfigBeam4
 
     ckpt = args.test_ckpt
-    test(SubTestWikiEightRefConfig(), ckpt)
+    test(SubTestWikiSmallConfig(), ckpt)
+    # test(SubTestWikiEightRefConfig(), ckpt)
     # test(SubTestWikiEightRefConfigBeam4(), ckpt)
