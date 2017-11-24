@@ -158,7 +158,7 @@ class MtEval_BLEU:
 
     """Get Result for joshua"""
 
-    def get_bleu_from_joshua(self, step, path_ref, targets):
+    def get_bleu_from_joshua(self, step, path_dst, path_ref, targets):
         path_tar = self.model_config.resultdor + '/joshua_target_%s.txt' % step
         if not os.path.exists(path_tar):
             f = open(path_tar, 'w', encoding='utf-8')
@@ -166,11 +166,29 @@ class MtEval_BLEU:
             f.write(self.result2txt(targets, lowercase=True))
             f.close()
 
-        return self.get_result_joshua(path_ref, path_tar)
+        if self.model_config.num_refs > 0:
+            return self.get_result_joshua(path_ref, path_tar)
+        else:
+            return self.get_result_joshua_nonref(path_dst, path_tar)
 
     def get_result_joshua(self, path_ref, path_tar):
         args = ' '.join([self.model_config.joshua_script, path_tar, path_ref,
                          str(self.model_config.num_refs), self.model_config.joshua_class])
+
+        pipe = subprocess.Popen(args, stdin=subprocess.PIPE, stdout=subprocess.PIPE, shell=True)
+        mteval_result = pipe.communicate()
+
+        m = re.search(b'BLEU = ([\d+\.]+)', mteval_result[0])
+
+        try:
+            result = float(m.group(1))
+        except AttributeError:
+            result = 0
+        return result
+
+    def get_result_joshua_nonref(self, path_ref, path_tar):
+        args = ' '.join([self.model_config.joshua_script, path_tar, path_ref,
+                         '1', self.model_config.joshua_class])
 
         pipe = subprocess.Popen(args, stdin=subprocess.PIPE, stdout=subprocess.PIPE, shell=True)
         mteval_result = pipe.communicate()

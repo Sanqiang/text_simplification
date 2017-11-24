@@ -161,6 +161,7 @@ class DefaultConfig():
     joshua_class = get_path('script/ppdb-simplification-release-joshua5.0/joshua/class')
     joshua_script = get_path('script/ppdb-simplification-release-joshua5.0/joshua/bin/bleu')
     corpus_sari_script = get_path('script/corpus_sari.sh')
+    corpus_sari_script_nonref = get_path('script/corpus_sari_nonref.sh')
 
     path_ppdb_refine = get_path(args.path_ppdb_refine)
     # path_ppdb_refine = get_path(
@@ -391,7 +392,7 @@ class SubTestWikiSmallConfig(WikiDressSmallDefault):
 
 class SubTestWikiSmallPPDBConfig(SubTestWikiSmallConfig):
     output_folder = args.output_folder
-    resultdor = get_path('../' + output_folder + '/result/eightref_test_ppdbe')
+    resultdor = get_path('../' + output_folder + '/result/small_test_ppdbe')
     ppdb_emode = 'weight'
     ppdb_emode_args = 1.5
 

@@ -224,16 +224,16 @@ def test(model_config=None, ckpt=None):
         bleu_raw = bleu_oi_raw
     print('Current Mteval iBLEU raw: \t%f' % bleu_raw)
 
-    bleu_joshua = bleu_oi_raw
-    if model_config.num_refs > 0:
-        bleu_joshua = mteval.get_bleu_from_joshua(
-            step, model_config.val_dataset_simple_folder + model_config.val_dataset_simple_rawlines_file_references,
-            targets_raw)
+    bleu_joshua = mteval.get_bleu_from_joshua(
+        step, model_config.val_dataset_simple_folder + model_config.val_dataset_simple_rawlines_file,
+        model_config.val_dataset_simple_folder + model_config.val_dataset_simple_rawlines_file_references,
+        targets_raw)
 
     # Use corpus-level sari
     corpus_sari = CorpusSARI(model_config)
     sari_joshua = corpus_sari.get_sari_from_joshua(
-        step, model_config.val_dataset_simple_folder + model_config.val_dataset_simple_rawlines_file_references,
+        step, model_config.val_dataset_simple_folder + model_config.val_dataset_simple_rawlines_file,
+        model_config.val_dataset_simple_folder + model_config.val_dataset_simple_rawlines_file_references,
         model_config.val_dataset_complex_rawlines_file, target_raw
     )
 
@@ -296,9 +296,9 @@ def test(model_config=None, ckpt=None):
 if __name__ == '__main__':
     from model.model_config import WikiDressLargeDefault
     from model.model_config import SubValWikiEightRefConfig, SubTestWikiEightRefConfig
-    from model.model_config import SubValWikiEightRefConfigBeam4, SubTestWikiEightRefConfigBeam4
+    from model.model_config import SubValWikiEightRefConfigBeam4, SubTestWikiEightRefConfigBeam4, SubTestWikiSmallPPDBConfig
 
     ckpt = args.test_ckpt
-    test(SubTestWikiSmallConfig(), ckpt)
+    test(SubTestWikiSmallPPDBConfig(), ckpt)
     # test(SubTestWikiEightRefConfig(), ckpt)
     # test(SubTestWikiEightRefConfigBeam4(), ckpt)
