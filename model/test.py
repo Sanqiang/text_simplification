@@ -295,10 +295,11 @@ def test(model_config=None, ckpt=None):
 
 if __name__ == '__main__':
     from model.model_config import WikiDressLargeDefault
-    from model.model_config import SubValWikiEightRefConfig, SubTestWikiEightRefConfig
+    from model.model_config import SubValWikiEightRefConfig, SubTestWikiEightRefConfig, SubTestWikiEightRefPPDBConfig
     from model.model_config import SubValWikiEightRefConfigBeam4, SubTestWikiEightRefConfigBeam4, SubTestWikiSmallPPDBConfig
 
     ckpt = args.test_ckpt
-    test(SubTestWikiSmallPPDBConfig(), ckpt)
-    # test(SubTestWikiEightRefConfig(), ckpt)
+    # test(SubTestWikiSmallPPDBConfig(), ckpt)
+    test(SubTestWikiEightRefConfig(), ckpt)
+    test(SubTestWikiEightRefPPDBConfig(), ckpt)
     # test(SubTestWikiEightRefConfigBeam4(), ckpt)
