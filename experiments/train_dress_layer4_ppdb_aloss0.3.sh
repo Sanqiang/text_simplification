@@ -12,4 +12,4 @@
 module restore
 
 # Run the job
-srun python ../model/train.py -fw transformer -out dr_l4_ppdb_aloss0.3 -layer_drop 0.2 -op adagrad -lr 0.1 --mode dress -nhl 4 -nel 4 -ndl 4 -ppdb 'comp' -lc True -ppdbw 2.0|1.0|0.3 --attn_loss enc_dec@0.3|enc_self@0.3
+srun python ../model/train.py -fw transformer -out dr_l4_ppdb_aloss0.3 -layer_drop 0.2 -op adagrad -lr 0.1 --mode dress -nhl 4 -nel 4 -ndl 4 -ppdb 'comp' -lc True -ppdbw 2.0|1.5|0.3 --attn_loss enc_dec@0.3|enc_self@0.3
