@@ -13,10 +13,46 @@ BASE_PATH = get_path('../text_simplification_data/lm1b/')
 
 class GoogleLM:
     """Get from https://github.com/tensorflow/models/tree/master/research/lm_1b."""
-    def __init__(self):
+    def __init__(self, batch_size=32):
         self.vocab = CharsVocabulary(BASE_PATH + 'vocab-2016-09-10.txt', MAX_WORD_LEN)
         self.sess, self.t = self.load_model()
         print('Init GoogleLM Session .')
+
+    def get_batch_weight(self, sentneces, num_steps):
+        inputs, targets, weights, char_inputs = self.get_batch_data(sentneces, num_steps)
+        log_perps = []
+        for inp, target, weight, char_input in zip(
+                inputs, targets, weights, char_inputs):
+            input_dict = {
+                self.t['inputs_in']: inp,
+                self.t['targets_in']: target,
+                self.t['target_weights_in']: weight}
+            if 'char_inputs_in' in self.t:
+                input_dict[self.t['char_inputs_in']] = char_input
+            log_perp = self.sess.run(self.t['log_perplexity_out'], feed_dict=input_dict)
+            log_perps.append(log_perp)
+        return np.mean(log_perps)
+
+    def get_batch_data(self, sentences, num_steps, eos_id=0, bos_id=1):
+        chars_ids = [self.vocab.encode_chars(sentence) for sentence in sentences]
+        input_sent_ids = [self.vocab.encode(sentence) for sentence in sentences]
+        target_sent_ids = []
+        weights = []
+        for i, sent_id in enumerate(input_sent_ids):
+            weights.append([1.0] * len(sent_id))
+            while len(sent_id) < num_steps:
+                input_sent_ids[i].append(eos_id)
+                weights[i].append(0.0)
+                chars_ids[i].append(np.zeros(50,))
+            target_sent_ids.append(np.concatenate([sent_id[1:], [eos_id]]))
+
+        input_sent_ids = np.split(np.stack(input_sent_ids), num_steps, -1)
+        target_sent_ids = np.split(np.stack(target_sent_ids), num_steps, -1)
+        weights = np.split(np.stack(weights), num_steps, -1)
+        chars_ids = np.split(np.stack(chars_ids), num_steps, -1)
+        return input_sent_ids, target_sent_ids, weights, chars_ids
+
+
 
     def get_weight(self, sentence):
         inputs, targets, weights, char_inputs = self.get_data(sentence)
@@ -292,8 +328,9 @@ class NgramLM:
         f.close()
 
 if __name__ == '__main__':
-    lm = NgramLM()
+    # lm = NgramLM()
 
-    # lm = GoogleLM()
+    lm = GoogleLM()
+    lm.get_batch_weight(['car drives .', 'car flies .', 'car dies .'], 5)
     # lm.assess_interactive()
     # lm.get_weight('i am a sanqiang .')

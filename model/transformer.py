@@ -121,7 +121,6 @@ class TransformerGraph(Graph):
         decode_input_embs = tf.stack(self.embedding_fn(decoder_target_list, self.emb_simple), axis=1)
         tf.get_variable_scope().reuse_variables()
         decoder_outputs = self.decode_inputs_to_outputs(decode_input_embs, encoder_outputs, encoder_attn_bias)
-
         output = ModelOutput(
             encoder_outputs=encoder_outputs,
             decoder_outputs=decoder_outputs,

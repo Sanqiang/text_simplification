@@ -84,14 +84,37 @@ def test(model_config=None, ckpt=None):
 
         fetches = {'decoder_target_list': graph.decoder_target_list,
                    'loss': graph.loss,
-                   'global_step': graph.global_step}
+                   'global_step': graph.global_step,
+                   'sent_complex': graph.sentence_complex_input_placeholder_stack}
         if model_config.replace_unk_by_emb:
             fetches.update({'encoder_embs': graph.encoder_embs, 'decoder_outputs': graph.decoder_outputs})
+
+        enc_atts = []
+        dec_atts = []
+        encdec_atts = []
+        for layer_id in range(model_config.num_hidden_layers):
+            enc_att = tf.get_default_graph().get_operation_by_name(
+                "model/transformer_encoder/encoder/layer_%s/self_attention/multihead_attention/dot_product_attention/attention_weights" % layer_id).values()[
+                0]
+            dec_att = tf.get_default_graph().get_operation_by_name(
+                "model/transformer_decoder/decoder/layer_%s/self_attention/multihead_attention/dot_product_attention/attention_weights" % layer_id).values()[
+                0]
+            encdec_att = tf.get_default_graph().get_operation_by_name(
+                "model/transformer_decoder/decoder/layer_%s/encdec_attention/multihead_attention/dot_product_attention/attention_weights" % layer_id).values()[
+                0]
+
+
+            enc_atts.append(enc_att)
+            dec_atts.append(dec_att)
+            encdec_atts.append(encdec_att)
+        fetches.update({'enc_atts': enc_atts, 'dec_att': dec_atts, 'encdec_att': encdec_atts})
+
         results = sess.run(fetches, input_feed)
         target, loss, step = (results['decoder_target_list'], results['loss'],
                               results['global_step'])
         if model_config.replace_unk_by_emb:
             encoder_embs, decoder_outputs = results['encoder_embs'], results['decoder_outputs']
+        venc_atts, vdec_att, encdec_att, sent_complex = results['enc_atts'], results['dec_att'], results['encdec_att'], results['sent_complex']
         batch_perplexity = math.exp(loss)
         perplexitys_all.append(batch_perplexity)
 
@@ -301,5 +324,5 @@ if __name__ == '__main__':
     ckpt = args.test_ckpt
     # test(SubTestWikiSmallPPDBConfig(), ckpt)
     test(SubTestWikiEightRefConfig(), ckpt)
-    test(SubTestWikiEightRefPPDBConfig(), ckpt)
+    # test(SubTestWikiEightRefPPDBConfig(), ckpt)
     # test(SubTestWikiEightRefConfigBeam4(), ckpt)

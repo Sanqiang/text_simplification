@@ -397,7 +397,6 @@ class SubTestWikiSmallPPDBConfig(SubTestWikiSmallConfig):
     ppdb_emode_args = 1.5
 
 
-
 def list_config(config):
     attrs = [attr for attr in dir(config)
                if not callable(getattr(config, attr)) and not attr.startswith("__")]

@@ -175,9 +175,29 @@ def train(model_config=None):
             graph.sentence_complex_attn_prior_input_placeholder,
             model_config)
 
+        enc_atts = []
+        dec_atts = []
+        encdec_atts = []
+        for layer_id in range(model_config.num_hidden_layers):
+            enc_att = tf.get_default_graph().get_operation_by_name(
+                "model/transformer_encoder/encoder/layer_%s/self_attention/multihead_attention/dot_product_attention/attention_weights" % layer_id).values()[
+                0]
+            dec_att = tf.get_default_graph().get_operation_by_name(
+                "model/transformer_decoder/decoder/layer_%s/self_attention/multihead_attention/dot_product_attention/attention_weights" % layer_id).values()[
+                0]
+            encdec_att = tf.get_default_graph().get_operation_by_name(
+                "model/transformer_decoder/decoder/layer_%s/encdec_attention/multihead_attention/dot_product_attention/attention_weights" % layer_id).values()[
+                0]
+
+            enc_atts.append(enc_att)
+            dec_atts.append(dec_att)
+            encdec_atts.append(encdec_att)
+
+
         fetches = [graph.train_op, graph.loss, graph.global_step, graph.decoder_target_list,
-                   graph.perplexity, graph.learning_rate]
-        _, loss, step, result, perplexity, lr = sess.run(fetches, input_feed)
+                   graph.perplexity, graph.learning_rate,
+                   enc_atts, dec_atts, encdec_atts]
+        _, loss, step, result, perplexity, lr, enc_atts, vdec_atts, vencdec_atts = sess.run(fetches, input_feed)
         perplexitys.append(perplexity)
 
         if step % model_config.model_print_freq == 0:
