@@ -34,12 +34,14 @@ public class NERDataPrepare {
 	}
 
 	public void process() throws Exception {
-		String path_simp = "/Users/zhaosanqiang916/git/text_simplification_data/train/ours/simp350k.txt";
-		String path_comp = "/Users/zhaosanqiang916/git/text_simplification_data/train/ours/comp350k.txt";
-		String path_title = "/Users/zhaosanqiang916/git/text_simplification_data/train/ours/title350k.txt";
+		String path_simp = "/Users/zhaosanqiang916/git/text_simplification_data/train/ours/simp810.giga.txt";
+		String path_comp = "/Users/zhaosanqiang916/git/text_simplification_data/train/ours/comp810.giga.txt";
+		// String path_title =
+		// "/Users/zhaosanqiang916/git/text_simplification_data/train/ours/title350k.txt";
 		BufferedReader reader_simp = new BufferedReader(new FileReader(new File(path_simp)));
 		BufferedReader reader_comp = new BufferedReader(new FileReader(new File(path_comp)));
-		BufferedReader reader_title = new BufferedReader(new FileReader(new File(path_title)));
+		// BufferedReader reader_title = new BufferedReader(new FileReader(new
+		// File(path_title)));
 
 		ArrayList<String> nlist_comp = new ArrayList<>(), nlist_simp = new ArrayList<>();
 
@@ -47,11 +49,14 @@ public class NERDataPrepare {
 		while (true) {
 			line_comp = reader_comp.readLine();
 			line_simp = reader_simp.readLine();
-			line_title = reader_title.readLine();
-			if (line_title == null) {
-				if (line_comp != null || line_simp != null) {
-					throw new Exception("Unequal lines for comp, simp, titles.");
-				}
+			// line_title = reader_title.readLine();
+			// if (line_title == null) {
+			// if (line_comp != null || line_simp != null) {
+			// throw new Exception("Unequal lines for comp, simp, titles.");
+			// }
+			// break;
+			// }
+			if (line_comp == null && line_simp == null) {
 				break;
 			}
 
@@ -80,22 +85,28 @@ public class NERDataPrepare {
 				sb_simp.append(" ");
 			}
 			nlist_simp.add(sb_simp.toString());
+
+			if (nlist_comp.size() % 1000 == 0) {
+				System.out.println("Processed:" + nlist_comp.size() + " for " + path_simp);
+			}
 		}
 
 		reader_comp.close();
 		reader_simp.close();
-		reader_title.close();
-		
-		String npath_simp = "/Users/zhaosanqiang916/git/text_simplification_data/train/ours/simp350.ner.txt";
-		String npath_comp = "/Users/zhaosanqiang916/git/text_simplification_data/train/ours/comp350k.ner.txt";
+		// reader_title.close();
+
+		String npath_simp = "/Users/zhaosanqiang916/git/text_simplification_data/train/ours/simp810.giga.ner.txt";
+		String npath_comp = "/Users/zhaosanqiang916/git/text_simplification_data/train/ours/comp810.giga.ner.txt";
 		BufferedWriter writer_simp = new BufferedWriter(new FileWriter(new File(npath_simp)));
 		BufferedWriter writer_comp = new BufferedWriter(new FileWriter(new File(npath_comp)));
 		for (String line : nlist_simp) {
 			writer_simp.write(line);
+			writer_simp.write("\n");
 		}
 		writer_simp.close();
 		for (String line : nlist_comp) {
 			writer_comp.write(line);
+			writer_comp.write("\n");
 		}
 		writer_comp.close();
 	}
@@ -134,6 +145,7 @@ public class NERDataPrepare {
 			}
 		}
 
+		previous_tag = null;
 		for (List<CoreLabel> cls : lcl_comp) {
 			for (CoreLabel coreLabel : cls) {
 				String word = coreLabel.word();
@@ -205,7 +217,7 @@ public class NERDataPrepare {
 		}
 		return true;
 	}
-	
+
 	public static void main(String[] args) throws Exception {
 		new NERDataPrepare().process();
 	}

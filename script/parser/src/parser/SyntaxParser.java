@@ -41,10 +41,14 @@ public class SyntaxParser {
 		String parserModel = "edu/stanford/nlp/models/lexparser/englishPCFG.ser.gz";
 		LexicalizedParser lp = LexicalizedParser.loadModel(parserModel);
 		
+//		BufferedWriter writer = new BufferedWriter(new FileWriter(new File(
+//				"/Users/zhaosanqiang916/git/text_simplification_data/train/dress/wikilarge/wiki.full.aner.train.src.jsyntax")));
+//		BufferedReader reader = new BufferedReader(new FileReader(new File(
+//				"/Users/zhaosanqiang916/git/text_simplification_data/train/dress/wikilarge/wiki.full.aner.train.src")));
 		BufferedWriter writer = new BufferedWriter(new FileWriter(new File(
-				"/Users/zhaosanqiang916/git/text_simplification_data/train/dress/wikilarge/wiki.full.aner.train.src.jsyntax")));
+				"/Users/zhaosanqiang916/git/text_simplification_data/train/dress/wikismall/PWKP_108016.tag.80.aner.train.src.jsyntax")));
 		BufferedReader reader = new BufferedReader(new FileReader(new File(
-				"/Users/zhaosanqiang916/git/text_simplification_data/train/dress/wikilarge/wiki.full.aner.train.src")));
+				"/Users/zhaosanqiang916/git/text_simplification_data/train/dress/wikismall/PWKP_108016.tag.80.aner.train.src")));
 		String line = null;
 		SyntaxParser test = new SyntaxParser();
 		int cnt = 0;

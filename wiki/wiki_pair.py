@@ -1,3 +1,5 @@
+"""Deprecated: Move to java."""
+
 import re
 from collections import defaultdict
 import copy as cp

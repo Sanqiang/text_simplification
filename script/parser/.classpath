@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="src" path="src"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.8"/>
+	<classpathentry kind="lib" path="/Users/zhaosanqiang916/git/stanford-parser-full-2017-06-09/ejml-0.23-src.zip"/>
+	<classpathentry kind="lib" path="/Users/zhaosanqiang916/git/stanford-parser-full-2017-06-09/ejml-0.23.jar"/>
+	<classpathentry kind="lib" path="/Users/zhaosanqiang916/git/stanford-parser-full-2017-06-09/slf4j-api-1.7.12-sources.jar"/>
+	<classpathentry kind="lib" path="/Users/zhaosanqiang916/git/stanford-parser-full-2017-06-09/slf4j-api.jar"/>
+	<classpathentry kind="lib" path="/Users/zhaosanqiang916/git/stanford-parser-full-2017-06-09/stanford-parser-3.8.0-javadoc.jar"/>
+	<classpathentry kind="lib" path="/Users/zhaosanqiang916/git/stanford-parser-full-2017-06-09/stanford-parser-3.8.0-models.jar"/>
+	<classpathentry kind="lib" path="/Users/zhaosanqiang916/git/stanford-parser-full-2017-06-09/stanford-parser-3.8.0-sources.jar"/>
+	<classpathentry kind="lib" path="/Users/zhaosanqiang916/git/stanford-parser-full-2017-06-09/stanford-parser.jar"/>
+	<classpathentry kind="lib" path="/Users/zhaosanqiang916/git/stanford-ner-2017-06-09/stanford-ner-3.8.0.jar"/>
+	<classpathentry kind="lib" path="/Users/zhaosanqiang916/git/stanford-ner-2017-06-09/stanford-ner.jar"/>
+	<classpathentry kind="lib" path="/Users/zhaosanqiang916/git/stanford-ner-2017-06-09/stanford-english-corenlp-2017-06-09-models.jar"/>
+	<classpathentry kind="lib" path="/Users/zhaosanqiang916/git/stanford-ner-2017-06-09/stanford-ner-3.8.0-javadoc.jar"/>
+	<classpathentry kind="lib" path="/Users/zhaosanqiang916/git/stanford-ner-2017-06-09/stanford-ner-3.8.0-sources.jar"/>
+	<classpathentry kind="output" path="bin"/>
+</classpath>
