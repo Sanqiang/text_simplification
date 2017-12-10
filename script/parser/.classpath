@@ -15,5 +15,6 @@
 	<classpathentry kind="lib" path="/Users/zhaosanqiang916/git/stanford-ner-2017-06-09/stanford-english-corenlp-2017-06-09-models.jar"/>
 	<classpathentry kind="lib" path="/Users/zhaosanqiang916/git/stanford-ner-2017-06-09/stanford-ner-3.8.0-javadoc.jar"/>
 	<classpathentry kind="lib" path="/Users/zhaosanqiang916/git/stanford-ner-2017-06-09/stanford-ner-3.8.0-sources.jar"/>
+	<classpathentry kind="lib" path="/Users/zhaosanqiang916/git/selenium-java-3.8.1/selenium-server-standalone-3.8.1.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
