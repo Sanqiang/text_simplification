@@ -18,7 +18,7 @@ import edu.stanford.nlp.ling.CoreLabel;
 public class NERDataPrepare {
 	AbstractSequenceClassifier<CoreLabel> classifier = null;
 	HashSet<String> concat_tag_set = new HashSet<>(), replace_tag_set = new HashSet<>();
-
+	
 	public NERDataPrepare() throws Exception {
 		classifier = CRFClassifier.getClassifier(
 				"/Users/zhaosanqiang916/git/stanford-ner-2017-06-09/classifiers/english.conll.4class.distsim.crf.ser.gz");
@@ -32,6 +32,7 @@ public class NERDataPrepare {
 		replace_tag_set.add("ORGANIZATION");
 		replace_tag_set.add("NUMBER");
 	}
+	
 
 	public void process() throws Exception {
 		String path_simp = "/Users/zhaosanqiang916/git/text_simplification_data/train/ours/simp810.giga.txt";

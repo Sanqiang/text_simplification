@@ -14,6 +14,8 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 
+import com.sun.org.apache.xpath.internal.operations.And;
+
 import edu.stanford.nlp.ie.AbstractSequenceClassifier;
 import edu.stanford.nlp.ie.crf.CRFClassifier;
 import edu.stanford.nlp.ling.CoreAnnotations;
@@ -28,6 +30,15 @@ public class WikiPrepare {
 	public WikiPrepare() throws Exception {
 		classifier = CRFClassifier.getClassifier(
 				"/Users/zhaosanqiang916/git/stanford-ner-2017-06-09/classifiers/english.conll.4class.distsim.crf.ser.gz");
+	}
+
+	private boolean is_num(String str) {
+		try {
+			Double.parseDouble(str);
+		} catch (NumberFormatException nfe) {
+			return false;
+		}
+		return true;
 	}
 
 	// For Pair Data
@@ -254,7 +265,7 @@ public class WikiPrepare {
 
 	// For LM model use
 	public void extract_wiki_lm() throws Exception {
-		boolean use_ner = true, use_title = true;
+		boolean use_ner = false, use_title = false, sep_files = true;
 		File folder = new File("/Volumes/Storage/wiki/text_comp/AA/");
 		File[] files = folder.listFiles();
 		// Loop Var
@@ -264,8 +275,7 @@ public class WikiPrepare {
 		boolean start_doc = false;
 		// Output Var
 		ArrayList<String> output_sents = new ArrayList<>();
-		BufferedWriter writer = new BufferedWriter(
-				new FileWriter(new File("/Volumes/Storage/wiki/comp_all_title_ner.txt")));
+		BufferedWriter writer = new BufferedWriter(new FileWriter(new File("/Volumes/Storage/wiki/comp_all.txt")));
 		for (File file : files) {
 			BufferedReader reader = new BufferedReader(new FileReader(file));
 			String line = null;
@@ -295,29 +305,47 @@ public class WikiPrepare {
 						assert sents.size() == sent_cnt;
 						for (List<CoreLabel> sent : sents) {
 							StringBuilder sb_tmp = new StringBuilder();
+							String pre_ner = "";
 							for (CoreLabel coreLabel : sent) {
 								String ner = coreLabel.get(CoreAnnotations.AnswerAnnotation.class);
+								if (is_num(coreLabel.word())) {
+									ner = "NUMBER";
+								}
 								if (ner.equals("O")) {
 									sb_tmp.append(coreLabel.word());
+									sb_tmp.append(" ");
+									pre_ner = "";
 								} else {
-									sb_tmp.append(ner);
+									if (!pre_ner.equals("") && pre_ner.equals(ner)) {
+									} else {
+										sb_tmp.append(ner);
+										sb_tmp.append(" ");
+									}
+									pre_ner = ner;
 								}
-								sb_tmp.append(" ");
 							}
 							output_sents.add(sb_tmp.toString());
 						}
 					} else {
+						StringBuilder sb_tmp = new StringBuilder();
 						for (List<HasWord> sentence : dp) {
-							StringBuilder sb_tmp = new StringBuilder();
 							for (HasWord hasWord : sentence) {
 								sb_tmp.append(hasWord.word());
 								sb_tmp.append(" ");
 							}
-							output_sents.add(sb_tmp.toString());
+							String last_word = sentence.get(sentence.size() - 1).word();
+							if (last_word.equals(".") || last_word.equals("?") || last_word.equals("!")) {
+								output_sents.add(sb_tmp.toString());
+								sb_tmp = new StringBuilder();
+							}	
 						}
 					}
 
-					if (output_sents.size() >= 100000) {
+					if (output_sents.size() >= 500) {
+						if (sep_files) {
+							writer = new BufferedWriter(new FileWriter(
+									new File("/Volumes/Storage/wiki/wiki_output/comp/" + line_id + ".txt")));
+						}
 						line_id += 1;
 						System.out.println("Processed " + line_id);
 						for (String sent : output_sents) {
@@ -326,6 +354,9 @@ public class WikiPrepare {
 						}
 						writer.flush();
 						output_sents.clear();
+						if (sep_files) {
+							writer.close();
+						}
 					}
 
 					start_doc = false;
@@ -339,7 +370,10 @@ public class WikiPrepare {
 			}
 			reader.close();
 		}
-
+		if (sep_files) {
+			writer = new BufferedWriter(
+					new FileWriter(new File("/Volumes/Storage/wiki/wiki_output/comp/" + line_id + ".txt")));
+		}
 		for (String sent : output_sents) {
 			writer.write(sent);
 			writer.write("\n");
@@ -349,33 +383,34 @@ public class WikiPrepare {
 
 	}
 
-	public void extract_wiki_lm_ner() throws Exception {
-		BufferedWriter writer = new BufferedWriter(
-				new FileWriter(new File("/Volumes/Storage/wiki/simp_all_title_ner.txt")));
-
-		List<List<CoreLabel>> sents = classifier.classifyFile("/Volumes/Storage/wiki/simp_all_title.txt");
-		StringBuilder sBuilder = new StringBuilder();
-		for (List<CoreLabel> sent : sents) {
-			for (CoreLabel coreLabel : sent) {
-				String ner = coreLabel.get(CoreAnnotations.AnswerAnnotation.class);
-				if (ner.equals("O")) {
-					sBuilder.append(coreLabel.word());
-				} else {
-					sBuilder.append(ner);
-				}
-				sBuilder.append(" ");
-			}
-			sBuilder.append("\n");
-			if (sBuilder.length() > 10000) {
-				writer.write(sBuilder.toString());
-				writer.flush();
-				sBuilder = new StringBuilder();
-			}
-		}
-		writer.write(sBuilder.toString());
-		writer.flush();
-		writer.close();
-	}
+	// public void extract_wiki_lm_ner() throws Exception {
+	// BufferedWriter writer = new BufferedWriter(
+	// new FileWriter(new File("/Volumes/Storage/wiki/simp_all_title_ner.txt")));
+	//
+	// List<List<CoreLabel>> sents =
+	// classifier.classifyFile("/Volumes/Storage/wiki/simp_all_title.txt");
+	// StringBuilder sBuilder = new StringBuilder();
+	// for (List<CoreLabel> sent : sents) {
+	// for (CoreLabel coreLabel : sent) {
+	// String ner = coreLabel.get(CoreAnnotations.AnswerAnnotation.class);
+	// if (ner.equals("O")) {
+	// sBuilder.append(coreLabel.word());
+	// } else {
+	// sBuilder.append(ner);
+	// }
+	// sBuilder.append(" ");
+	// }
+	// sBuilder.append("\n");
+	// if (sBuilder.length() > 10000) {
+	// writer.write(sBuilder.toString());
+	// writer.flush();
+	// sBuilder = new StringBuilder();
+	// }
+	// }
+	// writer.write(sBuilder.toString());
+	// writer.flush();
+	// writer.close();
+	// }
 
 	public static void main(String[] args) throws Exception {
 		new WikiPrepare().extract_wiki_lm();
