@@ -41,5 +41,6 @@
 	<classpathentry kind="lib" path="/Users/zhaosanqiang916/git/java/parser/jar/jar_files/snakeyaml-1.17.jar"/>
 	<classpathentry kind="lib" path="/Users/zhaosanqiang916/git/java/parser/jar/jar_files/spi-2017.12.1.jar"/>
 	<classpathentry kind="lib" path="/Users/zhaosanqiang916/git/java/parser/jar/java-json.jar"/>
+	<classpathentry kind="lib" path="/Users/zhaosanqiang916/git/java/parser/jar/google-guava.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

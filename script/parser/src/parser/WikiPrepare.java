@@ -14,6 +14,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 
+import com.google.common.base.CharMatcher;
 import com.sun.org.apache.xpath.internal.operations.And;
 
 import edu.stanford.nlp.ie.AbstractSequenceClassifier;
@@ -327,21 +328,29 @@ public class WikiPrepare {
 							output_sents.add(sb_tmp.toString());
 						}
 					} else {
+						boolean add_sent = true;
 						StringBuilder sb_tmp = new StringBuilder();
 						for (List<HasWord> sentence : dp) {
 							for (HasWord hasWord : sentence) {
+								if (!CharMatcher.ascii().matchesAllOf(hasWord.word())) {
+									add_sent = false;
+									break;
+								}
 								sb_tmp.append(hasWord.word());
 								sb_tmp.append(" ");
 							}
 							String last_word = sentence.get(sentence.size() - 1).word();
 							if (last_word.equals(".") || last_word.equals("?") || last_word.equals("!")) {
-								output_sents.add(sb_tmp.toString());
+								if (sb_tmp.toString().split(" ").length >= 10 && add_sent) {
+									output_sents.add(sb_tmp.toString());
+									add_sent = true;
+								}
 								sb_tmp = new StringBuilder();
-							}	
+							}
 						}
 					}
 
-					if (output_sents.size() >= 500) {
+					if (output_sents.size() >= 5000) {
 						if (sep_files) {
 							writer = new BufferedWriter(new FileWriter(
 									new File("/Volumes/Storage/wiki/wiki_output/comp/" + line_id + ".txt")));

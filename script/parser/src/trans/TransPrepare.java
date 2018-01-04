@@ -3,29 +3,22 @@ package trans;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
-import java.io.OutputStreamWriter;
 import java.util.Arrays;
-import java.util.concurrent.ExecutionException;
+import java.util.HashMap;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ForkJoinPool;
-
-import javax.swing.text.AbstractDocument.Content;
 
 import org.openqa.selenium.By;
 import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
-//import org.openqa.selenium.chrome.ChromeDriver;
-import org.openqa.selenium.firefox.*;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
 public class TransPrepare {
-
-	private final int BATCH_SIZE = 16;
 
 	public TransPrepare() {
 		System.setProperty("webdriver.chrome.driver", "C:\\git\\java\\selenium-java-3.8.1\\chromedriver.exe");
@@ -44,15 +37,20 @@ public class TransPrepare {
 			driver_tmp.get("https://translate.google.com/?hl=en&sl=en&tl=zh-CN");
 		}
 		driver_tmp.findElement(By.id("source")).clear();
-
+		WebDriverWait wait0 = new WebDriverWait(driver_tmp, 60);
+		wait0.until(ExpectedConditions.textToBe(By.id("result_box"), ""));
+		
 		// driver_tmp.findElement(By.id("source")).sendKeys(text);
 		((JavascriptExecutor) driver_tmp).executeScript("arguments[0].value = arguments[1];",
 				driver_tmp.findElement(By.id("source")), text);
 
 		driver_tmp.findElement(By.id("gt-submit")).click();
-		WebDriverWait wait = new WebDriverWait(driver_tmp, 100);
-		wait.until(ExpectedConditions.attributeToBe(driver_tmp.findElement(By.id("result_box")), "lang", "zh-CN"));
-
+		WebDriverWait wait = new WebDriverWait(driver_tmp, 60);
+		if (back) {
+			wait.until(ExpectedConditions.attributeToBe(driver_tmp.findElement(By.id("result_box")), "lang", "en"));
+		} else {
+			wait.until(ExpectedConditions.attributeToBe(driver_tmp.findElement(By.id("result_box")), "lang", "zh-CN"));
+		}
 		String result = driver_tmp.findElement(By.id("gt-res-dir-ctr")).getText();
 		return result;
 	}
@@ -68,7 +66,7 @@ public class TransPrepare {
 			driver_tmp.findElement(By.id("file")).sendKeys(path);
 			driver_tmp.findElement(By.id("gt-submit")).click();
 
-			WebDriverWait wait = new WebDriverWait(driver_tmp, 100);
+			WebDriverWait wait = new WebDriverWait(driver_tmp, 60);
 			wait.until(ExpectedConditions.urlToBe("https://translate.googleusercontent.com/translate_f"));
 			WebElement content = driver_tmp.findElement(By.tagName("body"));
 			String result = content.getText();
@@ -149,8 +147,10 @@ public class TransPrepare {
 		// }
 	}
 
-	private void trans3(File file, boolean back) throws Exception {
-		// tranlsate single file chunk by chunk
+	ConcurrentHashMap<Long, WebDriver> driver_pool = new ConcurrentHashMap<>();
+
+	private File trans3(File file, boolean back) throws Exception {
+		// translate single file chunk by chunk
 		// used for translate
 		String npath = null;
 		if (back) {
@@ -158,13 +158,22 @@ public class TransPrepare {
 		} else {
 			npath = file.getParent() + "/tran1/" + file.getName();
 		}
+		// System.out.println("Start:\t" + npath + "\t with back:\t" + back);
 		File nfile = new File(npath);
 		if (nfile.exists()) {
-			return;
+			// System.out.println("Ignore:\t" + npath);
+			return nfile;
 		}
-		WebDriver driver_tmp = new ChromeDriver();
+		long threadId = Thread.currentThread().getId();
+		if (!driver_pool.containsKey(threadId)) {
+			System.out.println("Create driver for id:\t" + threadId);
+			driver_pool.put(threadId, new ChromeDriver());
+		}else {
+			System.out.println("Get driver for id:\t" + threadId);
+		}
+		WebDriver driver_tmp = driver_pool.get(threadId);
+		BufferedReader reader = new BufferedReader(new FileReader(file));
 		try {
-			BufferedReader reader = new BufferedReader(new FileReader(file));
 			StringBuilder output = new StringBuilder();
 			StringBuilder text = new StringBuilder();
 			String line = null;
@@ -175,30 +184,53 @@ public class TransPrepare {
 					text = new StringBuilder();
 				}
 				text.append(line.toString());
-				text.append("\nzzzzz\n");
+				if (back) {
+					text.append("\nZZZZZ\n");
+				} else {
+					text.append("\nzzzzz\n");
+				}
 			}
-			reader.close();
 
+			BufferedWriter writer = new BufferedWriter(new FileWriter(nfile));
 			String ntext = getChineseText(text.toString(), back, driver_tmp);
 			output.append(ntext.replaceAll("ZZZZZ", "\n").replaceAll("\n\n", "\n").replaceAll("\n\n", "\n"));
-			BufferedWriter writer = new BufferedWriter(new FileWriter(nfile));
 			writer.write(output.toString());
 			writer.close();
+
 		} catch (Exception e) {
+			// driver_tmp.quit();
+			// driver_tmp.close();
+			reader.close();
+			
+			return null;
 		}
-		driver_tmp.close();
+		// driver_tmp.quit();
+		// driver_tmp.close();
+		reader.close();
+		// System.out.println("Generate:\t" + npath);
+		return nfile;
 	}
 
 	public void translate(String path) throws Exception {
-		ForkJoinPool pool = new ForkJoinPool(6);
+		int num_thread = 30;
+		ForkJoinPool pool = new ForkJoinPool(num_thread);
+
 		File folder = new File(path);
 		final File[] files = folder.listFiles();
 
 		pool.submit(() -> Arrays.asList(files).parallelStream().forEach(f -> {
+			File nfile = null;
 			try {
-				trans3(f, false);
+				nfile = trans3(f, false);
+				if (nfile != null) {
+					trans3(nfile, true);
+				}
 			} catch (Exception e) {
 				e.printStackTrace();
+			} finally {
+				if (nfile != null) {
+					nfile = null;
+				}
 			}
 		})).get();
 
