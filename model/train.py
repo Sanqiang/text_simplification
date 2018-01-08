@@ -23,11 +23,12 @@ args = get_args()
 
 def get_graph_train_data(
         data,
-        sentence_idxs,
-        sentence_simple_input,
-        sentence_complex_input,
-        sentence_simple_input_weight,
-        sentence_complex_attn_weight,
+        objs,
+        # sentence_idxs,
+        # sentence_simple_input,
+        # sentence_complex_input,
+        # sentence_simple_input_weight,
+        # sentence_complex_attn_weight,
         model_config):
     input_feed = {}
     # Reserved section of vocabuary are same.
@@ -38,63 +39,63 @@ def get_graph_train_data(
     else:
         pad_id = [voc.encode(constant.SYMBOL_PAD)]
 
-    (tmp_sentence_simple, tmp_sentence_complex,
-     tmp_sentence_simple_weight, tmp_attn_weight,
-     tmp_idxs) = [], [], [], [], []
+    for obj in objs:
 
-    for i in range(model_config.batch_size):
-        if not model_config.it_train:
-            idx, sentence_simple, sentence_complex, sentence_simple_weight, attn_weight = data.get_data_sample()
-        else:
-            idx, sentence_simple, sentence_complex, sentence_simple_weight, attn_weight = next(data.data_it)
+        (tmp_sentence_simple, tmp_sentence_complex,
+         tmp_sentence_simple_weight, tmp_attn_weight,
+         tmp_idxs) = [], [], [], [], []
 
-        # PAD zeros
-        if len(sentence_simple) < model_config.max_simple_sentence:
-            num_pad = model_config.max_simple_sentence - len(sentence_simple)
-            sentence_simple.extend(num_pad * pad_id)
-        else:
-            sentence_simple = sentence_simple[:model_config.max_simple_sentence]
 
-        if len(sentence_complex) < model_config.max_complex_sentence:
-            num_pad = model_config.max_complex_sentence - len(sentence_complex)
-            sentence_complex.extend(num_pad * pad_id)
-        else:
-            sentence_complex = sentence_complex[:model_config.max_complex_sentence]
+        for i in range(model_config.batch_size):
+            if not model_config.it_train:
+                idx, sentence_simple, sentence_complex, sentence_simple_weight, attn_weight = data.get_data_sample()
+            else:
+                idx, sentence_simple, sentence_complex, sentence_simple_weight, attn_weight = next(data.data_it)
 
-        tmp_sentence_simple.append(sentence_simple)
-        tmp_sentence_complex.append(sentence_complex)
+            # PAD zeros
+            if len(sentence_simple) < model_config.max_simple_sentence:
+                num_pad = model_config.max_simple_sentence - len(sentence_simple)
+                sentence_simple.extend(num_pad * pad_id)
+            else:
+                sentence_simple = sentence_simple[:model_config.max_simple_sentence]
 
-        if len(sentence_simple_weight) < model_config.max_simple_sentence:
-            num_pad = model_config.max_simple_sentence - len(sentence_simple_weight)
-            sentence_simple_weight.extend(num_pad * pad_id)
-        else:
-            sentence_simple_weight = sentence_simple[:model_config.max_simple_sentence]
-        tmp_sentence_simple_weight.append(sentence_simple_weight)
+            if len(sentence_complex) < model_config.max_complex_sentence:
+                num_pad = model_config.max_complex_sentence - len(sentence_complex)
+                sentence_complex.extend(num_pad * pad_id)
+            else:
+                sentence_complex = sentence_complex[:model_config.max_complex_sentence]
 
-        if len(attn_weight) < model_config.max_complex_sentence:
-            num_pad = model_config.max_complex_sentence - len(attn_weight)
-            attn_weight.extend(num_pad * pad_id)
-        else:
-            attn_weight = attn_weight[:model_config.max_complex_sentence]
-        tmp_attn_weight.append(attn_weight)
+            tmp_sentence_simple.append(sentence_simple)
+            tmp_sentence_complex.append(sentence_complex)
 
-        tmp_idxs.append(idx)
+            if len(sentence_simple_weight) < model_config.max_simple_sentence:
+                num_pad = model_config.max_simple_sentence - len(sentence_simple_weight)
+                sentence_simple_weight.extend(num_pad * pad_id)
+            else:
+                sentence_simple_weight = sentence_simple[:model_config.max_simple_sentence]
+            tmp_sentence_simple_weight.append(sentence_simple_weight)
 
-    for step in range(model_config.max_simple_sentence):
-        input_feed[sentence_simple_input[step].name] = [tmp_sentence_simple[batch_idx][step]
-                                                        for batch_idx in range(model_config.batch_size)]
-    for step in range(model_config.max_complex_sentence):
-        input_feed[sentence_complex_input[step].name] = [tmp_sentence_complex[batch_idx][step]
-                                                         for batch_idx in range(model_config.batch_size)]
-    for step in range(model_config.max_simple_sentence):
-        input_feed[sentence_simple_input_weight[step].name] = [tmp_sentence_simple_weight[batch_idx][step]
-                                                               for batch_idx in range(model_config.batch_size)]
-    for step in range(model_config.max_complex_sentence):
-        input_feed[sentence_complex_attn_weight[step].name] = [tmp_attn_weight[batch_idx][step]
-                                                               for batch_idx in range(model_config.batch_size)]
-    input_feed[sentence_idxs.name] = [tmp_idxs[batch_idx] for batch_idx in range(model_config.batch_size)]
+            if len(attn_weight) < model_config.max_complex_sentence:
+                num_pad = model_config.max_complex_sentence - len(attn_weight)
+                attn_weight.extend(num_pad * pad_id)
+            else:
+                attn_weight = attn_weight[:model_config.max_complex_sentence]
+            tmp_attn_weight.append(attn_weight)
 
-    return input_feed, tmp_sentence_simple, tmp_sentence_complex
+            tmp_idxs.append(idx)
+
+        for step in range(model_config.max_simple_sentence):
+            input_feed[obj['sentence_simple_input_placeholder'][step].name] = [tmp_sentence_simple[batch_idx][step]
+                                                            for batch_idx in range(model_config.batch_size)]
+        for step in range(model_config.max_complex_sentence):
+            input_feed[obj['sentence_complex_input_placeholder'][step].name] = [tmp_sentence_complex[batch_idx][step]
+                                                             for batch_idx in range(model_config.batch_size)]
+        for step in range(model_config.max_simple_sentence):
+            input_feed[obj['sentence_simple_input_prior_placeholder'][step].name] = [tmp_sentence_simple_weight[batch_idx][step]
+                                                                   for batch_idx in range(model_config.batch_size)]
+        input_feed[obj['sentence_idxs'].name] = [tmp_idxs[batch_idx] for batch_idx in range(model_config.batch_size)]
+
+    return input_feed
 
 
 def train(model_config=None):
@@ -105,12 +106,12 @@ def train(model_config=None):
     graph = None
     if model_config.framework == 'transformer':
         graph = TransformerGraph(data, True, model_config)
-    elif model_config.framework == 'seq2seq':
-        graph = Seq2SeqGraph(data, True, model_config)
+    # elif model_config.framework == 'seq2seq':
+    #     graph = Seq2SeqGraph(data, True, model_config)
     else:
         raise NotImplementedError('Unknown Framework.')
 
-    graph.create_model()
+    graph.create_model_multigpu()
 
     if model_config.change_optimizer:
         # Back up Log
@@ -130,14 +131,14 @@ def train(model_config=None):
             ignore_missing_vars=True, reshape_variables=False)
 
     def init_fn(session):
-        if model_config.pretrained_embedding is not None and model_config.subword_vocab_size <= 0:
-            input_feed = {graph.embed_simple_placeholder: data.pretrained_emb_simple,
-                          graph.embed_complex_placeholder: data.pretrained_emb_complex}
-            session.run([graph.replace_emb_complex, graph.replace_emb_simple], input_feed)
-            print('Replace Pretrained Word Embedding.')
-
-            del data.pretrained_emb_simple
-            del data.pretrained_emb_complex
+        # if model_config.pretrained_embedding is not None and model_config.subword_vocab_size <= 0:
+        #     # input_feed = {graph.embed_simple_placeholder: data.pretrained_emb_simple,
+        #     #               graph.embed_complex_placeholder: data.pretrained_emb_complex}
+        #     # session.run([graph.replace_emb_complex, graph.replace_emb_simple], input_feed)
+        #     # print('Replace Pretrained Word Embedding.')
+        #
+        #     del data.pretrained_emb_simple
+        #     del data.pretrained_emb_complex
 
         # Restore ckpt either from warm start or automatically get when changing optimizer
         ckpt_path = None
@@ -166,42 +167,18 @@ def train(model_config=None):
     sess = sv.PrepareSession(config=session.get_session_config(model_config))
     perplexitys = []
     while True:
-        input_feed, sentence_simple, sentence_complex = get_graph_train_data(
+        input_feed = get_graph_train_data(
             data,
-            graph.sentence_idxs,
-            graph.sentence_simple_input_placeholder,
-            graph.sentence_complex_input_placeholder,
-            graph.sentence_simple_input_prior_placeholder,
-            graph.sentence_complex_attn_prior_input_placeholder,
+            graph.objs,
             model_config)
 
-        enc_atts = []
-        dec_atts = []
-        encdec_atts = []
-        for layer_id in range(model_config.num_hidden_layers):
-            enc_att = tf.get_default_graph().get_operation_by_name(
-                "model/transformer_encoder/encoder/layer_%s/self_attention/multihead_attention/dot_product_attention/attention_weights" % layer_id).values()[
-                0]
-            dec_att = tf.get_default_graph().get_operation_by_name(
-                "model/transformer_decoder/decoder/layer_%s/self_attention/multihead_attention/dot_product_attention/attention_weights" % layer_id).values()[
-                0]
-            encdec_att = tf.get_default_graph().get_operation_by_name(
-                "model/transformer_decoder/decoder/layer_%s/encdec_attention/multihead_attention/dot_product_attention/attention_weights" % layer_id).values()[
-                0]
-
-            enc_atts.append(enc_att)
-            dec_atts.append(dec_att)
-            encdec_atts.append(encdec_att)
-
-
-        fetches = [graph.train_op, graph.loss, graph.global_step, graph.decoder_target_list,
-                   graph.perplexity, graph.learning_rate,
-                   enc_atts, dec_atts, encdec_atts]
-        _, loss, step, result, perplexity, lr, enc_atts, vdec_atts, vencdec_atts = sess.run(fetches, input_feed)
+        fetches = [graph.train_op, graph.loss, graph.global_step,
+                   graph.perplexity]
+        _, loss, step, perplexity = sess.run(fetches, input_feed)
         perplexitys.append(perplexity)
 
         if step % model_config.model_print_freq == 0:
-            print('Perplexity:\t%f at step %d with lr %s' % (perplexity, step, lr))
+            print('Perplexity:\t%f at step %d.' % (perplexity, step))
             perplexitys.clear()
 
         # if step % 20 == 0:

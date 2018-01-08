@@ -21,9 +21,9 @@ from __future__ import print_function
 
 from collections import defaultdict
 import gzip
-import io
 import os
 import random
+import stat
 import tarfile
 
 # Dependency imports
@@ -125,6 +125,13 @@ def shard_filepath(fname, num_shards):
   ]
 
 
+def outputs_exist(filenames):
+  for out_fname in filenames:
+    out_fname = out_fname.replace(UNSHUFFLED_SUFFIX, "")
+    if tf.gfile.Exists(out_fname):
+      return out_fname
+
+
 def generate_files(generator, output_filenames, max_cases=None):
   """Generate cases from a generator and save as TFRecord files.
 
@@ -137,6 +144,9 @@ def generate_files(generator, output_filenames, max_cases=None):
     max_cases: maximum number of cases to get from the generator;
       if None (default), we use the generator until StopIteration is raised.
   """
+  if outputs_exist(output_filenames):
+    tf.logging.info("Skipping generator because outputs files exist")
+    return
   num_shards = len(output_filenames)
   writers = [tf.python_io.TFRecordWriter(fname) for fname in output_filenames]
   counter, shard = 0, 0
@@ -190,8 +200,8 @@ def maybe_download(directory, filename, url):
     print()
     tf.gfile.Rename(inprogress_filepath, filepath)
     statinfo = os.stat(filepath)
-    tf.logging.info("Succesfully downloaded %s, %s bytes." % (filename,
-                                                              statinfo.st_size))
+    tf.logging.info("Successfully downloaded %s, %s bytes." %
+                    (filename, statinfo.st_size))
   else:
     tf.logging.info("Not downloading, file already found: %s" % filepath)
   return filepath
@@ -242,8 +252,8 @@ def maybe_download_from_drive(directory, filename, url):
   # Print newline to clear the carriage return from the download progress
   print()
   statinfo = os.stat(filepath)
-  tf.logging.info("Succesfully downloaded %s, %s bytes." % (filename,
-                                                            statinfo.st_size))
+  tf.logging.info("Successfully downloaded %s, %s bytes." % (filename,
+                                                             statinfo.st_size))
   return filepath
 
 
@@ -258,45 +268,13 @@ def gunzip_file(gz_path, new_path):
     tf.logging.info("File %s already exists, skipping unpacking" % new_path)
     return
   tf.logging.info("Unpacking %s to %s" % (gz_path, new_path))
+  # We may be unpacking into a newly created directory, add write mode.
+  mode = stat.S_IRWXU or stat.S_IXGRP or stat.S_IRGRP or stat.S_IROTH
+  os.chmod(os.path.dirname(new_path), mode)
   with gzip.open(gz_path, "rb") as gz_file:
-    with io.open(new_path, "wb") as new_file:
+    with tf.gfile.GFile(new_path, mode="wb") as new_file:
       for line in gz_file:
         new_file.write(line)
-
-
-# TODO(aidangomez): en-fr tasks are significantly over-represented below
-_DATA_FILE_URLS = [
-    # German-English
-    [
-        "http://data.statmt.org/wmt16/translation-task/training-parallel-nc-v11.tgz",  # pylint: disable=line-too-long
-        [
-            "training-parallel-nc-v11/news-commentary-v11.de-en.en",
-            "training-parallel-nc-v11/news-commentary-v11.de-en.de"
-        ]
-    ],
-    # German-English & French-English
-    [
-        "http://www.statmt.org/wmt13/training-parallel-commoncrawl.tgz", [
-            "commoncrawl.de-en.en", "commoncrawl.de-en.de",
-            "commoncrawl.fr-en.en", "commoncrawl.fr-en.fr"
-        ]
-    ],
-    [
-        "http://www.statmt.org/wmt13/training-parallel-europarl-v7.tgz", [
-            "training/europarl-v7.de-en.en", "training/europarl-v7.de-en.de",
-            "training/europarl-v7.fr-en.en", "training/europarl-v7.fr-en.fr"
-        ]
-    ],
-    # French-English
-    [
-        "http://www.statmt.org/wmt10/training-giga-fren.tar",
-        ["giga-fren.release2.fixed.en.gz", "giga-fren.release2.fixed.fr.gz"]
-    ],
-    [
-        "http://www.statmt.org/wmt13/training-parallel-un.tgz",
-        ["un/undoc.2000.fr-en.en", "un/undoc.2000.fr-en.fr"]
-    ],
-]
 
 
 def get_or_generate_vocab_inner(data_dir, vocab_filename, vocab_size,
@@ -337,13 +315,9 @@ def get_or_generate_vocab_inner(data_dir, vocab_filename, vocab_size,
   return vocab
 
 
-def get_or_generate_vocab(data_dir,
-                          tmp_dir,
-                          vocab_filename,
-                          vocab_size,
-                          sources=None):
-  """Generate a vocabulary from the datasets in sources (_DATA_FILE_URLS)."""
-  sources = sources or _DATA_FILE_URLS
+def get_or_generate_vocab(data_dir, tmp_dir, vocab_filename, vocab_size,
+                          sources):
+  """Generate a vocabulary from the datasets in sources."""
 
   def generate():
     tf.logging.info("Generating vocab from: %s", str(sources))
@@ -355,6 +329,8 @@ def get_or_generate_vocab(data_dir,
       for lang_file in source[1]:
         tf.logging.info("Reading file: %s" % lang_file)
         filepath = os.path.join(tmp_dir, lang_file)
+
+        # Extract from tar if needed.
         if not tf.gfile.Exists(filepath):
           read_type = "r:gz" if filename.endswith("tgz") else "r"
           with tarfile.open(compressed_file, read_type) as corpus_tar:
@@ -373,13 +349,19 @@ def get_or_generate_vocab(data_dir,
 
         # Use Tokenizer to count the word occurrences.
         with tf.gfile.GFile(filepath, mode="r") as source_file:
-          file_byte_budget = 3.5e5 if filepath.endswith("en") else 7e5
+          file_byte_budget = 1e6
+          counter = 0
+          countermax = int(source_file.size() / file_byte_budget / 2)
           for line in source_file:
-            if file_byte_budget <= 0:
-              break
-            line = line.strip()
-            file_byte_budget -= len(line)
-            yield line
+            if counter < countermax:
+              counter += 1
+            else:
+              if file_byte_budget <= 0:
+                break
+              line = line.strip()
+              file_byte_budget -= len(line)
+              counter = 0
+              yield line
 
   return get_or_generate_vocab_inner(data_dir, vocab_filename, vocab_size,
                                      generate())
@@ -411,7 +393,7 @@ def get_or_generate_tabbed_vocab(data_dir, tmp_dir, source_filename,
       for line in source_file:
         line = line.strip()
         if line and "\t" in line:
-          parts = line.split("\t", maxsplit=1)
+          parts = line.split("\t", 1)
           part = parts[index].strip()
           yield part
 
@@ -468,6 +450,9 @@ def generate_dataset_and_shuffle(train_gen,
 
 
 def shuffle_dataset(filenames):
+  if outputs_exist(filenames):
+    tf.logging.info("Skipping shuffle because output files exist")
+    return
   tf.logging.info("Shuffling data...")
   for fname in filenames:
     records = read_records(fname)
@@ -475,3 +460,133 @@ def shuffle_dataset(filenames):
     out_fname = fname.replace(UNSHUFFLED_SUFFIX, "")
     write_records(records, out_fname)
     tf.gfile.Remove(fname)
+
+
+class SequencePacker(object):
+  """Helper for constructing a packed example of sequence examples.
+
+  See comments to pack_examples()
+  """
+
+  def __init__(self, first_sequence, spacing=2):
+    self._spacing = spacing
+    self._ids = first_sequence[:]
+    self._segmentation = [1] * len(first_sequence)
+    self._position = range(len(first_sequence))
+
+  def add(self, ids):
+    padding = [0] * self._spacing
+    self._ids.extend(padding + ids)
+    next_segment_num = self._segmentation[-1] + 1 if self._segmentation else 1
+    self._segmentation.extend(padding + [next_segment_num] * len(ids))
+    self._position.extend(padding + range(len(ids)))
+
+  def can_fit(self, ids, packed_length):
+    return len(self._ids) + self._spacing + len(ids) <= packed_length
+
+  def to_dict(self):
+    return {"inputs": [0],
+            "targets": self._ids,
+            "targets_segmentation": self._segmentation,
+            "targets_position": self._position}
+
+
+class SequencePairPacker(object):
+  """Helper for packing sequence-to-sequence examples into bigger examples.
+
+  See comments to pack_examples()
+  """
+
+  def __init__(self, first_sequence_pair, spacing=2):
+    self._inputs = SequencePacker(first_sequence_pair[0], spacing)
+    self._targets = SequencePacker(first_sequence_pair[1], spacing)
+
+  def add(self, pair):
+    self._inputs.add(pair[0])
+    self._targets.add(pair[1])
+
+  def can_fit(self, pair, packed_length):
+    return (self._inputs.can_fit(pair[0], packed_length) and
+            self._targets.can_fit(pair[1], packed_length))
+
+  def to_dict(self):
+    ret = self._targets.to_dict()
+    inputs_dict = self._inputs.to_dict()
+    ret["inputs"] = inputs_dict["targets"]
+    ret["inputs_segmentation"] = inputs_dict["targets_segmentation"]
+    ret["inputs_position"] = inputs_dict["targets_position"]
+    return ret
+
+
+def pack_examples(examples,
+                  has_inputs,
+                  packed_length=256,
+                  spacing=2,
+                  queue_size=10,
+                  chop_long_sequences=False):
+  """Pack examples into longer examples.
+
+  If has_inputs=False, we are packing single-sequence examples with
+  targets only and no inputs.
+
+  In this case, we concatenate the targets from several examples to form
+  each new example.  We insert a number of zeros for spacing between the
+  original sequences.  This is to help the sequences stay separate
+  under convolutions.  If chop_long_sequences is set, then any input sequence
+  longer than packed_length gets chopped up into multiple examples.  Otherwise,
+  long sequences are emitted as singletons.
+
+  If has_inputs=True, then we are packing sequence-to-sequence
+  examples.  We combine several examples by concatenating the inputs
+  (as above) and concatenating the targets (as above).  Chopping of
+  long sequences is not supported.
+
+  The packed examples are represented as dictionaries containing:
+    "inputs", "targets": the packed sequences described above
+    "inputs_segmentation", "targets_segmentation":
+       Sequences aligned with "inputs", "targets" specifying to which original
+       sequence each position belongs.  Numbering starts from 1, and 0 is used
+       for spacing.  This information is useful for preventing attention across
+       segments.
+       e.g. [1 1 1 1 1 1 0 0 2 2 2 0 0 3 3 3 3 3 0 0 4 4 4]
+     "inputs_position", "targets_position":
+       Sequences aligned with "inputs", "targets" specifying position within
+       the original sequence.  This is useful for positional encodings.
+       e.g. [0 1 2 3 4 5 0 0 0 1 2 0 0 0 1 2 3 4 0 0 0 1 2]
+
+  Args:
+    examples: a generator returning feature dictionaries.
+    has_inputs: a boolean
+    packed_length: an integer
+    spacing: an integer
+    queue_size: an integer
+    chop_long_sequences: a boolean
+
+  Yields:
+    feature dictionaries.
+  """
+  packer = SequencePairPacker if has_inputs else SequencePacker
+  combined = []
+  for example in examples:
+    x = ((example["inputs"], example["targets"])
+         if has_inputs else example["targets"])
+    if chop_long_sequences and len(x) > packed_length:
+      assert not has_inputs
+      num_fragments = len(x) // packed_length
+      for i in xrange(num_fragments):
+        yield packer(
+            x[packed_length * i:packed_length * (i + 1)], spacing).to_dict()
+      x = x[packed_length * num_fragments:]
+    added = False
+    for c in combined:
+      if c.can_fit(x, packed_length):
+        c.add(x)
+        added = True
+        break
+    if not added:
+      if len(combined) == queue_size:
+        yield combined[0].to_dict()
+        combined = combined[1:]
+      combined.append(packer(x, spacing))
+  for c in combined:
+    yield c.to_dict()

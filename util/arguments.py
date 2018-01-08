@@ -3,6 +3,8 @@ import argparse
 
 def get_args():
     parser = argparse.ArgumentParser(description='Model Parameter')
+    parser.add_argument('-ngpus', '--num_gpus', default=1, type=int,
+                        help='Number of GPU cards?')
     parser.add_argument('-fw', '--framework', default='transformer',
                         help='Framework we are using?')
     parser.add_argument('-out', '--output_folder', default='tmp',
@@ -61,19 +63,19 @@ def get_args():
     parser.add_argument('-decay', '--use_learning_rate_decay', default=False, type=bool,
                         help='Whether to use learning rate decay?')
 
-    parser.add_argument('-rl_len', '--rl_prelenth', default=3, type=int,
-                        help='Length of output sentences before RL applied?')
-    parser.add_argument('-rl_bleu', '--rl_bleu', default=0.0, type=float,
-                        help='The weight for BLEU in RL?')
-    parser.add_argument('-rl_sari', '--rl_sari', default=0.0, type=float,
-                        help='The weight for SARI in RL?')
-    parser.add_argument('-rl_fkgl', '--rl_fkgl', default=0.0, type=float,
-                        help='The weight for FKGL in RL?')
+    # parser.add_argument('-rl_len', '--rl_prelenth', default=3, type=int,
+    #                     help='Length of output sentences before RL applied?')
+    # parser.add_argument('-rl_bleu', '--rl_bleu', default=0.0, type=float,
+    #                     help='The weight for BLEU in RL?')
+    # parser.add_argument('-rl_sari', '--rl_sari', default=0.0, type=float,
+    #                     help='The weight for SARI in RL?')
+    # parser.add_argument('-rl_fkgl', '--rl_fkgl', default=0.0, type=float,
+    #                     help='The weight for FKGL in RL?')
     # For PPDB
-    parser.add_argument('-rl_simp', '--rl_simp', default=0.0, type=float,
-                        help='The weight for SARI simple in RL?')
-    parser.add_argument('-rl_keep', '--rl_keep', default=0.0, type=float,
-                        help='The weight for SARI keep in RL?')
+    # parser.add_argument('-rl_simp', '--rl_simp', default=0.0, type=float,
+    #                     help='The weight for SARI simple in RL?')
+    # parser.add_argument('-rl_keep', '--rl_keep', default=0.0, type=float,
+    #                     help='The weight for SARI keep in RL?')
 
     parser.add_argument('-path_ppdb', '--path_ppdb_refine',
                         default='../text_simplification_data/ppdb/SimplePPDB.enrich',

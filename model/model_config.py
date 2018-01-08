@@ -10,6 +10,7 @@ def get_path(file_path):
 
 
 class DefaultConfig():
+    num_gpus = args.num_gpus
     framework = args.framework
     warm_start = args.warm_start
     use_partial_restore = args.use_partial_restore
@@ -44,14 +45,14 @@ class DefaultConfig():
     beam_search_size = -1
 
     # RL weight
-    rl_prelenth = args.rl_prelenth
-    rl_bleu = args.rl_bleu
-    rl_sari = args.rl_sari
-    rl_fkgl = args.rl_fkgl
-
-    # RL2 weight
-    rl_keep = args.rl_keep
-    rl_simp = args.rl_simp
+    # rl_prelenth = args.rl_prelenth
+    # rl_bleu = args.rl_bleu
+    # rl_sari = args.rl_sari
+    # rl_fkgl = args.rl_fkgl
+    #
+    # # RL2 weight
+    # rl_keep = args.rl_keep
+    # rl_simp = args.rl_simp
 
     # Overwrite transformer config
     # timing: use positional encoding
@@ -187,7 +188,7 @@ class DefaultTestConfig(DefaultConfig):
 
 class DefaultTestConfig2(DefaultConfig):
     beam_search_size = 4
-    batch_size = 1
+    batch_size = 2
     output_folder = args.output_folder
     resultdor = get_path('../' + output_folder + '/result/test2')
 

@@ -15,11 +15,14 @@ class TransformerGraph(Graph):
         self.setup_hparams()
         self.model_fn = self.transformer_fn
 
-    def transformer_fn(self):
+    def transformer_fn(self,
+                       sentence_complex_input_placeholder, emb_complex,
+                       sentence_simple_input_placeholder, emb_simple,
+                       w, b):
         encoder_embed_inputs = tf.stack(
-            self.embedding_fn(self.sentence_complex_input_placeholder, self.emb_complex), axis=1)
+            self.embedding_fn(sentence_complex_input_placeholder, emb_complex), axis=1)
         encoder_attn_bias = common_attention.attention_bias_ignore_padding(
-            tf.to_float(tf.equal(tf.stack(self.sentence_complex_input_placeholder, axis=1),
+            tf.to_float(tf.equal(tf.stack(sentence_complex_input_placeholder, axis=1),
                                  self.data.vocab_complex.encode(constant.SYMBOL_PAD))))
         if self.hparams.pos == 'timing':
             encoder_embed_inputs = common_attention.add_timing_signal_1d(encoder_embed_inputs)
@@ -47,15 +50,16 @@ class TransformerGraph(Graph):
                 # General train
                 print('Use Generally Process.')
                 decoder_embed_inputs = self.embedding_fn(
-                    self.sentence_simple_input_placeholder[:-1], self.emb_simple)
+                    sentence_simple_input_placeholder[:-1], emb_simple)
                 decoder_output_list = self.decode_step(
                     decoder_embed_inputs, encoder_outputs, encoder_attn_bias)
-                gt_target_list = self.sentence_simple_input_placeholder
-                decoder_logit_list = [self.output_to_logit(o) for o in decoder_output_list]
+                gt_target_list = sentence_simple_input_placeholder
+                decoder_logit_list = [self.output_to_logit(o, w, b) for o in decoder_output_list]
             else:
                 # Beam Search
                 print('Use Beam Search with Beam Search Size %d.' % self.model_config.beam_search_size)
-                return self.transformer_beam_search(encoder_outputs, encoder_attn_bias, encoder_embed_inputs_list)
+                return self.transformer_beam_search(encoder_outputs, encoder_attn_bias, encoder_embed_inputs_list,
+                                                    sentence_complex_input_placeholder, emb_simple, w, b)
 
         output = ModelOutput(
             encoder_outputs=encoder_outputs,
@@ -80,7 +84,8 @@ class TransformerGraph(Graph):
             for d in tf.split(decoder_output, target_length, axis=1)]
         return decoder_output_list
 
-    def transformer_beam_search(self, encoder_outputs, encoder_attn_bias, encoder_embed_inputs_list):
+    def transformer_beam_search(self, encoder_outputs, encoder_attn_bias, encoder_embed_inputs_list,
+                                sentence_complex_input_placeholder, emb_simple, w, b):
         # Use Beam Search in evaluation stage
         # Update [a, b, c] to [a, a, a, b, b, b, c, c, c] if beam_search_size == 3
         encoder_beam_outputs = tf.concat(
@@ -94,10 +99,10 @@ class TransformerGraph(Graph):
              for o in range(self.model_config.batch_size)], axis=0)
 
         def symbol_to_logits_fn(ids):
-            embs = tf.nn.embedding_lookup(self.emb_simple, ids[:, 1:])
+            embs = tf.nn.embedding_lookup(emb_simple, ids[:, 1:])
             embs = tf.pad(embs, [[0, 0], [1, 0], [0, 0]])
             decoder_outputs = self.decode_inputs_to_outputs(embs, encoder_beam_outputs, encoder_attn_beam_bias)
-            return self.output_to_logit(decoder_outputs[:, -1, :])
+            return self.output_to_logit(decoder_outputs[:, -1, :], w, b)
 
         beam_ids, beam_score = beam_search.beam_search(symbol_to_logits_fn,
                                                        tf.zeros([self.model_config.batch_size], tf.int32),
@@ -105,10 +110,11 @@ class TransformerGraph(Graph):
                                                        self.model_config.max_simple_sentence,
                                                        self.data.vocab_simple.vocab_size(),
                                                        self.model_config.penalty_alpha,
-                                                       self.data,
-                                                       self.model_config,
-                                                       self.sentence_complex_input_placeholder,
-                                                       self.data.vocab_simple.encode(constant.SYMBOL_END))
+                                                       #self.data,
+                                                       #self.model_config,
+                                                       #sentence_complex_input_placeholder,
+                                                       #self.data.vocab_simple.encode(constant.SYMBOL_END)
+                                                       )
         top_beam_ids = beam_ids[:, 0, 1:]
         top_beam_ids = tf.pad(top_beam_ids,
                               [[0, 0],
@@ -118,7 +124,7 @@ class TransformerGraph(Graph):
         decoder_score = -beam_score[:, 0] / tf.to_float(tf.shape(top_beam_ids)[1])
 
         # Get outputs based on target ids
-        decode_input_embs = tf.stack(self.embedding_fn(decoder_target_list, self.emb_simple), axis=1)
+        decode_input_embs = tf.stack(self.embedding_fn(decoder_target_list, emb_simple), axis=1)
         tf.get_variable_scope().reuse_variables()
         decoder_outputs = self.decode_inputs_to_outputs(decode_input_embs, encoder_outputs, encoder_attn_bias)
         output = ModelOutput(
@@ -130,8 +136,8 @@ class TransformerGraph(Graph):
         )
         return output
 
-    def output_to_logit(self, prev_out):
-        prev_logit = tf.add(tf.matmul(prev_out, tf.transpose(self.w)), self.b)
+    def output_to_logit(self, prev_out, w, b):
+        prev_logit = tf.add(tf.matmul(prev_out, tf.transpose(w)), b)
         return prev_logit
 
     def decode_inputs_to_outputs(self, decoder_embed_inputs, encoder_outputs, encoder_attn_bias):

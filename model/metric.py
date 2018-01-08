@@ -13,15 +13,15 @@ class Metric:
     def __init__(self, model_config, data):
         self.model_config = model_config
         self.data = data
-        if model_config.use_quality_model:
-            self.lm = GoogleLM()
-        if model_config.rl_simp:
-            self.ppdb = PPDB(model_config)
-            # Copied from data_generator/train_data.py
-            self.syntaxs = []
-            for line in open(self.model_config.train_dataset_complex_ppdb, encoding='utf-8'):
-                syntax = [r.split('=>') for r in line.strip().split('\t') if len(r) > 0]
-                self.syntaxs.append(syntax)
+        # if model_config.use_quality_model:
+        #     self.lm = GoogleLM()
+        # if model_config.rl_simp:
+        #     self.ppdb = PPDB(model_config)
+        #     # Copied from data_generator/train_data.py
+        #     self.syntaxs = []
+        #     for line in open(self.model_config.train_dataset_complex_ppdb, encoding='utf-8'):
+        #         syntax = [r.split('=>') for r in line.strip().split('\t') if len(r) > 0]
+        #         self.syntaxs.append(syntax)
 
     """Used for training weight."""
     """RL version 1: automatically pick up words and give weight"""

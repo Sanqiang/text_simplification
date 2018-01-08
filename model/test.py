@@ -46,7 +46,7 @@ def test(model_config=None, ckpt=None):
     elif model_config.framework == 'seq2seq':
         graph = Seq2SeqGraph(val_data, False, model_config)
     tf.reset_default_graph()
-    graph.create_model()
+    graph.create_model_multigpu()
 
     # while True:
     ibleus_all = []

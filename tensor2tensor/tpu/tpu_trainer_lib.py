@@ -15,281 +15,333 @@
 
 """Library for training on TPU. See tpu_trainer.py."""
 
-# TODO(rsepassi):
-# * Fix EVAL (breaks when loading from checkpoint)
-# * Support all decoders
-# * Share more code with Problem.dataset and input_pipeline
-# * Support PREDICT
-
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-import copy
-import math
+import os
+import random
 
 # Dependency imports
 
-from tensor2tensor.layers import common_layers
-from tensor2tensor.models import transformer
-from tensor2tensor.utils import data_reader
-from tensor2tensor.utils import metrics
-from tensor2tensor.utils import model_builder
+import numpy as np
+
+from tensor2tensor.utils import devices
+from tensor2tensor.utils import expert_utils
+from tensor2tensor.utils import metrics_hook
 from tensor2tensor.utils import registry
+from tensor2tensor.utils import t2t_model
 
 import tensorflow as tf
 
-
-def get_input_fn(data_dir, problem, hparams):
-  """Get basic T2T input fn."""
-
-  def input_fn(mode, params):
-    """Input fn."""
-    is_training = mode == tf.estimator.ModeKeys.TRAIN
-    num_threads = 4 if is_training else 1
-    batch_size = params["batch_size"]
-
-    data_file_patterns = [problem.filepattern(data_dir, mode)]
-
-    batching_scheme = {
-        "boundaries": [],
-        "batch_sizes": [batch_size],
-        "max_length": hparams.max_length,
-        "window_size": batch_size,
-        "padded_shapes": {
-            "inputs": [hparams.max_length],
-            "targets": [hparams.max_length],
-        },
-    }
-
-    def decode_record(record):
-      """Serialized Example to dict of <feature name, Tensor>."""
-      data_fields, _ = problem.example_reading_spec()
-      decoded = tf.parse_single_example(record, features=data_fields)
-      decoded["inputs"] = decoded["inputs"].values
-      decoded["targets"] = decoded["targets"].values
-      return decoded
-
-    data_files = tf.contrib.slim.parallel_reader.get_data_files(
-        data_file_patterns)
-    dataset = tf.contrib.data.TFRecordDataset(data_files)
-    dataset = dataset.map(decode_record, num_threads=num_threads)
-
-    def _preprocess(example, problem, hparams, mode):
-      example = problem.preprocess_example(example, mode, hparams)
-      # We do not want int64s as they are not supported on TPUs.
-      example = data_reader.cast_int64_to_int32(example)
-      return example
-
-    dataset = dataset.map(
-        lambda ex: _preprocess(ex, problem, hparams, mode),
-        num_threads=num_threads)
-
-    def _valid_size(example):
-      return data_reader.example_valid_size(example,
-                                            batching_scheme["max_length"])
-
-    dataset = dataset.filter(_valid_size)
-    if is_training:
-      dataset = dataset.shuffle(100)
-      dataset = dataset.repeat(None)
-    dataset = data_reader.padded_batch(dataset,
-                                       batching_scheme["batch_sizes"][0],
-                                       batching_scheme["padded_shapes"])
-    dataset.prefetch(1)
-
-    train_features = dataset.make_one_shot_iterator().get_next()
-
-    inputs = train_features["inputs"]
-    targets = train_features["targets"]
-
-    # Ensure inputs and targets are proper rank.
-    while len(inputs.get_shape()) != 4:
-      inputs = tf.expand_dims(inputs, axis=-1)
-    while len(targets.get_shape()) != 4:
-      targets = tf.expand_dims(targets, axis=-1)
-
-    inputs_shape = inputs.get_shape().as_list()
-    inputs_shape[0] = batch_size
-    inputs.set_shape(inputs_shape)
-    targets_shape = targets.get_shape().as_list()
-    targets_shape[0] = batch_size
-    targets.set_shape(targets_shape)
-
-    train_features["inputs"] = inputs
-    train_features["targets"] = targets
-
-    return train_features, targets
-
-  return input_fn
+from tensorflow.core.protobuf import rewriter_config_pb2
+from tensorflow.python import debug
 
 
-def get_model_fn(model, hp, use_tpu=True):
-  """Get simple T2T model fn."""
-
-  def model_fn(features, labels, mode, params, config):
-    """Model fn."""
-    del params
-    hparams = copy.deepcopy(hp)
-    problem_hp = hparams.problems[0]
-    orig_features = features
-
-    # Instantiate model and retrieve modalities
-    model_class = registry.model(model)(hparams, mode, problem_hp)
-    input_modality = problem_hp.input_modality["inputs"]
-    target_modality = problem_hp.target_modality
-
-    # Model construction
-    features = {
-        "inputs": input_modality.bottom(features["inputs"]),
-        "targets": target_modality.targets_bottom(features["targets"]),
-        "problem_choice": tf.constant(0),
-        "input_space_id": tf.constant(problem_hp.input_space_id),
-        "target_space_id": tf.constant(problem_hp.target_space_id)
-    }
-    outputs = model_class.model_fn_body(features)
-    logits = target_modality.top(outputs, labels)
-
-    # Loss
-    loss_num, loss_den = target_modality.loss(logits, labels)
-    loss = loss_num / tf.maximum(1.0, loss_den)
-
-    if mode == tf.estimator.ModeKeys.EVAL:
-      problem = hp.problem_instances[0]
-      eval_metrics_fn = create_eval_metrics_fn(problem)
-      return tf.contrib.tpu.TPUEstimatorSpec(
-          mode,
-          eval_metrics=(eval_metrics_fn, [logits, orig_features["targets"]]),
-          loss=loss)
-
-    assert mode == tf.estimator.ModeKeys.TRAIN
-
-    # Learning rate
-    num_shards = config.tpu_config.num_shards
-    lr = hparams.learning_rate * model_builder.learning_rate_decay(
-        hparams, num_worker_replicas=num_shards)
-    lr /= math.sqrt(float(num_shards))
-
-    # Optimizer
-    opt_name = hparams.optimizer
-    if opt_name == "Momentum":
-      opt = tf.train.MomentumOptimizer(
-          lr, momentum=hparams.optimizer_momentum_momentum)
+def create_session_config(log_device_placement=False,
+                          enable_graph_rewriter=False,
+                          gpu_mem_fraction=0.95,
+                          use_tpu=False):
+  """The TensorFlow Session config to use."""
+  if use_tpu:
+    graph_options = tf.GraphOptions()
+  else:
+    if enable_graph_rewriter:
+      rewrite_options = rewriter_config_pb2.RewriterConfig()
+      rewrite_options.optimizers.append("pruning")
+      rewrite_options.optimizers.append("constfold")
+      rewrite_options.optimizers.append("arithmetic")
+      rewrite_options.optimizers.append("layout")
+      graph_options = tf.GraphOptions(rewrite_options=rewrite_options)
     else:
-      if hparams.optimizer not in ["RMSProp", "SGD"]:
-        tf.logging.warn(
-            "Only Momentum, RMSProp, and SGD are known to work on TPU.")
-      opt = tf.contrib.layers.OPTIMIZER_CLS_NAMES[opt_name](lr)
+      graph_options = tf.GraphOptions(
+          optimizer_options=tf.OptimizerOptions(
+              opt_level=tf.OptimizerOptions.L1, do_function_inlining=False))
 
-    if use_tpu:
-      opt = tf.contrib.tpu.CrossShardOptimizer(opt)
+  gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=gpu_mem_fraction)
 
-    # Optimize
-    gradients = opt.compute_gradients(loss, tf.trainable_variables())
-    if hparams.clip_grad_norm:
-      gradients = _clip_gradients_by_norm(gradients, hparams.clip_grad_norm)
-    train_op = opt.apply_gradients(
-        gradients, global_step=tf.train.get_or_create_global_step())
-    with tf.control_dependencies([train_op]):
-      train_op = tf.identity(loss)
-
-    _remove_summaries()
-    return tf.contrib.tpu.TPUEstimatorSpec(mode, loss=loss, train_op=train_op)
-
-  return model_fn
+  config = tf.ConfigProto(
+      allow_soft_placement=True,
+      graph_options=graph_options,
+      gpu_options=gpu_options,
+      log_device_placement=log_device_placement)
+  return config
 
 
-def create_eval_metrics_fn(problem):
-  """Create the metrics_fn that TPUEstimatorSpec expects."""
-
-  def make_metric_fn(metric_fn):
-
-    def wrapped_metric_fn(logits, labels):
-      num, den = metric_fn(
-          logits, labels, weights_fn=common_layers.weights_nonzero)
-      return tf.metrics.mean(num, den)
-
-    return wrapped_metric_fn
-
-  metric_fns = []
-  eval_metrics = problem.eval_metrics()
-  for metric in eval_metrics:
-    name = "metrics-%s/%s" % (problem.name, metric)
-    metric_fns.append((name, make_metric_fn(metrics.METRICS_FNS[metric])))
-
-  def all_metrics_fn(logits, labels):
-    metrics_dict = {}
-
-    for name, fn in metric_fns:
-      metrics_dict[name] = fn(logits, labels)
-
-    return metrics_dict
-
-  return all_metrics_fn
+def create_hparams(hparams_set,
+                   hparams_overrides_str="",
+                   data_dir=None,
+                   problem_name=None):
+  hparams = registry.hparams(hparams_set)()
+  if hparams_overrides_str:
+    hparams = hparams.parse(hparams_overrides_str)
+  if data_dir:
+    hparams.add_hparam("data_dir", data_dir)
+  if problem_name:
+    add_problem_hparams(hparams, problem_name)
+  return hparams
 
 
-def _remove_summaries():
-  g = tf.get_default_graph()
-  key = tf.GraphKeys.SUMMARIES
-  del g.get_collection_ref(key)[:]
-  assert not g.get_collection(key)
-
-
-def _clip_gradients_by_norm(grads_and_vars, clip_gradients):
-  """Clips gradients by global norm."""
-  gradients, variables = zip(*grads_and_vars)
-  clipped_gradients, _ = tf.clip_by_global_norm(gradients, clip_gradients)
-  return list(zip(clipped_gradients, variables))
-
-
-def make_estimator(model_fn,
-                   output_dir,
-                   master="",
-                   batch_size=16,
-                   iterations_per_loop=100,
-                   num_shards=8,
-                   per_host_input_for_training=True,
-                   use_tpu=True,
-                   log_device_placement=False,
-                   save_checkpoints_steps=1000):
-  """Make TPUEstimator."""
-  tpu_config = tf.contrib.tpu.TPUConfig(
-      iterations_per_loop=iterations_per_loop,
-      num_shards=num_shards,
-      per_host_input_for_training=per_host_input_for_training)
+def create_run_config(master="",
+                      model_dir=None,
+                      iterations_per_loop=1000,
+                      num_shards=8,
+                      log_device_placement=False,
+                      save_checkpoints_steps=1000,
+                      keep_checkpoint_max=20,
+                      keep_checkpoint_every_n_hours=10000,
+                      num_gpus=1,
+                      gpu_order="",
+                      shard_to_cpu=False,
+                      num_async_replicas=1,
+                      enable_graph_rewriter=False,
+                      gpu_mem_fraction=0.95,
+                      no_data_parallelism=False,
+                      daisy_chain_variables=True,
+                      schedule="continuous_train_and_eval",
+                      worker_job="/job:localhost",
+                      worker_id=0,
+                      ps_replicas=0,
+                      ps_job="/job:ps",
+                      ps_gpu=0,
+                      sync=False,
+                      use_tpu=False):
+  """Create RunConfig, TPUConfig, and Parallelism object."""
+  session_config = create_session_config(
+      log_device_placement=log_device_placement,
+      enable_graph_rewriter=enable_graph_rewriter,
+      gpu_mem_fraction=gpu_mem_fraction,
+      use_tpu=use_tpu)
   session_config = tf.ConfigProto(
       allow_soft_placement=True, log_device_placement=log_device_placement)
-  run_config = tf.contrib.tpu.RunConfig(
-      session_config=session_config,
-      save_summary_steps=0,
-      save_checkpoints_steps=save_checkpoints_steps,
-      tpu_config=tpu_config,
-      master=master)
+  run_config_args = {
+      "master": master,
+      "model_dir": model_dir,
+      "session_config": session_config,
+      "save_summary_steps": 0,
+      "save_checkpoints_steps": save_checkpoints_steps,
+      "keep_checkpoint_max": keep_checkpoint_max,
+      "keep_checkpoint_every_n_hours": keep_checkpoint_every_n_hours,
+  }
+  run_config_cls = tf.contrib.learn.RunConfig
 
-  return tf.contrib.tpu.TPUEstimator(
-      model_fn=model_fn,
-      use_tpu=use_tpu,
-      model_dir=output_dir,
-      config=run_config,
-      train_batch_size=batch_size,
-      eval_batch_size=batch_size * 2)
+  # If using TPU, use TPU RunConfig, add TPUConfig, and add additional args
+  if use_tpu:
+    run_config_cls = tf.contrib.tpu.RunConfig
+    tpu_config = tf.contrib.tpu.TPUConfig(
+        iterations_per_loop=iterations_per_loop,
+        num_shards=num_shards,
+        per_host_input_for_training=(num_shards <= 8))
+    run_config_args["tpu_config"] = tpu_config
+
+  config = run_config_cls(**run_config_args)
+
+  # If not using TPU, add device info for data_parallelism
+  config.use_tpu = use_tpu
+  if not use_tpu:
+    config.t2t_device_info = {
+        "num_async_replicas": num_async_replicas,
+    }
+    if no_data_parallelism:
+      config.data_parallelism = expert_utils.Parallelism([""])
+    else:
+      config.data_parallelism = devices.data_parallelism(
+          daisy_chain_variables=daisy_chain_variables,
+          ps_replicas=ps_replicas,
+          ps_job=ps_job,
+          ps_gpu=ps_gpu,
+          schedule=schedule,
+          sync=sync,
+          worker_gpu=num_gpus,
+          worker_replicas=num_async_replicas,
+          worker_id=worker_id,
+          gpu_order=gpu_order,
+          locally_shard_to_cpu=shard_to_cpu,
+          worker_job=worker_job)
+
+  return config
 
 
-@registry.register_hparams
-def transformer_tpu():
-  """HParams for Transformer model on TPU."""
-  hp = transformer.transformer_base()
-  hp.use_pad_remover = int(False)  # where op not supported
+def create_estimator(model_name,
+                     hparams,
+                     run_config,
+                     schedule="train_and_evaluate",
+                     decode_hparams=None,
+                     use_tpu=False):
+  model_fn = t2t_model.T2TModel.make_estimator_model_fn(
+      model_name, hparams, decode_hparams=decode_hparams, use_tpu=use_tpu)
 
-  # Inputs
-  hp.add_hparam("batch_size_per_shard", 24)
-  # Each example in the batch will be of (padded) length hp.max_length
-  hp.max_length = 64
+  if use_tpu:
+    batch_size = hparams.tpu_batch_size_per_shard
+    batch_size *= run_config.tpu_config.num_shards
+    eval_batch_size = batch_size * 2
+    if "eval" not in schedule:
+      # Estimator takes the presence of eval_batch_size as an indication that
+      # an eval is being performed, and complains about num_shards being too
+      # big. So we have to set eval_batch_size to None.
+      eval_batch_size = None
+    return tf.contrib.tpu.TPUEstimator(
+        model_fn=model_fn,
+        model_dir=run_config.model_dir,
+        config=run_config,
+        train_batch_size=batch_size,
+        eval_batch_size=eval_batch_size)
+  else:
+    return tf.estimator.Estimator(
+        model_fn=model_fn, model_dir=run_config.model_dir, config=run_config)
 
-  hp.optimizer = "Momentum"  # can be SGD, Momentum, RMSProp
-  hp.norm_type = "none"  # seem to get nans with layer norm
-  hp.clip_grad_norm = 2.
-  hp.norm_epsilon = 1e-3
-  hp.layer_preprocess_sequence = "n"
-  hp.layer_postprocess_sequence = "da"
-  return hp
+
+def create_hooks(use_tfdbg=False, use_dbgprofile=False, dbgprofile_kwargs=None,
+                 use_validation_monitor=False, validation_monitor_kwargs=None,
+                 use_early_stopping=False, early_stopping_kwargs=None):
+  """Create train and eval hooks for Experiment."""
+  train_monitors = []
+  eval_hooks = []
+
+  if use_tfdbg:
+    hook = debug.LocalCLIDebugHook()
+    train_monitors.append(hook)
+    eval_hooks.append(hook)
+
+  if use_dbgprofile:
+    # Recorded traces can be visualized with chrome://tracing/
+    # The memory/tensor lifetime is also profiled
+    defaults = dict(save_steps=10, show_dataflow=True, show_memory=True)
+    defaults.update(dbgprofile_kwargs)
+    train_monitors.append(tf.contrib.hooks.ProfilerHook(**defaults))
+
+  if use_validation_monitor:
+    train_monitors.append(
+        tf.contrib.learn.monitors.ValidationMonitor(
+            hooks=eval_hooks, **validation_monitor_kwargs))
+
+  if use_early_stopping:
+    hook = metrics_hook.EarlyStoppingHook(**early_stopping_kwargs)
+    # Adding to both training and eval so that eval aborts as well
+    train_monitors.append(hook)
+    eval_hooks.append(hook)
+
+  return train_monitors, eval_hooks
+
+
+def create_experiment(run_config,
+                      hparams,
+                      model_name,
+                      problem_name,
+                      data_dir,
+                      train_steps,
+                      eval_steps,
+                      min_eval_frequency=2000,
+                      schedule="train_and_evaluate",
+                      export=False,
+                      decode_hparams=None,
+                      use_tfdbg=False,
+                      use_dbgprofile=False,
+                      eval_early_stopping_steps=None,
+                      eval_early_stopping_metric=None,
+                      eval_early_stopping_metric_delta=None,
+                      eval_early_stopping_metric_minimize=True,
+                      use_tpu=False):
+  """Create Experiment."""
+  # HParams
+  hparams.add_hparam("data_dir", data_dir)
+  add_problem_hparams(hparams, problem_name)
+
+  # Estimator
+  estimator = create_estimator(
+      model_name,
+      hparams,
+      run_config,
+      schedule=schedule,
+      decode_hparams=decode_hparams,
+      use_tpu=use_tpu)
+
+  # Input fns from Problem
+  problem = hparams.problem_instances[0]
+  train_input_fn = problem.make_estimator_input_fn(
+      tf.estimator.ModeKeys.TRAIN, hparams)
+  eval_input_fn = problem.make_estimator_input_fn(
+      tf.estimator.ModeKeys.EVAL, hparams)
+
+  # Export
+  export_strategies = export and [create_export_strategy(problem, hparams)]
+
+  # Hooks
+  hooks_kwargs = {}
+  if not use_tpu:
+    dbgprofile_kwargs = {"output_dir": run_config.model_dir}
+    validation_monitor_kwargs = dict(
+        input_fn=eval_input_fn,
+        eval_steps=eval_steps,
+        every_n_steps=min_eval_frequency,
+        early_stopping_rounds=eval_early_stopping_steps,
+        early_stopping_metric=eval_early_stopping_metric,
+        early_stopping_metric_minimize=eval_early_stopping_metric_minimize)
+    early_stopping_kwargs = dict(
+        events_dir=os.path.join(run_config.model_dir, "eval_continuous"),
+        tag=eval_early_stopping_metric,
+        num_plateau_steps=eval_early_stopping_steps,
+        plateau_decrease=eval_early_stopping_metric_minimize,
+        plateau_delta=eval_early_stopping_metric_delta,
+        every_n_steps=min_eval_frequency)
+
+    # In-process eval (and possible early stopping)
+    local_schedules = ["train_and_evaluate", "continuous_train_and_eval"]
+    use_validation_monitor = (
+        schedule in local_schedules and min_eval_frequency)
+    # Distributed early stopping
+    use_early_stopping = (
+        schedule not in local_schedules and eval_early_stopping_steps)
+    train_monitors, eval_hooks = create_hooks(
+        use_tfdbg=use_tfdbg,
+        use_dbgprofile=use_dbgprofile,
+        dbgprofile_kwargs=dbgprofile_kwargs,
+        use_validation_monitor=use_validation_monitor,
+        use_early_stopping=use_early_stopping,
+        validation_monitor_kwargs=validation_monitor_kwargs,
+        early_stopping_kwargs=early_stopping_kwargs)
+    hooks_kwargs = {"train_monitors": train_monitors, "eval_hooks": eval_hooks}
+
+  # Experiment
+  return tf.contrib.learn.Experiment(
+      estimator=estimator,
+      train_input_fn=train_input_fn,
+      eval_input_fn=eval_input_fn,
+      train_steps=train_steps,
+      eval_steps=eval_steps,
+      min_eval_frequency=min_eval_frequency,
+      train_steps_per_iteration=min(min_eval_frequency, train_steps),
+      export_strategies=export_strategies,
+      **hooks_kwargs)
+
+
+def create_experiment_fn(*args, **kwargs):
+  """Wrapper for canonical experiment_fn. See create_experiment."""
+
+  def experiment_fn(run_config, hparams):
+    return create_experiment(run_config, hparams, *args, **kwargs)
+
+  return experiment_fn
+
+
+def create_export_strategy(problem, hparams):
+  return tf.contrib.learn.make_export_strategy(
+      lambda: problem.serving_input_fn(hparams), as_text=True)
+
+
+def add_problem_hparams(hparams, problems):
+  """Add problem hparams for the problems."""
+  hparams.problems = []
+  hparams.problem_instances = []
+  for problem_name in problems.split("-"):
+    problem = registry.problem(problem_name)
+    p_hparams = problem.get_hparams(hparams)
+
+    hparams.problem_instances.append(problem)
+    hparams.problems.append(p_hparams)
+
+
+def set_random_seed(seed):
+  tf.set_random_seed(seed)
+  random.seed(seed)
+  np.random.seed(seed)

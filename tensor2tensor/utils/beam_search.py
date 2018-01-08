@@ -20,16 +20,65 @@ from __future__ import division
 from __future__ import print_function
 
 # Dependency imports
+
+from tensor2tensor.layers import common_layers
+
 import tensorflow as tf
-import numpy as np
-from util import constant
-from collections import defaultdict
-import math
+
+from tensorflow.python.util import nest
 
 # Assuming EOS_ID is 1
 EOS_ID = 1
 # Default value for INF
 INF = 1. * 1e7
+
+
+def _merge_beam_dim(tensor):
+  """Reshapes first two dimensions in to single dimension.
+
+  Args:
+    tensor: Tensor to reshape of shape [A, B, ...]
+
+  Returns:
+    Reshaped tensor of shape [A*B, ...]
+  """
+  shape = common_layers.shape_list(tensor)
+  shape[0] *= shape[1]  # batch -> batch * beam_size
+  shape.pop(1)  # Remove beam dim
+  return tf.reshape(tensor, shape)
+
+
+def _unmerge_beam_dim(tensor, batch_size, beam_size):
+  """Reshapes first dimension back to [batch_size, beam_size].
+
+  Args:
+    tensor: Tensor to reshape of shape [batch_size*beam_size, ...]
+    batch_size: Tensor, original batch size.
+    beam_size: int, original beam size.
+
+  Returns:
+    Reshaped tensor of shape [batch_size, beam_size, ...]
+  """
+  shape = common_layers.shape_list(tensor)
+  new_shape = [batch_size] + [beam_size] + shape[1:]
+  return tf.reshape(tensor, new_shape)
+
+
+def _expand_to_beam_size(tensor, beam_size):
+  """Tiles a given tensor by beam_size.
+
+  Args:
+    tensor: tensor to tile [batch_size, ...]
+    beam_size: How much to tile the tensor by.
+
+  Returns:
+    Tiled tensor [batch_size, beam_size, ...]
+  """
+  tensor = tf.expand_dims(tensor, axis=1)
+  tile_dims = [1] * tensor.shape.ndims
+  tile_dims[1] = beam_size
+
+  return tf.tile(tensor, tile_dims)
 
 
 def log_prob_from_logits(logits):
@@ -55,7 +104,8 @@ def compute_batch_indices(batch_size, beam_size):
 
 
 def compute_topk_scores_and_seq(sequences, scores, scores_to_gather, flags,
-                                beam_size, batch_size, prefix="default"):
+                                beam_size, batch_size, prefix="default",
+                                states_to_gather=None):
   """Given sequences and scores, will gather the top k=beam size sequences.
 
   This function is used to grow alive, and finished. It takes sequences,
@@ -83,6 +133,7 @@ def compute_topk_scores_and_seq(sequences, scores, scores_to_gather, flags,
     beam_size: int
     batch_size: int
     prefix: string that will prefix unique names for the ops run.
+    states_to_gather: dict (possibly nested) of decoding states.
   Returns:
     Tuple of
     (topk_seq [batch_size, beam_size, decode_length],
@@ -105,13 +156,17 @@ def compute_topk_scores_and_seq(sequences, scores, scores_to_gather, flags,
   # Gather up the highest scoring sequences.  For each operation added, give it
   # a concrete name to simplify observing these operations with tfdbg.  Clients
   # can capture these tensors by watching these node names.
-  topk_seq = tf.gather_nd(
-      sequences, top_coordinates, name=(prefix + "_topk_seq"))
-  topk_flags = tf.gather_nd(
-      flags, top_coordinates, name=(prefix + "_topk_flags"))
-  topk_gathered_scores = tf.gather_nd(
-      scores_to_gather, top_coordinates, name=(prefix + "_topk_scores"))
-  return topk_seq, topk_gathered_scores, topk_flags
+  def gather(tensor, name):
+    return tf.gather_nd(tensor, top_coordinates, name=(prefix + name))
+  topk_seq = gather(sequences, "_topk_seq")
+  topk_flags = gather(flags, "_topk_flags")
+  topk_gathered_scores = gather(scores_to_gather, "_topk_scores")
+  if states_to_gather:
+    topk_gathered_states = nest.map_structure(
+        lambda state: gather(state, "_topk_states"), states_to_gather)
+  else:
+    topk_gathered_states = states_to_gather
+  return topk_seq, topk_gathered_scores, topk_flags, topk_gathered_states
 
 
 def beam_search(symbols_to_logits_fn,
@@ -120,10 +175,9 @@ def beam_search(symbols_to_logits_fn,
                 decode_length,
                 vocab_size,
                 alpha,
-                data,
-                model_config,
-                encoder_input_list,
-                eos_id=EOS_ID,):
+                states=None,
+                eos_id=EOS_ID,
+                stop_early=True):
   """Beam search with length penalties.
 
   Requires a function that can take the currently decoded sybmols and return
@@ -157,27 +211,34 @@ def beam_search(symbols_to_logits_fn,
     vocab_size: Size of the vocab, must equal the size of the logits returned by
         symbols_to_logits_fn
     alpha: alpha for length penalty.
+    states: dict (possibly nested) of decoding states.
     eos_id: ID for end of sentence.
+    stop_early: a boolean - stop once best sequence is provably determined.
   Returns:
     Tuple of
     (decoded beams [batch_size, beam_size, decode_length]
      decoding probablities [batch_size, beam_size])
   """
-  batch_size = tf.shape(initial_ids)[0]
+  batch_size = common_layers.shape_list(initial_ids)[0]
 
   # Assume initial_ids are prob 1.0
   initial_log_probs = tf.constant([[0.] + [-float("inf")] * (beam_size - 1)])
   # Expand to beam_size (batch_size, beam_size)
   alive_log_probs = tf.tile(initial_log_probs, [batch_size, 1])
 
-  # Expand each batch to beam_size
-  alive_seq = tf.tile(tf.expand_dims(initial_ids, 1), [1, beam_size])
-  alive_seq = tf.expand_dims(alive_seq, 2)  # (batch_size, beam_size, 1)
+  # Expand each batch and state to beam_size
+  alive_seq = _expand_to_beam_size(initial_ids, beam_size)
+  alive_seq = tf.expand_dims(alive_seq, axis=2)  # (batch_size, beam_size, 1)
+  if states:
+    states = nest.map_structure(
+        lambda state: _expand_to_beam_size(state, beam_size), states)
+  else:
+    states = {}
 
   # Finished will keep track of all the sequences that have finished so far
   # Finished log probs will be negative infinity in the beginning
   # finished_flags will keep track of booleans
-  finished_seq = tf.zeros(tf.shape(alive_seq), tf.int32)
+  finished_seq = tf.zeros(common_layers.shape_list(alive_seq), tf.int32)
   # Setting the scores of the initial to negative infinity.
   finished_scores = tf.ones([batch_size, beam_size]) * -INF
   finished_flags = tf.zeros([batch_size, beam_size], tf.bool)
@@ -221,7 +282,7 @@ def beam_search(symbols_to_logits_fn,
         curr_finished_seq, curr_finished_scores, curr_finished_scores,
         curr_finished_flags, beam_size, batch_size, "grow_finished")
 
-  def grow_alive(curr_seq, curr_scores, curr_log_probs, curr_finished):
+  def grow_alive(curr_seq, curr_scores, curr_log_probs, curr_finished, states):
     """Given sequences and scores, will gather the top k=beam size sequences.
 
     Args:
@@ -232,6 +293,7 @@ def beam_search(symbols_to_logits_fn,
         [batch_size, beam_size]
       curr_finished: Finished flags for each of these sequences.
         [batch_size, beam_size]
+      states: dict (possibly nested) of decoding states.
     Returns:
       Tuple of
         (Topk sequences based on scores,
@@ -243,44 +305,9 @@ def beam_search(symbols_to_logits_fn,
     curr_scores += tf.to_float(curr_finished) * -INF
     return compute_topk_scores_and_seq(curr_seq, curr_scores, curr_log_probs,
                                        curr_finished, beam_size, batch_size,
-                                       "grow_alive")
+                                       "grow_alive", states)
 
-  encoder_input = tf.stack(encoder_input_list, axis=1)
-  def top_k(flat_curr_scores, k=beam_size * 2):
-      flat_curr_scores.set_shape(
-          (model_config.batch_size, model_config.beam_search_size*len(data.vocab_simple.i2w)))
-
-      def augment_score(flat_curr_scores, encoder_input):
-          for batch_i in range(model_config.batch_size):
-              ppdb_cands = {}
-              cands = set(encoder_input[batch_i])
-              for cand_wid in cands:
-                  cand_word = data.vocab_complex.describe(cand_wid)
-                  if cand_word in data.ppdb.rules:
-                      for tag in data.ppdb.rules[cand_word]:
-                          for word in data.ppdb.rules[cand_word][tag]:
-                              wid = data.vocab_simple.encode(word)
-                              if wid != data.vocab_simple.encode(constant.SYMBOL_UNK):
-                                ppdb_cands[wid] = data.ppdb.rules[cand_word][tag][word]
-              for cand_id in ppdb_cands:
-                  for beam_id in range(model_config.beam_search_size):
-                      flat_curr_scores[batch_i][beam_id*len(data.vocab_simple.i2w) + cand_id] += (
-                          model_config.ppdb_emode_args * ppdb_cands[cand_id])
-              # for res_id in [data.vocab_simple.encode(constant.SYMBOL_UNK)]:
-              #     for beam_id in range(model_config.beam_search_size):
-              #         flat_curr_scores[batch_i][beam_id * len(data.vocab_simple.i2w) + res_id] += 1.5
-          return np.array(flat_curr_scores, dtype=np.float32)
-
-      flat_curr_scores = tf.py_func(augment_score, [flat_curr_scores, encoder_input],
-                                    tf.float32,
-                                    stateful=False,
-                                    name='augment_score')
-      flat_curr_scores.set_shape(
-          (model_config.batch_size, model_config.beam_search_size*len(data.vocab_simple.i2w)))
-      topk_scores, topk_ids = tf.nn.top_k(flat_curr_scores, k=k)
-      return topk_scores, topk_ids
-
-  def grow_topk(i, alive_seq, alive_log_probs):
+  def grow_topk(i, alive_seq, alive_log_probs, states):
     r"""Inner beam seach loop.
 
     This function takes the current alive sequences, and grows them to topk
@@ -297,19 +324,27 @@ def beam_search(symbols_to_logits_fn,
       i: loop index
       alive_seq: Topk sequences decoded so far [batch_size, beam_size, i+1]
       alive_log_probs: probabilities of these sequences. [batch_size, beam_size]
+      states: dict (possibly nested) of decoding states.
     Returns:
       Tuple of
         (Topk sequences extended by the next word,
          The log probs of these sequences,
          The scores with length penalty of these sequences,
-         Flags indicating which of these sequences have finished decoding)
+         Flags indicating which of these sequences have finished decoding,
+         dict of transformed decoding states)
     """
     # Get the logits for all the possible next symbols
     flat_ids = tf.reshape(alive_seq, [batch_size * beam_size, -1])
 
     # (batch_size * beam_size, decoded_length)
-    flat_logits = symbols_to_logits_fn(flat_ids)
-    logits = tf.reshape(flat_logits, (batch_size, beam_size, -1))
+    if states:
+      flat_states = nest.map_structure(_merge_beam_dim, states)
+      flat_logits, flat_states = symbols_to_logits_fn(flat_ids, i, flat_states)
+      states = nest.map_structure(
+          lambda t: _unmerge_beam_dim(t, batch_size, beam_size), flat_states)
+    else:
+      flat_logits = symbols_to_logits_fn(flat_ids)
+    logits = tf.reshape(flat_logits, [batch_size, beam_size, -1])
 
     # Convert logits to normalized log probs
     candidate_log_probs = log_prob_from_logits(logits)
@@ -324,10 +359,7 @@ def beam_search(symbols_to_logits_fn,
     # Flatten out (beam_size, vocab_size) probs in to a list of possibilites
     flat_curr_scores = tf.reshape(curr_scores, [-1, beam_size * vocab_size])
 
-    if model_config.ppdb_emode == 'none':
-        topk_scores, topk_ids = tf.nn.top_k(flat_curr_scores, k=beam_size * 2)
-    else:
-        topk_scores, topk_ids = top_k(flat_curr_scores, k=beam_size * 2)
+    topk_scores, topk_ids = tf.nn.top_k(flat_curr_scores, k=beam_size * 2)
 
     # Recovering the log probs because we will need to send them back
     topk_log_probs = topk_scores * length_penalty
@@ -350,16 +382,19 @@ def beam_search(symbols_to_logits_fn,
     # Gather up the most probable 2*beams both for the ids and finished_in_alive
     # bools
     topk_seq = tf.gather_nd(alive_seq, topk_coordinates)
+    if states:
+      states = nest.map_structure(
+          lambda state: tf.gather_nd(state, topk_coordinates), states)
 
     # Append the most probable alive
     topk_seq = tf.concat([topk_seq, tf.expand_dims(topk_ids, axis=2)], axis=2)
 
     topk_finished = tf.equal(topk_ids, eos_id)
 
-    return topk_seq, topk_log_probs, topk_scores, topk_finished
+    return topk_seq, topk_log_probs, topk_scores, topk_finished, states
 
   def inner_loop(i, alive_seq, alive_log_probs, finished_seq, finished_scores,
-                 finished_flags):
+                 finished_flags, states):
     """Inner beam seach loop.
 
     There are three groups of tensors, alive, finished, and topk.
@@ -391,6 +426,7 @@ def beam_search(symbols_to_logits_fn,
         [batch_size, beam_size]
       finished_flags: finished bools for each of these sequences.
         [batch_size, beam_size]
+      states: dict (possibly nested) of decoding states.
 
     Returns:
       Tuple of
@@ -399,26 +435,27 @@ def beam_search(symbols_to_logits_fn,
          Log probs of the alive sequences,
          New finished sequences,
          Scores of the new finished sequences,
-         Flags inidicating which sequence in finished as reached EOS)
+         Flags inidicating which sequence in finished as reached EOS,
+         dict of final decoding states)
     """
 
     # Each inner loop, we carry out three steps:
     # 1. Get the current topk items.
     # 2. Extract the ones that have finished and haven't finished
     # 3. Recompute the contents of finished based on scores.
-    topk_seq, topk_log_probs, topk_scores, topk_finished = grow_topk(
-        i, alive_seq, alive_log_probs)
-    alive_seq, alive_log_probs, _ = grow_alive(topk_seq, topk_scores,
-                                               topk_log_probs, topk_finished)
-    finished_seq, finished_scores, finished_flags = grow_finished(
+    topk_seq, topk_log_probs, topk_scores, topk_finished, states = grow_topk(
+        i, alive_seq, alive_log_probs, states)
+    alive_seq, alive_log_probs, _, states = grow_alive(
+        topk_seq, topk_scores, topk_log_probs, topk_finished, states)
+    finished_seq, finished_scores, finished_flags, _ = grow_finished(
         finished_seq, finished_scores, finished_flags, topk_seq, topk_scores,
         topk_finished)
 
     return (i + 1, alive_seq, alive_log_probs, finished_seq, finished_scores,
-            finished_flags)
+            finished_flags, states)
 
   def _is_finished(i, unused_alive_seq, alive_log_probs, unused_finished_seq,
-                   finished_scores, finished_in_finished):
+                   finished_scores, finished_in_finished, unused_states):
     """Checking termination condition.
 
     We terminate when we decoded up to decode_length or the lowest scoring item
@@ -436,6 +473,8 @@ def beam_search(symbols_to_logits_fn,
     Returns:
       Bool.
     """
+    if not stop_early:
+      return tf.less(i, decode_length)
     max_length_penalty = tf.pow(((5. + tf.to_float(decode_length)) / 6.), alpha)
     # The best possible score of the most likley alive sequence
     lower_bound_alive_scores = alive_log_probs[:, 0] / max_length_penalty
@@ -461,11 +500,11 @@ def beam_search(symbols_to_logits_fn,
         tf.less(i, decode_length), tf.logical_not(bound_is_met))
 
   (_, alive_seq, alive_log_probs, finished_seq, finished_scores,
-   finished_flags) = tf.while_loop(
+   finished_flags, _) = tf.while_loop(
        _is_finished,
        inner_loop, [
            tf.constant(0), alive_seq, alive_log_probs, finished_seq,
-           finished_scores, finished_flags
+           finished_scores, finished_flags, states
        ],
        shape_invariants=[
            tf.TensorShape([]),
@@ -473,7 +512,9 @@ def beam_search(symbols_to_logits_fn,
            alive_log_probs.get_shape(),
            tf.TensorShape([None, None, None]),
            finished_scores.get_shape(),
-           finished_flags.get_shape()
+           finished_flags.get_shape(),
+           nest.map_structure(
+               lambda tensor: tf.TensorShape(tensor.shape), states),
        ],
        parallel_iterations=1,
        back_prop=False)
