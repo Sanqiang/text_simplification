@@ -33,26 +33,14 @@ class DefaultConfig():
     optimizer = args.optimizer
     change_optimizer = args.change_optimizer
     learning_rate_warmup_steps = 50000
-    use_learning_rate_decay = args.use_learning_rate_decay
     learning_rate = args.learning_rate
-    max_grad_staleness = 0.0
     max_grad_norm = 4.0
     layer_prepostprocess_dropout = args.layer_prepostprocess_dropout
 
-    loss_fn = args.loss_fn
-    num_samples = args.number_samples
+    # loss_fn = args.loss_fn
+    # num_samples = args.number_samples
 
     beam_search_size = -1
-
-    # RL weight
-    # rl_prelenth = args.rl_prelenth
-    # rl_bleu = args.rl_bleu
-    # rl_sari = args.rl_sari
-    # rl_fkgl = args.rl_fkgl
-    #
-    # # RL2 weight
-    # rl_keep = args.rl_keep
-    # rl_simp = args.rl_simp
 
     # Overwrite transformer config
     # timing: use positional encoding
@@ -64,17 +52,6 @@ class DefaultConfig():
     num_decoder_layers = args.num_decoder_layers
 
     # Our research ideas !!!
-    decode_input_gate = args.decode_input_gate
-    decode_atten_gate = args.decode_atten_gate
-    trans_layer_gate = args.trans_layer_gate
-    encoder_attn_flatten = args.encoder_attn_flatten
-    use_quality_model = args.use_quality_model
-    # att_loss: attention reconstruction loss
-    # enc_self@1|dec_self@1|enc_dec@1
-    attn_loss = args.attn_loss
-    if attn_loss:
-        attn_loss = dict([conf[0], float(conf[1])] for conf in
-                         [p.split('@') for p in attn_loss.split('|')])
     # ppdb_mode: incorporate ppdb in our model
     # comp: use comp supervision, simp: use further simplify for simple sentence
     # none: no ppdb
@@ -154,8 +131,6 @@ class DefaultConfig():
 
     allow_growth = True
     # per_process_gpu_memory_fraction = 1.0
-    use_cpu = args.use_cpu
-
     use_mteval = True
     mteval_script = get_path('script/mteval-v13a.pl')
     mteval_mul_script = get_path('script/multi-bleu.perl')
@@ -171,8 +146,6 @@ class DefaultConfig():
     #     '../text_simplification_data/ppdb/SimplePPDB.enrich')
 
     # For Exp
-    exp_penalty_alpha = args.exp_penalty_alpha
-    penalty_alpha = args.penalty_alpha
 
 
 class DefaultTrainConfig(DefaultConfig):

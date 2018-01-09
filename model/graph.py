@@ -57,7 +57,9 @@ class Graph:
 
                     if self.is_train:
                         avg_grad = self.average_gradients(grads)
-                        self.train_op = optim.apply_gradients(avg_grad, global_step=self.global_step)
+                        grads = [g for (g,v) in avg_grad]
+                        clipped_grads, _ = tf.clip_by_global_norm(grads, self.model_config.max_grad_norm)
+                        self.train_op = optim.apply_gradients(zip(clipped_grads, tf.trainable_variables()), global_step=self.global_step)
                         self.increment_global_step = tf.assign_add(self.global_step, 1)
 
                     self.saver = tf.train.Saver(write_version=tf.train.SaverDef.V2)
@@ -177,15 +179,10 @@ class Graph:
         else:
             raise Exception('Not Implemented Optimizer!')
 
-        if self.model_config.max_grad_staleness > 0:
-            opt = tf.contrib.opt.DropStaleGradientOptimizer(opt, self.model_config.max_grad_staleness)
-
-        # grads_and_vars = opt.compute_gradients(loss, var_list=tf.trainable_variables())
-        # grads = [g for (g,v) in grads_and_vars]
-        # clipped_grads, _ = tf.clip_by_global_norm(grads, self.model_config.max_grad_norm)
+        # if self.model_config.max_grad_staleness > 0:
+        #     opt = tf.contrib.opt.DropStaleGradientOptimizer(opt, self.model_config.max_grad_staleness)
 
         return opt
-        # return opt.apply_gradients(zip(clipped_grads, tf.trainable_variables()), global_step=self.global_step)
 
     # Got from https://github.com/tensorflow/models/blob/master/tutorials/image/cifar10/cifar10_multi_gpu_train.py#L101
     def average_gradients(self, tower_grads):

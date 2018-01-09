@@ -31,18 +31,8 @@ class TransformerGraph(Graph):
         with tf.variable_scope('transformer_encoder'):
             encoder_embed_inputs = tf.nn.dropout(encoder_embed_inputs,
                                                  1.0 - self.hparams.layer_prepostprocess_dropout)
-            if self.model_config.encoder_attn_flatten:
-                encoder_outputs = transformer.transformer_encoder_attn_flatten(
-                    encoder_embed_inputs, encoder_attn_bias, self.hparams)
-                encoder_attn_bias = tf.concat(
-                    [encoder_attn_bias for _ in range(self.model_config.num_hidden_layers)],
-                    axis=-1)
-            elif self.model_config.trans_layer_gate:
-                encoder_outputs = transformer.transformer_encoder_gate(
-                    encoder_embed_inputs, encoder_attn_bias, self.hparams)
-            else:
-                encoder_outputs = transformer.transformer_encoder(
-                    encoder_embed_inputs, encoder_attn_bias, self.hparams)
+            encoder_outputs = transformer.transformer_encoder(
+                encoder_embed_inputs, encoder_attn_bias, self.hparams)
 
         encoder_embed_inputs_list = tf.unstack(encoder_embed_inputs, axis=1)
         with tf.variable_scope('transformer_decoder'):
@@ -72,9 +62,6 @@ class TransformerGraph(Graph):
 
     def decode_step(self, decode_input_list, encoder_outputs, encoder_attn_bias):
         batch_go = [tf.zeros([self.model_config.batch_size, self.model_config.dimension])]
-        # batch_go = self.embedding_fn(
-        #     tf.constant(constant.SYMBOL_GO, dtype=tf.int32, shape=self.model_config.batch_size),
-        #     self.data.vocab_simple)
         target_length = len(decode_input_list) + 1
         decoder_emb_inputs = tf.stack(batch_go + decode_input_list, axis=1)
         decoder_output = self.decode_inputs_to_outputs(
@@ -141,17 +128,6 @@ class TransformerGraph(Graph):
         return prev_logit
 
     def decode_inputs_to_outputs(self, decoder_embed_inputs, encoder_outputs, encoder_attn_bias):
-        if self.model_config.decode_input_gate:
-            print('Use Decode Input Gate!')
-            with tf.variable_scope('decode_input_gate'):
-                gate_filter = tf.get_variable('gate_decode',
-                                           [1, self.model_config.dimension, self.model_config.dimension],
-                                           tf.float32,
-                                           initializer=tf.contrib.layers.xavier_initializer())
-                gate_decode_input = tf.tanh(
-                    tf.nn.conv1d(decoder_embed_inputs, gate_filter, 1, 'SAME'))
-                decoder_embed_inputs *= gate_decode_input
-
         if self.hparams.pos == 'timing':
             decoder_embed_inputs = common_attention.add_timing_signal_1d(decoder_embed_inputs)
             print('Use positional encoding in decoder text.')
@@ -159,22 +135,8 @@ class TransformerGraph(Graph):
         decoder_attn_bias = common_attention.attention_bias_lower_triangle(tf.shape(decoder_embed_inputs)[1])
         decoder_embed_inputs = tf.nn.dropout(decoder_embed_inputs,
                                              1.0 - self.hparams.layer_prepostprocess_dropout)
-        if self.model_config.decode_atten_gate:
-            print('Use Decode Attention Gate')
-            decoder_output = transformer.transformer_decoder_attngate(decoder_embed_inputs,
-                                                             encoder_outputs,
-                                                             decoder_attn_bias,
-                                                             encoder_attn_bias,
-                                                             self.hparams)
-        elif self.model_config.trans_layer_gate:
-            print('Use Layer Gate Transformer')
-            decoder_output = transformer.transformer_decoder_gate(decoder_embed_inputs,
-                                                             encoder_outputs,
-                                                             decoder_attn_bias,
-                                                             encoder_attn_bias,
-                                                             self.hparams)
-        else:
-            decoder_output = transformer.transformer_decoder(decoder_embed_inputs,
+
+        decoder_output = transformer.transformer_decoder(decoder_embed_inputs,
                                                              encoder_outputs,
                                                              decoder_attn_bias,
                                                              encoder_attn_bias,

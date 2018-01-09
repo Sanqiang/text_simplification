@@ -164,48 +164,7 @@ class PostProcess:
                         ndecoder_targets[batch_i][len_i] = target_word
 
         return ndecoder_targets
-
-    def replace_unk_by_cnt(self, encoder_words, decoder_targets, window=5):
-        batch_size = np.shape(decoder_targets)[0]
-
-        ndecoder_targets = cp.deepcopy(decoder_targets)
-        for batch_i in range(batch_size):
-            for len_i in range(len(decoder_targets[batch_i])):
-                target = decoder_targets[batch_i][len_i]
-                if target == constant.SYMBOL_UNK or target == constant.SYMBOL_NUM:
-                    word_cands = set(encoder_words[batch_i]) - set(ndecoder_targets[batch_i])
-                    exclude_word = set([
-                        constant.SYMBOL_START, constant.SYMBOL_END, constant.SYMBOL_UNK,
-                        constant.SYMBOL_PAD, constant.SYMBOL_GO, constant.SYMBOL_NUM])
-                    word_cands -= exclude_word
-                    word_cands = list(word_cands)
-                    word_cands_point = [0 for _ in range(len(word_cands))]
-
-                    target_len = len(decoder_targets[batch_i])
-                    words = set()
-                    for loop_i in range(1, window+1):
-                        if len_i - loop_i >= 0:
-                            word = decoder_targets[batch_i][len_i - loop_i]
-                            words.add(word)
-                        if len_i + loop_i < target_len:
-                            word = decoder_targets[batch_i][len_i + loop_i]
-                            words.add(word)
-
-                    for i, word_cand in enumerate(word_cands):
-                        word_cand_id = encoder_words[batch_i].index(word_cand)
-                        for loop_i in range(1, window + 1):
-                            if word_cand_id - loop_i >= 0:
-                                word = encoder_words[batch_i][word_cand_id - loop_i]
-                                if word in words:
-                                    word_cands_point[i] += 1
-                            if word_cand_id + loop_i < target_len:
-                                word = encoder_words[batch_i][word_cand_id + loop_i]
-                                if word in words:
-                                    word_cands_point[i] += 1
-
-                    ndecoder_targets[batch_i][len_i] = word_cands[np.argmax(word_cands_point)]
-
-        return ndecoder_targets
+    
 
 if __name__ == '__main__':
     sents = ['the term #quot# union council #quot# may be used for cities that are part of their cities .'.split()]
