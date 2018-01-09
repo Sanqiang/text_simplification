@@ -164,7 +164,7 @@ class PostProcess:
                         ndecoder_targets[batch_i][len_i] = target_word
 
         return ndecoder_targets
-    
+
 
 if __name__ == '__main__':
     sents = ['the term #quot# union council #quot# may be used for cities that are part of their cities .'.split()]

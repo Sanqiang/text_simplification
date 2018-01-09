@@ -47,7 +47,7 @@ class Graph:
                         self.objs.append(obj)
                         tf.get_variable_scope().reuse_variables()
 
-                with tf.variable_scope('optim', reuse=tf.AUTO_REUSE):
+                with tf.variable_scope('optimization', reuse=tf.AUTO_REUSE):
 
                     self.loss = tf.divide(tf.add_n(losses), self.model_config.num_gpus)
                     self.perplexity = tf.exp(tf.reduce_mean(self.loss))
@@ -60,6 +60,7 @@ class Graph:
                         grads = [g for (g,v) in avg_grad]
                         clipped_grads, _ = tf.clip_by_global_norm(grads, self.model_config.max_grad_norm)
                         self.train_op = optim.apply_gradients(zip(clipped_grads, tf.trainable_variables()), global_step=self.global_step)
+
                         self.increment_global_step = tf.assign_add(self.global_step, 1)
 
                     self.saver = tf.train.Saver(write_version=tf.train.SaverDef.V2)

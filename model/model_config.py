@@ -140,13 +140,9 @@ class DefaultConfig():
     corpus_sari_script_nonref = get_path('script/corpus_sari_nonref.sh')
 
     path_ppdb_refine = get_path(args.path_ppdb_refine)
-    # path_ppdb_refine = get_path(
-    #     '../text_simplification_data/ppdb/XU_PPDB')
-    # path_ppdb_refine = get_path(
-    #     '../text_simplification_data/ppdb/SimplePPDB.enrich')
 
     # For Exp
-
+    penalty_alpha = args.penalty_alpha
 
 class DefaultTrainConfig(DefaultConfig):
     beam_search_size = 0

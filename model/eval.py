@@ -5,7 +5,6 @@ sys.path.insert(0, '/ihome/hdaqing/saz31/sanqiang/text_simplification')
 
 from data_generator.val_data import ValData
 from model.transformer import TransformerGraph
-from model.seq2seq import Seq2SeqGraph
 from model.model_config import DefaultConfig, DefaultTestConfig, DefaultTestConfig2, list_config
 from data_generator.vocab import Vocab
 from util import constant
@@ -125,12 +124,9 @@ def eval(model_config=None, ckpt=None):
     graph = None
     if model_config.framework == 'transformer':
         graph = TransformerGraph(val_data, False, model_config)
-    elif model_config.framework == 'seq2seq':
-        graph = Seq2SeqGraph(val_data, False, model_config)
     tf.reset_default_graph()
     graph.create_model_multigpu()
 
-    # while True:
     ibleus_all = []
     perplexitys_all = []
     saris_all = []

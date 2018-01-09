@@ -5,7 +5,6 @@ sys.path.insert(0,'/ihome/hdaqing/saz31/sanqiang/text_simplification')
 
 from data_generator.train_data import TrainData
 from model.transformer import TransformerGraph
-from model.seq2seq import Seq2SeqGraph
 from model.model_config import DefaultConfig, DefaultTrainConfig, WikiDressLargeTrainConfig, WikiDressSmallTrainConfig, list_config
 from data_generator.vocab import Vocab
 from util import session

@@ -78,10 +78,10 @@ def get_args():
                         help='Number of decoder layer?')
     parser.add_argument('-nh', '--num_heads', default=5, type=int,
                         help='Number of multi-attention heads?')
+    parser.add_argument('-penalty_alpha', '--penalty_alpha', default=0.6, type=float,
+                        help='The alpha for length penalty?')
 
     # For Experiment
-    parser.add_argument('-exp_penalty_alpha', '--exp_penalty_alpha', default=False,
-                        help='Whether to do penalty alpha experiment')
 
 
 
