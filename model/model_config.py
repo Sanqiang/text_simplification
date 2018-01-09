@@ -367,6 +367,67 @@ class SubTestWikiSmallPPDBConfig(SubTestWikiSmallConfig):
     ppdb_emode_args = 1.5
 
 
+""" 
+==========================================================================================
+For experiment after Jan 2018
+==========================================================================================
+"""
+
+
+class WikiTransBaseCfg(DefaultConfig):
+    model_print_freq = 50
+    save_model_secs = 600
+    model_eval_freq = args.model_eval_freq
+
+    train_dataset_simple = get_path('../text_simplification_data/wiki/ner2/ner_simp.txt')
+    # train_dataset_simple_ppdb = get_path(
+    #     '../text_simplification_data/train/dress/wikilarge/wiki.full.aner.train.dst.rules')
+    # train_dataset_simple_syntax = get_path(
+    #     '../text_simplification_data/train/dress/wikilarge/wiki.full.aner.train.dst.jsyntax')
+    # train_dataset_complex_syntax = get_path(
+    #     '../text_simplification_data/train/dress/wikilarge/wiki.full.aner.train.src.jsyntax')
+    train_dataset_complex = get_path('../text_simplification_data/wiki/ner2/ner_comp.txt')
+    # train_dataset_complex_ppdb = get_path(args.train_dataset_complex_ppdb)
+    vocab_simple = get_path('../text_simplification_data/wiki/voc/voc_simp.txt')
+    vocab_complex = get_path('../text_simplification_data/wiki/voc/voc_comp.txt')
+    vocab_all = get_path('../text_simplification_data/wiki/voc/voc_all.txt')
+
+    val_dataset_simple_folder = get_path('../text_simplification_data/val/')
+    # use the original dress
+    val_dataset_simple_file = 'wiki.full.aner.valid.dst'
+    val_dataset_complex = get_path('../text_simplification_data/val/wiki.full.aner.valid.src')
+    val_mapper = get_path('../text_simplification_data/val/tune.8turkers.tok.map.dress')
+    # wiki.full.aner.ori.valid.dst is uppercase whereas tune.8turkers.tok.simp is lowercase
+    val_dataset_simple_raw_file = 'wiki.full.aner.ori.valid.dst'
+    val_dataset_complex_raw = get_path(
+        '../text_simplification_data/val/wiki.full.aner.ori.valid.src')
+    val_dataset_complex_rawlines_file = get_path(
+        '../text_simplification_data/val/tune.8turkers.tok.norm')
+    val_dataset_simple_rawlines_file_references = 'tune.8turkers.tok.turk.'
+    val_dataset_simple_rawlines_file = 'tune.8turkers.tok.simp'
+    num_refs = 8
+
+    dimension = args.dimension
+
+    max_complex_sentence = 85
+    max_simple_sentence = 85
+
+    min_count = args.min_count
+    batch_size = 128
+
+    tokenizer = 'split'
+
+
+class WikiTransTrainCfg(WikiTransBaseCfg):
+    beam_search_size = 0
+
+
+class WikiTransValCfg(WikiTransBaseCfg):
+    beam_search_size = 1
+    batch_size = 128
+    replace_unk_by_emb = True
+
+
 def list_config(config):
     attrs = [attr for attr in dir(config)
                if not callable(getattr(config, attr)) and not attr.startswith("__")]

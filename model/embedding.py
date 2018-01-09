@@ -17,25 +17,27 @@ class Embedding:
         print('Use tied embedding: \t%s.' % self.model_config.tie_embedding)
 
     def get_complex_embedding(self):
-        if hasattr(self, 'emb_complex'):
+        with tf.device('/cpu:0'):
+            if hasattr(self, 'emb_complex'):
+                return self.emb_complex
+            self.emb_complex = tf.get_variable(
+                'embedding_complex', [self.voc_complex.vocab_size(),self.model_config.dimension], tf.float32,
+                initializer=self.emb_init)
             return self.emb_complex
-        self.emb_complex = tf.get_variable(
-            'embedding_complex', [self.voc_complex.vocab_size(),self.model_config.dimension], tf.float32,
-            initializer=self.emb_init)
-        return self.emb_complex
 
     def get_simple_embedding(self):
-        if hasattr(self, 'emb_simple'):
-            return self.emb_simple
+        with tf.device('/cpu:0'):
+            if hasattr(self, 'emb_simple'):
+                return self.emb_simple
 
-        if (self.model_config.tie_embedding == 'none' or
-                    self.model_config.tie_embedding == 'dec_out'):
-            self.emb_simple = tf.get_variable(
-                'embedding_simple', [self.voc_simple.vocab_size(), self.model_config.dimension], tf.float32,
-                initializer=self.emb_init)
-            return self.emb_simple
-        else:
-            return self.get_complex_embedding()
+            if (self.model_config.tie_embedding == 'none' or
+                        self.model_config.tie_embedding == 'dec_out'):
+                self.emb_simple = tf.get_variable(
+                    'embedding_simple', [self.voc_simple.vocab_size(), self.model_config.dimension], tf.float32,
+                    initializer=self.emb_init)
+                return self.emb_simple
+            else:
+                return self.get_complex_embedding()
 
     def get_w(self):
         if self.model_config.framework == 'transformer':

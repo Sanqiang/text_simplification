@@ -39,7 +39,7 @@ class Graph:
                 self.objs = []
                 optim = self.get_optim()
                 for gpu_id in range(self.model_config.num_gpus):
-                    with tf.device('/cpu:%d' % gpu_id):
+                    with tf.device('/gpu:%d' % gpu_id):
                         loss, obj = self.create_model()
                         grad = optim.compute_gradients(loss)
                         losses.append(loss)
