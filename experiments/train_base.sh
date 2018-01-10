@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 #SBATCH --cluster=gpu
-#SBATCH --gres=gpu:3
-#SBATCH --partition=gtx1080
+#SBATCH --gres=gpu:2
+#SBATCH --partition=titanx
 #SBATCH --job-name=trans_base
 #SBATCH --output=trans_base.out
 #SBATCH --nodes=1
@@ -12,4 +12,4 @@
 module restore
 
 # Run the job
-srun python ../model/train.py -fw transformer -out trans_base -layer_drop 0.2 -op adagrad -lr 0.1 --mode dress -nhl 4 -nel 4 -ndl 4
+srun python ../model/train.py -ngpus 2 -fw transformer -out trans_base -layer_drop 0.2 -op adagrad -lr 0.1 --mode dress -nhl 4 -nel 4 -ndl 4

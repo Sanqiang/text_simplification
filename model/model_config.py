@@ -412,7 +412,7 @@ class WikiTransBaseCfg(DefaultConfig):
     max_complex_sentence = 85
     max_simple_sentence = 85
 
-    min_count = args.min_count
+    min_count = 50
     batch_size = 128
 
     tokenizer = 'split'
