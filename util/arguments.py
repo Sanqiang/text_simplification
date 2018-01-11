@@ -56,7 +56,8 @@ def get_args():
     #                     help='Loss function?')
     # parser.add_argument('-ns', '--number_samples', default=10, type=int,
     #                     help='Number of samples used in Softmax?')
-
+    parser.add_argument('-ns', '--number_samples', default=0, type=int,
+                        help='Number of samples used in Softmax?')
 
     parser.add_argument('-path_ppdb', '--path_ppdb_refine',
                         default='../text_simplification_data/ppdb/SimplePPDB.enrich',

@@ -37,9 +37,9 @@ class TrainData:
         # Populate basic complex simple pairs
         if not self.model_config.it_train:
             self.data_simple, self.data_simple_raw = self.populate_data(
-                data_simple_path, self.vocab_simple, need_raw=True)
+                data_simple_path, self.vocab_simple, need_raw=False)
             self.data_complex, self.data_complex_raw = self.populate_data(
-                data_complex_path, self.vocab_complex, need_raw=True)
+                data_complex_path, self.vocab_complex, need_raw=False)
             assert len(self.data_complex) == self.size
             assert len(self.data_simple) == self.size
             assert len(self.data_simple_raw) == self.size

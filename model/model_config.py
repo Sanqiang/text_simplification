@@ -421,7 +421,8 @@ class WikiTransBaseCfg(DefaultConfig):
 class WikiTransTrainCfg(WikiTransBaseCfg):
     beam_search_size = 0
     it_train = True
-    
+    number_samples = args.number_samples
+
 
 class WikiTransValCfg(WikiTransBaseCfg):
     beam_search_size = 1

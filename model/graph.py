@@ -60,7 +60,6 @@ class Graph:
                         grads = [g for (g,v) in avg_grad]
                         clipped_grads, _ = tf.clip_by_global_norm(grads, self.model_config.max_grad_norm)
                         self.train_op = optim.apply_gradients(zip(clipped_grads, tf.trainable_variables()), global_step=self.global_step)
-
                         self.increment_global_step = tf.assign_add(self.global_step, 1)
 
                     self.saver = tf.train.Saver(write_version=tf.train.SaverDef.V2)
@@ -107,17 +106,17 @@ class Graph:
                        sentence_simple_input_placeholder, emb_simple,
                        w, b)
 
-            if not self.is_train and self.model_config.replace_unk_by_emb:
+            # if not self.is_train and self.model_config.replace_unk_by_emb:
                 # Get output list matrix for replacement by embedding
                 # self.encoder_embs = tf.stack(
                 #     self.embedding_fn(self.sentence_complex_input_placeholder, self.emb_complex),
                 #     axis=1)
-                encoder_embs = tf.stack(output.encoder_embed_inputs_list, axis=1)
-                # self.encoder_embs = output.encoder_outputs
-                if type(output.decoder_outputs) == list:
-                    decoder_outputs = tf.stack(output.decoder_outputs, axis=1)
-                else:
-                    decoder_outputs = output.decoder_outputs
+            encoder_embs = tf.stack(output.encoder_embed_inputs_list, axis=1)
+            # self.encoder_embs = output.encoder_outputs
+            if type(output.decoder_outputs) == list:
+                decoder_outputs = tf.stack(output.decoder_outputs, axis=1)
+            else:
+                decoder_outputs = output.decoder_outputs
 
             if not self.is_train:
                 # in beam search, it directly provide decoder target list
@@ -143,12 +142,21 @@ class Graph:
 
                 gt_target = tf.stack(output.gt_target_list, axis=1)
 
-                loss_fn = None
+                if self.model_config.number_samples > 0:
+                    loss_fn = tf.nn.sampled_softmax_loss
+                else:
+                    loss_fn = None
 
                 loss = sequence_loss(logits=tf.stack(output.decoder_logit_list, axis=1),
-                                          targets=gt_target,
-                                          weights=decode_word_weight,
-                                          softmax_loss_function=loss_fn)
+                                     targets=gt_target,
+                                     weights=decode_word_weight,
+                                     softmax_loss_function=loss_fn,
+                                     data=self.data,
+                                     w=w,
+                                     b=b,
+                                     decoder_outputs=decoder_outputs,
+                                     number_samples=self.model_config.number_samples
+                                     )
                 return loss, \
                        {
                            'sentence_idxs':sentence_idxs,

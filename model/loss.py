@@ -15,7 +15,7 @@ def sequence_loss(logits,
                   average_across_timesteps=True,
                   average_across_batch=True,
                   softmax_loss_function=None,
-                  name=None):
+                  name=None, data=None, w=None, b=None, decoder_outputs=None, number_samples=-1):
   """Weighted cross-entropy loss for a sequence of logits.
   Depending on the values of `average_across_timesteps` and
   `average_across_batch`, the return Tensor will have rank 0, 1, or 2 as these
@@ -72,7 +72,13 @@ def sequence_loss(logits,
       crossent = nn_ops.sparse_softmax_cross_entropy_with_logits(
           labels=targets, logits=logits_flat)
     else:
-      crossent = softmax_loss_function(labels=targets, inputs=logits_flat)
+      targets = tf.expand_dims(targets, -1)
+      dims = w.get_shape()[1].value
+      decoder_outputs = array_ops.reshape(decoder_outputs, [-1, dims])
+      crossent = softmax_loss_function(labels=targets, inputs=decoder_outputs, num_sampled=number_samples,
+                                       weights=w,
+                                       biases=b,
+                                       num_classes=len(data.vocab_simple.i2w))
     crossent *= array_ops.reshape(weights, [-1])
     if average_across_timesteps and average_across_batch:
       crossent = math_ops.reduce_sum(crossent)

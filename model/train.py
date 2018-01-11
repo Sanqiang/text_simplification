@@ -15,6 +15,7 @@ from model.eval import eval, get_ckpt
 import tensorflow as tf
 import tensorflow.contrib.slim as slim
 from util.arguments import get_args
+from datetime import datetime
 
 
 args = get_args()
@@ -38,7 +39,6 @@ def get_graph_train_data(
         (tmp_sentence_simple, tmp_sentence_complex,
          tmp_sentence_simple_weight, tmp_attn_weight,
          tmp_idxs) = [], [], [], [], []
-
 
         for i in range(model_config.batch_size):
             if not model_config.it_train:
@@ -158,6 +158,7 @@ def train(model_config=None):
                              save_model_secs=model_config.save_model_secs)
     sess = sv.PrepareSession(config=session.get_session_config(model_config))
     perplexitys = []
+    start_time = datetime.now()
     while True:
         input_feed = get_graph_train_data(
             data,
@@ -170,7 +171,10 @@ def train(model_config=None):
         perplexitys.append(perplexity)
 
         if step % model_config.model_print_freq == 0:
-            print('Perplexity:\t%f at step %d.' % (perplexity, step))
+            end_time = datetime.now()
+            time_span = end_time - start_time
+            start_time = end_time
+            print('Perplexity:\t%f at step %d using %s.' % (perplexity, step, time_span))
             perplexitys.clear()
 
         # if step % 20 == 0:
