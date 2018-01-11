@@ -379,14 +379,14 @@ class WikiTransBaseCfg(DefaultConfig):
     save_model_secs = 600
     model_eval_freq = args.model_eval_freq
 
-    train_dataset_simple = get_path('../text_simplification_data/wiki/ner2/ner_simp.txt')
+    train_dataset_simple = get_path('../text_simplification_data/wiki/ner3/ner_simp.txt')
     # train_dataset_simple_ppdb = get_path(
     #     '../text_simplification_data/train/dress/wikilarge/wiki.full.aner.train.dst.rules')
     # train_dataset_simple_syntax = get_path(
     #     '../text_simplification_data/train/dress/wikilarge/wiki.full.aner.train.dst.jsyntax')
     # train_dataset_complex_syntax = get_path(
     #     '../text_simplification_data/train/dress/wikilarge/wiki.full.aner.train.src.jsyntax')
-    train_dataset_complex = get_path('../text_simplification_data/wiki/ner2/ner_comp.txt')
+    train_dataset_complex = get_path('../text_simplification_data/wiki/ner3/ner_comp.txt')
     # train_dataset_complex_ppdb = get_path(args.train_dataset_complex_ppdb)
     vocab_simple = get_path('../text_simplification_data/wiki/voc/voc_simp.txt')
     vocab_complex = get_path('../text_simplification_data/wiki/voc/voc_comp.txt')
@@ -413,14 +413,15 @@ class WikiTransBaseCfg(DefaultConfig):
     max_simple_sentence = 85
 
     min_count = 50
-    batch_size = 128
+    batch_size = 16
 
     tokenizer = 'split'
 
 
 class WikiTransTrainCfg(WikiTransBaseCfg):
     beam_search_size = 0
-
+    it_train = True
+    
 
 class WikiTransValCfg(WikiTransBaseCfg):
     beam_search_size = 1

@@ -23,11 +23,6 @@ args = get_args()
 def get_graph_train_data(
         data,
         objs,
-        # sentence_idxs,
-        # sentence_simple_input,
-        # sentence_complex_input,
-        # sentence_simple_input_weight,
-        # sentence_complex_attn_weight,
         model_config):
     input_feed = {}
     # Reserved section of vocabuary are same.
@@ -105,8 +100,6 @@ def train(model_config=None):
     graph = None
     if model_config.framework == 'transformer':
         graph = TransformerGraph(data, True, model_config)
-    # elif model_config.framework == 'seq2seq':
-    #     graph = Seq2SeqGraph(data, True, model_config)
     else:
         raise NotImplementedError('Unknown Framework.')
 

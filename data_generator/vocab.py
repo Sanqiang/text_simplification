@@ -48,9 +48,9 @@ class Vocab:
             w = items[0]
             if len(items) > 1:
                 cnt = int(items[1])
-            else:
-                # Accept all words
-                cnt = 99999
+            # else:
+            #     # Accept all words
+            #     cnt = 99999
             if cnt >= mincount:
                 self.w2i[w] = len(self.i2w)
                 self.i2w.append(w)

@@ -14,7 +14,7 @@ def get_args():
     parser.add_argument('-upr', '--use_partial_restore', default=True, type=bool,
                         help='Whether to use partial restore?')
 
-    parser.add_argument('-mode', '--mode', default='dress',
+    parser.add_argument('-mode', '--mode', default='wiki',
                         help='The Usage Model?')
     parser.add_argument('-op', '--optimizer', default='adagrad',
                         help='Which optimizer to use?')

@@ -94,31 +94,23 @@ class TrainData:
     def get_size(self, data_complex_path):
         return len(open(data_complex_path, encoding='utf-8').readlines())
 
-    # def get_data_sample_it(self, data_simple_path, data_complex_path):
-    #     f_simple = open(data_simple_path, encoding='utf-8')
-    #     f_complex = open(data_complex_path, encoding='utf-8')
-    #     i = 0
-    #     while True:
-    #         if i == self.size:
-    #             f_simple = open(data_simple_path, encoding='utf-8')
-    #             f_complex = open(data_complex_path, encoding='utf-8')
-    #             i = 0
-    #         line_complex = f_complex.readline()
-    #         line_simple = f_simple.readline()
-    #         words_complex, _ = self.process_line(line_complex, self.vocab_complex)
-    #         words_simple, words_raw_simple = self.process_line(line_simple, self.vocab_simple, need_raw=True)
-    #
-    #         if self.model_config.add_ppdb_training:
-    #             nwords_simple, data_weight = self.ppdb.simplify(
-    #                 words_raw_simple, self.ppdb_simp_rules[i], self.vocab_simple)
-    #             if nwords_simple:
-    #                 yield nwords_simple, words_complex, data_weight
-    #             else:
-    #                 yield words_simple, words_complex, None
-    #         else:
-    #             yield words_simple, words_complex, None
-    #
-    #         i += 1
+    def get_data_sample_it(self, data_simple_path, data_complex_path):
+        f_simple = open(data_simple_path, encoding='utf-8')
+        f_complex = open(data_complex_path, encoding='utf-8')
+        i = 0
+        while True:
+            if i == self.size:
+                f_simple = open(data_simple_path, encoding='utf-8')
+                f_complex = open(data_complex_path, encoding='utf-8')
+                i = 0
+            line_complex = f_complex.readline()
+            line_simple = f_simple.readline()
+            words_complex, _ = self.process_line(line_complex, self.vocab_complex)
+            words_simple, words_raw_simple = self.process_line(line_simple, self.vocab_simple, need_raw=True)
+
+            yield i, words_simple, words_complex, cp.deepcopy([1.0] * len(words_simple)), cp.deepcopy([1.0] * len(words_complex))
+
+            i += 1
 
 
     def populate_data(self, data_path, vocab, need_raw=False):
