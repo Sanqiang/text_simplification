@@ -79,6 +79,7 @@ def sequence_loss(logits,
                                        weights=w,
                                        biases=b,
                                        num_classes=len(data.vocab_simple.i2w))
+      print('Use Sampled Softmax with number of samples:' + str(number_samples))
     crossent *= array_ops.reshape(weights, [-1])
     if average_across_timesteps and average_across_batch:
       crossent = math_ops.reduce_sum(crossent)

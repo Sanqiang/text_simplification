@@ -24,6 +24,7 @@ class DefaultConfig():
     it_train = args.it_train
     model_print_freq = 1
     save_model_secs = 60
+    number_samples = args.number_samples
 
     min_count = 0
     lower_case = args.lower_case
@@ -413,21 +414,35 @@ class WikiTransBaseCfg(DefaultConfig):
     max_simple_sentence = 85
 
     min_count = 50
-    batch_size = 16
+    batch_size = 128
 
     tokenizer = 'split'
 
 
 class WikiTransTrainCfg(WikiTransBaseCfg):
     beam_search_size = 0
-    it_train = True
     number_samples = args.number_samples
 
 
 class WikiTransValCfg(WikiTransBaseCfg):
-    beam_search_size = 1
-    batch_size = 128
+    batch_size = 64
     replace_unk_by_emb = True
+    beam_search_size = 1
+
+    output_folder = args.output_folder
+    resultdor = get_path('../' + output_folder + '/result/eightref_test')
+
+    val_dataset_simple_folder = get_path('../text_simplification_data/test/')
+    # use the original dress
+    val_dataset_simple_file = 'wiki.full.aner.test.dst'
+    val_dataset_complex = get_path('../text_simplification_data/test/wiki.full.aner.test.src')
+    val_mapper = get_path('../text_simplification_data/test/test.8turkers.tok.map.dress')
+    # wiki.full.aner.ori.test.dst is uppercase whereas test.8turkers.tok.simp is lowercase
+    val_dataset_complex_rawlines_file = get_path(
+        '../text_simplification_data/test/test.8turkers.tok.norm')
+    val_dataset_simple_rawlines_file_references = 'test.8turkers.tok.turk.'
+    val_dataset_simple_rawlines_file = 'test.8turkers.tok.simp'
+    num_refs = 8
 
 
 def list_config(config):

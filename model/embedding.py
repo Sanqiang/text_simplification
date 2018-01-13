@@ -17,7 +17,7 @@ class Embedding:
         print('Use tied embedding: \t%s.' % self.model_config.tie_embedding)
 
     def get_complex_embedding(self):
-        with tf.device('/cpu:0'):
+        # with tf.device('/cpu:0'):
             if hasattr(self, 'emb_complex'):
                 return self.emb_complex
             self.emb_complex = tf.get_variable(
@@ -26,7 +26,7 @@ class Embedding:
             return self.emb_complex
 
     def get_simple_embedding(self):
-        with tf.device('/cpu:0'):
+        # with tf.device('/cpu:0'):
             if hasattr(self, 'emb_simple'):
                 return self.emb_simple
 

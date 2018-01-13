@@ -12,4 +12,4 @@
 module restore
 
 # Run the job
-srun python ../model/train.py -ngpus 2 -fw transformer -out trans_base -layer_drop 0.2 -op adagrad -lr 0.1 --mode wiki -nhl 4 -nel 4 -ndl 4 -number_samples 10000
+srun python ../model/train.py -ngpus 2 -fw transformer -out trans_base -layer_drop 0.2 -op adagrad -lr 0.1 --mode wiki -nhl 4 -nel 4 -ndl 4 --number_samples 10000 --it_train = True

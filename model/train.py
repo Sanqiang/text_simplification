@@ -211,7 +211,6 @@ def train(model_config=None):
                     eval(SubTestWikiSmallPPDBConfig(), ckpt)
                 elif args.mode == 'wiki':
                     eval(WikiTransValCfg(), ckpt)
-                    eval(SubTestWikiEightRefConfig(), ckpt)
 
 if __name__ == '__main__':
     config = None

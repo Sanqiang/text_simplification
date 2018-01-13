@@ -33,13 +33,13 @@ class Graph:
 
     def create_model_multigpu(self):
         # with tf.Graph().as_default():
-            with tf.device('/cpu:0'):
+        #     with tf.device('/cpu:0'):
                 losses = []
                 grads = []
                 self.objs = []
                 optim = self.get_optim()
                 for gpu_id in range(self.model_config.num_gpus):
-                    with tf.device('/gpu:%d' % gpu_id):
+                    with tf.device('/cpu:%d' % gpu_id):
                         loss, obj = self.create_model()
                         grad = optim.compute_gradients(loss)
                         losses.append(loss)
