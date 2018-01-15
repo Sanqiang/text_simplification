@@ -5,6 +5,8 @@ def get_args():
     parser = argparse.ArgumentParser(description='Model Parameter')
     parser.add_argument('-ngpus', '--num_gpus', default=1, type=int,
                         help='Number of GPU cards?')
+    parser.add_argument('-bsize', '--batch_size', default=128, type=int,
+                        help='Size of Mini-Batch?')
     parser.add_argument('-fw', '--framework', default='transformer',
                         help='Framework we are using?')
     parser.add_argument('-out', '--output_folder', default='tmp',

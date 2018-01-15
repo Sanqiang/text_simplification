@@ -389,9 +389,15 @@ class WikiTransBaseCfg(DefaultConfig):
     #     '../text_simplification_data/train/dress/wikilarge/wiki.full.aner.train.src.jsyntax')
     train_dataset_complex = get_path('../text_simplification_data/wiki/ner3/ner_comp.txt')
     # train_dataset_complex_ppdb = get_path(args.train_dataset_complex_ppdb)
-    vocab_simple = get_path('../text_simplification_data/wiki/voc/voc_simp.txt')
-    vocab_complex = get_path('../text_simplification_data/wiki/voc/voc_comp.txt')
-    vocab_all = get_path('../text_simplification_data/wiki/voc/voc_all.txt')
+    subword_vocab_size = args.subword_vocab_size
+    if subword_vocab_size == 30000:
+        vocab_simple = get_path('../text_simplification_data/wiki/voc/voc_simp_sub30k.txt')
+        vocab_complex = get_path('../text_simplification_data/wiki/voc/voc_comp_sub30k.txt')
+        vocab_all = get_path('../text_simplification_data/wiki/voc/voc_all_sub30k.txt')
+    else:
+        vocab_simple = get_path('../text_simplification_data/wiki/voc/voc_simp.txt')
+        vocab_complex = get_path('../text_simplification_data/wiki/voc/voc_comp.txt')
+        vocab_all = get_path('../text_simplification_data/wiki/voc/voc_all.txt')
 
     val_dataset_simple_folder = get_path('../text_simplification_data/val/')
     # use the original dress
@@ -414,7 +420,7 @@ class WikiTransBaseCfg(DefaultConfig):
     max_simple_sentence = 85
 
     min_count = 50
-    batch_size = 128
+    batch_size = args.batch_size
 
     tokenizer = 'split'
 
