@@ -36,14 +36,12 @@ class TrainData:
         self.size = self.get_size(data_complex_path)
         # Populate basic complex simple pairs
         if not self.model_config.it_train:
-            self.data_simple, self.data_simple_raw = self.populate_data(
+            self.data_simple, _ = self.populate_data(
                 data_simple_path, self.vocab_simple, need_raw=False)
-            self.data_complex, self.data_complex_raw = self.populate_data(
+            self.data_complex, _ = self.populate_data(
                 data_complex_path, self.vocab_complex, need_raw=False)
             assert len(self.data_complex) == self.size
             assert len(self.data_simple) == self.size
-            assert len(self.data_simple_raw) == self.size
-            assert len(self.data_complex_raw) == self.size
         else:
             self.data_it = self.get_data_sample_it(data_simple_path, data_complex_path)
 
