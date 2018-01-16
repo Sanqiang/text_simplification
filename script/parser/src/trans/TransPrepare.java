@@ -5,6 +5,8 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
+import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.concurrent.ConcurrentHashMap;
@@ -17,6 +19,7 @@ import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
+import com.google.common.base.CharMatcher;
 
 public class TransPrepare {
 
@@ -39,7 +42,7 @@ public class TransPrepare {
 		driver_tmp.findElement(By.id("source")).clear();
 		WebDriverWait wait0 = new WebDriverWait(driver_tmp, 60);
 		wait0.until(ExpectedConditions.textToBe(By.id("result_box"), ""));
-		
+
 		// driver_tmp.findElement(By.id("source")).sendKeys(text);
 		((JavascriptExecutor) driver_tmp).executeScript("arguments[0].value = arguments[1];",
 				driver_tmp.findElement(By.id("source")), text);
@@ -168,7 +171,7 @@ public class TransPrepare {
 		if (!driver_pool.containsKey(threadId)) {
 			System.out.println("Create driver for id:\t" + threadId);
 			driver_pool.put(threadId, new ChromeDriver());
-		}else {
+		} else {
 			System.out.println("Get driver for id:\t" + threadId);
 		}
 		WebDriver driver_tmp = driver_pool.get(threadId);
@@ -178,7 +181,7 @@ public class TransPrepare {
 			StringBuilder text = new StringBuilder();
 			String line = null;
 			while (null != (line = reader.readLine())) {
-				if (text.toString().length() + line.toString().length() + "\nzzzzz\n".length() >= 5000) {
+				if (text.toString().length() + line.toString().length() + "\nzzzzz\n".length() >= 3000) {
 					String ntext = getChineseText(text.toString(), back, driver_tmp);
 					output.append(ntext.replaceAll("ZZZZZ", "\n").replaceAll("\n\n", "\n").replaceAll("\n\n", "\n"));
 					text = new StringBuilder();
@@ -201,7 +204,7 @@ public class TransPrepare {
 			// driver_tmp.quit();
 			// driver_tmp.close();
 			reader.close();
-			
+
 			return null;
 		}
 		// driver_tmp.quit();
@@ -266,9 +269,134 @@ public class TransPrepare {
 		// }
 	}
 
+	private String text_postprocess(String text) {
+		text = text.replaceAll("[- ]*L[A-Z]?B+[- ]*", " -LRB- ");
+		text = text.replaceAll("[- ]*[^L]R[A-Z]?B+[- ]*", " -RRB- ");
+		text = text.replace(" - ", "");
+		text = text.replace(" +", " ");
+		return text;
+	}
+
+	public void postprocess(String comp_path, String simp_path, String ncomp_path, String nsimp_path, int num_part)
+			throws Exception {
+
+		ArrayList<BufferedWriter> writer_comps = new ArrayList<>(), writer_simps = new ArrayList<>();
+		;
+		for (int i = 0; i < num_part; i++) {
+			writer_comps.add(new BufferedWriter(new FileWriter(ncomp_path + i + ".txt")));
+			writer_simps.add(new BufferedWriter(new FileWriter(nsimp_path + i + ".txt")));
+		}
+		int part_idx = 0;
+
+		ArrayList<String> ncomp_sents = new ArrayList<>();
+		ArrayList<String> nsimp_sents = new ArrayList<>();
+
+		File folder = new File(simp_path);
+		final File[] files = folder.listFiles();
+		for (File simp_file : files) {
+			String file_name = simp_file.getName();
+			File comp_file = new File(comp_path + "/" + file_name);
+			if (!comp_file.exists()) {
+				continue;
+			}
+
+			BufferedReader reader_comp = new BufferedReader(new FileReader(comp_file));
+			int lines_comp = 0;
+			while (reader_comp.readLine() != null)
+				lines_comp++;
+			reader_comp.close();
+
+			BufferedReader reader_simp = new BufferedReader(new FileReader(simp_file));
+			int lines_simp = 0;
+			while (reader_simp.readLine() != null)
+				lines_simp++;
+			reader_simp.close();
+
+			if (lines_comp == lines_simp) {
+				reader_comp = new BufferedReader(new FileReader(comp_file));
+				reader_simp = new BufferedReader(new FileReader(simp_file));
+				while (true) {
+					String line_comp = reader_comp.readLine();
+					String line_simp = reader_simp.readLine();
+					if (line_comp == null || line_simp == null) {
+						break;
+					}
+					String[] line_comp_words = line_comp.split(" ");
+					String[] line_simp_words = line_simp.split(" ");
+					// Checker: length >= 10
+					if (line_comp_words.length < 10 || line_simp_words.length < 10) {
+						continue;
+					}
+					// Checker: all asc2 code
+					boolean validate = true;
+					for (String word : line_simp_words) {
+						if (!CharMatcher.ascii().matchesAllOf(word)) {
+							validate = false;
+							break;
+						}
+					}
+					if (!validate) {
+						continue;
+					}
+					for (String word : line_comp_words) {
+						if (!CharMatcher.ascii().matchesAllOf(word)) {
+							validate = false;
+							break;
+						}
+					}
+					if (!validate) {
+						continue;
+					}
+
+					ncomp_sents.add(line_comp);
+					nsimp_sents.add(line_simp);
+					if (ncomp_sents.size() > 100000) {
+						StringBuilder sb_comp = new StringBuilder();
+						for (String tmp : ncomp_sents) {
+							sb_comp.append(tmp).append("\n");
+						}
+						int cur_part_idx = part_idx++ % num_part;
+						writer_comps.get(cur_part_idx).write(text_postprocess(sb_comp.toString()));
+						writer_comps.get(cur_part_idx).flush();
+						ncomp_sents.clear();
+
+						StringBuilder sb_simp = new StringBuilder();
+						for (String tmp : nsimp_sents) {
+							sb_simp.append(tmp).append("\n");
+						}
+						writer_simps.get(cur_part_idx).write(text_postprocess(sb_simp.toString()));
+						writer_simps.get(cur_part_idx).flush();
+						nsimp_sents.clear();
+					}
+				}
+
+				int cur_part_idx = part_idx++ % num_part;
+				StringBuilder sb_comp = new StringBuilder();
+				for (String tmp : ncomp_sents) {
+					sb_comp.append(tmp).append("\n");
+				}
+				writer_comps.get(cur_part_idx).write(text_postprocess(sb_comp.toString()));
+				writer_comps.get(cur_part_idx).flush();
+				ncomp_sents.clear();
+
+				StringBuilder sb_simp = new StringBuilder();
+				for (String tmp : nsimp_sents) {
+					sb_simp.append(tmp).append("\n");
+				}
+				writer_simps.get(cur_part_idx).write(text_postprocess(sb_simp.toString()));
+				writer_simps.get(cur_part_idx).flush();
+				nsimp_sents.clear();
+			} else {
+				System.out.println(file_name);
+			}
+		}
+	}
+
 	public static void main(String[] args) throws Exception {
 		TransPrepare prepare = new TransPrepare();
-		prepare.translate("C:\\git\\wiki_output\\comp");
+		prepare.postprocess("C:\\git\\wiki_output\\comp", "C:\\git\\wiki_output\\comp\\tran1\\tran2",
+				"C:\\git\\wiki_output\\compf_", "C:\\git\\wiki_output\\simpf_", 7);
+		// prepare.translate("C:\\git\\wiki_output\\comp");
 		// prepare.translate("/Volumes/Storage/wiki/wiki_output/comp/");
 		// prepare.translateByFile("/Volumes/Storage/wiki/wiki_output/comp/");
 	}
