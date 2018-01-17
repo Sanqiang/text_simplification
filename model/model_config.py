@@ -374,6 +374,34 @@ For experiment after Jan 2018
 ==========================================================================================
 """
 
+class WikiTransLegacyBaseCfg(WikiDressLargeDefault):
+    train_dataset_simple = get_path('../text_simplification_data/train/dress/wikilarge2/dst.txt')
+    train_dataset_complex = get_path('../text_simplification_data/train/dress/wikilarge2/src.txt')
+
+class WikiTransLegacyTrainCfg(WikiTransLegacyBaseCfg):
+    beam_search_size = 0
+    number_samples = args.number_samples
+
+
+class WikiTransLegacyTestCfg(WikiTransLegacyBaseCfg):
+    batch_size = 64
+    replace_unk_by_emb = True
+    beam_search_size = 1
+
+    output_folder = args.output_folder
+    resultdor = get_path('../' + output_folder + '/result/eightref_test')
+
+    val_dataset_simple_folder = get_path('../text_simplification_data/test/')
+    # use the original dress
+    val_dataset_simple_file = 'wiki.full.aner.test.dst'
+    val_dataset_complex = get_path('../text_simplification_data/test/wiki.full.aner.test.src')
+    val_mapper = get_path('../text_simplification_data/test/test.8turkers.tok.map.dress')
+    # wiki.full.aner.ori.test.dst is uppercase whereas test.8turkers.tok.simp is lowercase
+    val_dataset_complex_rawlines_file = get_path(
+        '../text_simplification_data/test/test.8turkers.tok.norm')
+    val_dataset_simple_rawlines_file_references = 'test.8turkers.tok.turk.'
+    val_dataset_simple_rawlines_file = 'test.8turkers.tok.simp'
+    num_refs = 8
 
 class WikiTransBaseCfg(DefaultConfig):
     model_print_freq = 50

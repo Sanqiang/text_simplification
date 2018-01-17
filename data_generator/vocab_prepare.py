@@ -5,7 +5,7 @@ from collections import Counter
 from nltk import word_tokenize
 
 from data_generator.vocab import Vocab
-from model.model_config import WikiDressLargeDefault, DefaultConfig, list_config
+from model.model_config import WikiDressLargeDefault, DefaultConfig, WikiTransBaseCfg, list_config
 from util.arguments import get_args
 from util.data.text_encoder import SubwordTextEncoder
 from util.data import text_encoder
@@ -76,6 +76,9 @@ if __name__ == '__main__':
         config = DefaultConfig()
     elif args.mode == 'dress':
         config = WikiDressLargeDefault()
+    elif args.mode == 'wiki':
+        config = WikiTransBaseCfg()
+        config.subword_vocab_size = 30000
     print(list_config(config))
 
     if config.subword_vocab_size <= 0:

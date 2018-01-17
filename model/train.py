@@ -5,7 +5,8 @@ sys.path.insert(0,'/ihome/hdaqing/saz31/sanqiang/text_simplification')
 
 from data_generator.train_data import TrainData
 from model.transformer import TransformerGraph
-from model.model_config import DefaultConfig, DefaultTrainConfig, WikiDressLargeTrainConfig, WikiDressSmallTrainConfig, list_config, WikiTransTrainCfg, WikiTransValCfg
+from model.model_config import DefaultConfig, DefaultTrainConfig, WikiDressLargeTrainConfig, WikiDressSmallTrainConfig, list_config
+from model.model_config import WikiTransTrainCfg, WikiTransValCfg, WikiTransLegacyTestCfg, WikiTransLegacyTrainCfg
 from data_generator.vocab import Vocab
 from util import session
 from util import constant
@@ -211,6 +212,8 @@ def train(model_config=None):
                     eval(SubTestWikiSmallPPDBConfig(), ckpt)
                 elif args.mode == 'wiki':
                     eval(WikiTransValCfg(), ckpt)
+                elif args.mode == 'wikilegacy':
+                    eval(WikiTransLegacyTestCfg(), ckpt)
 
 if __name__ == '__main__':
     config = None
@@ -222,5 +225,7 @@ if __name__ == '__main__':
         config = WikiDressSmallTrainConfig()
     elif args.mode == 'wiki':
         config = WikiTransTrainCfg()
+    elif args.mode == 'wikilegacy':
+        config = WikiTransLegacyTrainCfg()
     print(list_config(config))
     train(config)

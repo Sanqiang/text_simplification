@@ -104,7 +104,7 @@ class TrainData:
             line_complex = f_complex.readline()
             line_simple = f_simple.readline()
             words_complex, _ = self.process_line(line_complex, self.vocab_complex)
-            words_simple, words_raw_simple = self.process_line(line_simple, self.vocab_simple, need_raw=True)
+            words_simple, _ = self.process_line(line_simple, self.vocab_simple)
 
             yield i, words_simple, words_complex, cp.deepcopy([1.0] * len(words_simple)), cp.deepcopy([1.0] * len(words_complex))
 
