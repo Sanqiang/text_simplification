@@ -377,6 +377,7 @@ For experiment after Jan 2018
 class WikiTransLegacyBaseCfg(WikiDressLargeDefault):
     train_dataset_simple = get_path('../text_simplification_data/train/dress/wikilarge2/dst.txt')
     train_dataset_complex = get_path('../text_simplification_data/train/dress/wikilarge2/src.txt')
+    batch_size = args.batch_size
 
 class WikiTransLegacyTrainCfg(WikiTransLegacyBaseCfg):
     beam_search_size = 0
