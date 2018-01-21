@@ -16,7 +16,7 @@ if False:
     sess.run(tf.global_variables_initializer())
     print(sess.run(data))
 
-if True:
+if False:
     f = open('/Users/zhaosanqiang916/git/text_simplification_data/train/dress/wikilarge2/src.rules.txt')
     rule2idx = {}
     idx2rule = []
@@ -31,3 +31,9 @@ if True:
                 rule2idx[rule] += 1
 
     print(len(rule2idx))
+
+
+import numpy as np
+cur_rule_target_input_placeholder = np.array([1,2,3,4,5,6,0,0,0,0,0])
+id = np.where(cur_rule_target_input_placeholder == 2)
+print(cur_rule_target_input_placeholder[id])

@@ -68,6 +68,12 @@ def get_args():
                         default='../text_simplification_data/train/dress/wikilarge/wiki.full.aner.train.src.rules',
                         help='The path for PPDB comp rules?')
 
+    # For Memory
+    parser.add_argument('-mem', '--memory', default=None,
+                        help='Separate memory?')
+    parser.add_argument('-memstep', '--memory_prepare_step', default=300, type=int,
+                        help='Number of steps for memory prepare?')
+
 
     # For Transformer
     parser.add_argument('-pos', '--hparams_pos', default='timing',

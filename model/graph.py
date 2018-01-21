@@ -5,6 +5,7 @@ from model.optimizer import TransformerOptimizer
 from util import constant
 
 import tensorflow as tf
+import numpy as np
 
 
 class Graph:
@@ -33,36 +34,45 @@ class Graph:
 
     def create_model_multigpu(self):
         # with tf.Graph().as_default():
-        #     with tf.device('/cpu:0'):
-                losses = []
-                grads = []
-                self.objs = []
-                optim = self.get_optim()
-                for gpu_id in range(self.model_config.num_gpus):
-                    with tf.device('/gpu:%d' % gpu_id):
-                        loss, obj = self.create_model()
-                        grad = optim.compute_gradients(loss)
-                        losses.append(loss)
-                        grads.append(grad)
-                        self.objs.append(obj)
-                        tf.get_variable_scope().reuse_variables()
+            # with tf.device('/gpu:0'):
+        losses = []
+        grads = []
+        ops = [tf.constant(0)]
+        self.objs = []
+        optim = self.get_optim()
 
-                with tf.variable_scope('optimization', reuse=tf.AUTO_REUSE):
+        self.global_step = tf.get_variable(
+            'global_step', initializer=tf.constant(0, dtype=tf.int64), trainable=False)
 
-                    self.loss = tf.divide(tf.add_n(losses), self.model_config.num_gpus)
-                    self.perplexity = tf.exp(tf.reduce_mean(self.loss))
+        with tf.variable_scope(tf.get_variable_scope()) as scope:
+            for gpu_id in range(self.model_config.num_gpus):
+                        with tf.device('/gpu:%d' % gpu_id):
+                            loss, obj = self.create_model()
+                            grad = optim.compute_gradients(loss)
+                            losses.append(loss)
+                            grads.append(grad)
+                            if self.model_config.memory == 'rule' and self.is_train:
+                                ops.append(obj['mem_contexts'])
+                                ops.append(obj['mem_outputs'])
+                                ops.append(obj['mem_counter'])
+                            self.objs.append(obj)
 
-                    self.global_step = tf.get_variable(
-                        'global_step', initializer=tf.constant(0, dtype=tf.int64), trainable=False)
+                            tf.get_variable_scope().reuse_variables()
 
-                    if self.is_train:
-                        avg_grad = self.average_gradients(grads)
-                        grads = [g for (g,v) in avg_grad]
-                        clipped_grads, _ = tf.clip_by_global_norm(grads, self.model_config.max_grad_norm)
-                        self.train_op = optim.apply_gradients(zip(clipped_grads, tf.trainable_variables()), global_step=self.global_step)
-                        self.increment_global_step = tf.assign_add(self.global_step, 1)
+        with tf.variable_scope('optimization'):
+            self.loss = tf.divide(tf.add_n(losses), self.model_config.num_gpus)
+            self.perplexity = tf.exp(tf.reduce_mean(self.loss))
 
-                    self.saver = tf.train.Saver(write_version=tf.train.SaverDef.V2)
+            if self.is_train:
+                avg_grad = self.average_gradients(grads)
+                grads = [g for (g,v) in avg_grad]
+                clipped_grads, _ = tf.clip_by_global_norm(grads, self.model_config.max_grad_norm)
+                self.train_op = optim.apply_gradients(zip(clipped_grads, tf.trainable_variables()), global_step=self.global_step)
+                self.increment_global_step = tf.assign_add(self.global_step, 1)
+
+            self.saver = tf.train.Saver(write_version=tf.train.SaverDef.V2)
+
+            self.ops = tf.tuple(ops)
 
     def create_model(self):
         with tf.variable_scope('variables'):
@@ -101,10 +111,24 @@ class Graph:
             w = embedding.get_w()
             b = embedding.get_b()
 
+            mem_contexts, mem_outputs, mem_counter = None, None, None
+            rule_id_input_placeholder, rule_target_input_placeholder = [], []
+            if self.model_config.memory == 'rule':
+                with tf.device('/cpu:0'):
+                    mem_contexts = tf.constant(0, shape=(self.model_config.rule_size, self.model_config.dimension), dtype=tf.float32)
+                    mem_outputs = tf.constant(0, shape=(self.model_config.rule_size, self.model_config.dimension), dtype=tf.float32)
+                    mem_counter = tf.zeros(shape=self.model_config.rule_size, dtype=tf.int32)
+
+                for step in range(self.model_config.max_cand_rules):
+                    rule_id_input_placeholder.append(tf.zeros(self.model_config.batch_size, tf.int32, name='rule_id_input'))
+                for step in range(self.model_config.max_cand_rules):
+                    rule_target_input_placeholder.append(tf.zeros(self.model_config.batch_size, tf.int32, name='rule_target_input'))
+
         with tf.variable_scope('model'):
             output = self.model_fn(sentence_complex_input_placeholder, emb_complex,
-                       sentence_simple_input_placeholder, emb_simple,
-                       w, b)
+                                   sentence_simple_input_placeholder, emb_simple,
+                                   w, b, rule_id_input_placeholder, mem_contexts, mem_outputs,
+                                   self.global_step)
 
             # if not self.is_train and self.model_config.replace_unk_by_emb:
                 # Get output list matrix for replacement by embedding
@@ -113,26 +137,93 @@ class Graph:
                 #     axis=1)
             encoder_embs = tf.stack(output.encoder_embed_inputs_list, axis=1)
             # self.encoder_embs = output.encoder_outputs
-            if type(output.decoder_outputs) == list:
-                decoder_outputs = tf.stack(output.decoder_outputs, axis=1)
+            if type(output.decoder_outputs_list) == list:
+                decoder_outputs_list = output.decoder_outputs_list
+                decoder_outputs = tf.stack(decoder_outputs_list, axis=1)
             else:
-                decoder_outputs = output.decoder_outputs
+                decoder_outputs = output.decoder_outputs_list
+
+            if type(output.final_outputs_list) == list:
+                final_outputs_list = output.final_outputs_list
+                final_outputs = tf.stack(final_outputs_list, axis=1)
+            else:
+                final_outputs = output.final_outputs_list
 
             if not self.is_train:
                 # in beam search, it directly provide decoder target list
-                decoder_target_list = tf.stack(output.decoder_target_list, axis=1)
+                decoder_target = tf.stack(output.decoder_target_list, axis=1)
                 loss = tf.reduce_mean(output.decoder_score)
-                return loss, \
-                       {
+                obj = {
                            'sentence_idxs': sentence_idxs,
                            'sentence_simple_input_placeholder': sentence_simple_input_placeholder,
                            'sentence_complex_input_placeholder': sentence_complex_input_placeholder,
                            'sentence_simple_input_prior_placeholder': sentence_simple_input_prior_placeholder,
-                           'decoder_target_list': decoder_target_list,
-                           'decoder_outputs':decoder_outputs,
+                           'decoder_target_list': decoder_target,
+                           'final_outputs':final_outputs,
                            'encoder_embs':encoder_embs
                        }
+                if self.model_config.memory == 'rule':
+                    obj['rule_id_input_placeholder'] = rule_id_input_placeholder
+                    obj['rule_target_input_placeholder'] = rule_target_input_placeholder
+                return loss, obj
             else:
+                #Memory Populate
+                if self.model_config.memory == 'rule':
+                    # Update Memory through python injection
+                    def update_memory(
+                            mem_contexts_tmp, mem_outputs_tmp, mem_counter_tmp,
+                            decoder_targets, decoder_outputs, contexts,
+                            rule_target_input_placeholder, rule_id_input_placeholder,
+                            global_step):
+                        if global_step <= self.model_config.memory_prepare_step:
+                            return mem_contexts_tmp, mem_outputs_tmp, mem_counter_tmp
+                        # print('global_step\t' + str(global_step))
+                        # print('mem_contexts\t' + str(mem_contexts_tmp))
+                        # print('mem_outputs\t' + str(mem_outputs_tmp))
+                        # print('mem_counter\t' + str(mem_counter_tmp))
+                        # print('decoder_outputs\t' + str(decoder_outputs))
+                        batch_size = np.shape(decoder_targets)[0]
+                        max_rules = np.shape(decoder_targets)[1]
+                        for batch_id in range(batch_size):
+                            cur_decoder_targets = decoder_targets[batch_id, :]
+                            cur_decoder_outputs = decoder_outputs[batch_id, :]
+                            cur_rule_target_input_placeholder = rule_target_input_placeholder[batch_id, :]
+                            cur_rule_id_input_placeholder = rule_id_input_placeholder[batch_id, :]
+
+                            for step in range(max_rules):
+                                # print('cur_decoder_targets[step]' + str(cur_decoder_targets[step]))
+                                if cur_decoder_targets[step] > constant.REVERED_VOCAB_SIZE and cur_decoder_targets[step] in cur_rule_target_input_placeholder:
+                                    # print('np.where(cur_rule_target_input_placeholder==cur_decoder_targets[step])'
+                                    #       + str(np.where(cur_rule_target_input_placeholder==cur_decoder_targets[step])))
+                                    rule_id = cur_rule_id_input_placeholder[
+                                        np.where(cur_rule_target_input_placeholder==cur_decoder_targets[step])]
+                                    if mem_counter_tmp[rule_id] == 0:
+                                        # print('batch_id' + str(batch_id))
+                                        # print('step' + str(step))
+                                        # print('mem_contexts[rule_id, :]' + str(mem_contexts_tmp[rule_id, :]))
+                                        # print('mem_outputs[rule_id, :]' + str(mem_outputs_tmp[rule_id, :]))
+                                        # print('cur_decoder_outputs[step, :]' + str(cur_decoder_outputs[step, :]))
+                                        # print('contexts[batch_id, step, :]' + str(contexts[batch_id, step, :]))
+                                        mem_contexts_tmp[rule_id, :] = contexts[batch_id, step, :]
+                                        mem_outputs_tmp[rule_id, :] = cur_decoder_outputs[step, :]
+                                    else:
+                                        mem_contexts_tmp[rule_id, :] = (contexts[batch_id, step, :] + mem_contexts_tmp[rule_id, :]) / 2
+                                        mem_outputs_tmp[rule_id, :] = (cur_decoder_outputs[step, :] + mem_outputs_tmp[rule_id, :]) / 2
+                                    mem_counter_tmp[rule_id] += 1
+                        return mem_contexts_tmp, mem_outputs_tmp, mem_counter_tmp
+
+                    mem_contexts, mem_outputs, mem_counter = tf.py_func(update_memory,
+                                                                        [mem_contexts, mem_outputs, mem_counter,
+                                                                         tf.stack(output.decoder_target_list, axis=1), decoder_outputs,
+                                                                         output.contexts,
+                                                                         tf.stack(rule_target_input_placeholder, axis=1),
+                                                                         tf.stack(rule_id_input_placeholder, axis=1),
+                                                                         self.global_step],
+                                                                        [tf.float32, tf.float32, tf.int32],
+                                                                        stateful=False, name='update_memory')
+
+
+                #Loss and corresponding prior/mask
                 decode_word_weight = tf.stack(
                     [tf.to_float(tf.not_equal(d, self.data.vocab_simple.encode(constant.SYMBOL_PAD)))
                      for d in output.gt_target_list], axis=1)
@@ -157,13 +248,20 @@ class Graph:
                                      decoder_outputs=decoder_outputs,
                                      number_samples=self.model_config.number_samples
                                      )
-                return loss, \
-                       {
-                           'sentence_idxs':sentence_idxs,
-                           'sentence_simple_input_placeholder':sentence_simple_input_placeholder,
-                           'sentence_complex_input_placeholder':sentence_complex_input_placeholder,
-                           'sentence_simple_input_prior_placeholder':sentence_simple_input_prior_placeholder,
-                       }
+                obj = {
+                    'sentence_idxs': sentence_idxs,
+                    'sentence_simple_input_placeholder': sentence_simple_input_placeholder,
+                    'sentence_complex_input_placeholder': sentence_complex_input_placeholder,
+                    'sentence_simple_input_prior_placeholder': sentence_simple_input_prior_placeholder,
+                }
+                if self.model_config.memory == 'rule':
+                    obj['rule_id_input_placeholder'] = rule_id_input_placeholder
+                    obj['rule_target_input_placeholder'] = rule_target_input_placeholder
+                    obj['mem_contexts'] = mem_contexts
+                    obj['mem_outputs'] = mem_outputs
+                    obj['mem_counter'] = mem_counter
+                return loss, obj
+
 
     def get_optim(self):
         learning_rate = tf.constant(self.model_config.learning_rate)
@@ -230,19 +328,22 @@ class Graph:
         return average_grads
 
 class ModelOutput:
-    def __init__(self, decoder_outputs=None, decoder_logit_list=None, decoder_target_list=None,
-                 decoder_score=None, gt_target_list=None, encoder_embed_inputs_list=None, encoder_outputs=None):
-        self._decoder_outputs = decoder_outputs
+    def __init__(self, decoder_outputs_list=None, decoder_logit_list=None, decoder_target_list=None,
+                 decoder_score=None, gt_target_list=None, encoder_embed_inputs_list=None, encoder_outputs=None,
+                 contexts=None, final_outputs_list=None):
+        self._decoder_outputs_list = decoder_outputs_list
         self._decoder_logit_list = decoder_logit_list
         self._decoder_target_list = decoder_target_list
         self._decoder_score = decoder_score
         self._gt_target_list = gt_target_list
         self._encoder_embed_inputs_list = encoder_embed_inputs_list
         self._encoder_outputs = encoder_outputs
+        self._contexts = contexts
+        self._final_outputs_list = final_outputs_list
 
-    @property
-    def encoder_outputs(self):
-        return self._encoder_outputs
+    # @property
+    # def encoder_outputs_list(self):
+    #     return self._decoder_outputs_list
 
     @property
     def encoder_embed_inputs_list(self):
@@ -250,8 +351,12 @@ class ModelOutput:
         return self._encoder_embed_inputs_list
 
     @property
-    def decoder_outputs(self):
-        return self._decoder_outputs
+    def decoder_outputs_list(self):
+        return self._decoder_outputs_list
+
+    @property
+    def final_outputs_list(self):
+        return self._final_outputs_list
 
     @property
     def decoder_logit_list(self):
@@ -260,6 +365,10 @@ class ModelOutput:
     @property
     def decoder_target_list(self):
         return self._decoder_target_list
+
+    @property
+    def contexts(self):
+        return self._contexts
 
     @property
     def decoder_score(self):

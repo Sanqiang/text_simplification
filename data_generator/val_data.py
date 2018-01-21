@@ -3,6 +3,7 @@ from nltk import word_tokenize
 from util import constant
 from util.map_util import load_mappers
 from model.ppdb import PPDB
+from data_generator.rule import Rule
 
 import copy as cp
 
@@ -64,6 +65,23 @@ class ValData:
         if model_config.ppdb_emode != 'none':
             self.ppdb = PPDB(model_config)
 
+        if self.model_config.memory == 'rule':
+            self.vocab_rule = Rule(model_config, self.model_config.vocab_rules)
+            self.rules = self.populate_rules(
+                self.model_config.val_dataset_complex_ppdb, self.vocab_rule)
+
+    def populate_rules(self, rule_path, vocab_rule):
+        data = []
+        for line in open(rule_path, encoding='utf-8'):
+            cur_rules = line.split('\t')
+            tmp = []
+            for cur_rule in cur_rules:
+                rule_id, rule_targets = vocab_rule.encode(cur_rule)
+                if rule_targets is not None:
+                    tmp.append((rule_id, [self.vocab_simple.encode(rule_target) for rule_target in rule_targets]))
+            data.append(tmp)
+        return data
+
     def populate_data_rawfile(self, data_path):
         """Populate data raw lines into memory"""
         data = []
@@ -112,13 +130,18 @@ class ValData:
         while True:
             ref_rawlines_batch = cp.deepcopy([self.data_references_raw_lines[j][i]
                                          for j in range(self.model_config.num_refs)])
+            supplement = {}
+            if self.model_config.memory == 'rule':
+                supplement['mem'] = self.rules[i]
+
             yield (cp.deepcopy(self.data_simple[i]),
                    cp.deepcopy(self.data_complex[i]),
                    cp.deepcopy(self.data_complex_raw[i]),
                    cp.deepcopy(self.data_complex_raw_lines[i]),
                    self.mapper[i],
-                   ref_rawlines_batch)
+                   ref_rawlines_batch,
+                   supplement)
 
             i += 1
             if i == len(self.data_simple):
-                yield None, None, None, None, None, None
+                yield None, None, None, None, None, None, None

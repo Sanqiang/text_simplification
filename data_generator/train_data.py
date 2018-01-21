@@ -5,6 +5,7 @@ import numpy as np
 from nltk import word_tokenize
 
 from data_generator.vocab import Vocab
+from data_generator.rule import Rule
 from model.ppdb import PPDB
 from util import constant
 
@@ -57,6 +58,11 @@ class TrainData:
 
         self.init_pretrained_embedding()
 
+        if self.model_config.memory == 'rule':
+            self.vocab_rule = Rule(model_config, self.model_config.vocab_rules)
+            self.rules = self.populate_rules(
+                self.model_config.train_dataset_complex_ppdb, self.vocab_rule)
+
     def populate_ppdb(self, data_path):
         rules = []
         for line in open(data_path, encoding='utf-8'):
@@ -106,10 +112,25 @@ class TrainData:
             words_complex, _ = self.process_line(line_complex, self.vocab_complex)
             words_simple, _ = self.process_line(line_simple, self.vocab_simple)
 
-            yield i, words_simple, words_complex, cp.deepcopy([1.0] * len(words_simple)), cp.deepcopy([1.0] * len(words_complex))
+            supplement = {}
+            if self.model_config.memory == 'rule':
+                supplement['mem'] = self.rules[i]
+
+            yield i, words_simple, words_complex, cp.deepcopy([1.0] * len(words_simple)), cp.deepcopy([1.0] * len(words_complex)), supplement
 
             i += 1
 
+    def populate_rules(self, rule_path, vocab_rule):
+        data = []
+        for line in open(rule_path, encoding='utf-8'):
+            cur_rules = line.split('\t')
+            tmp = []
+            for cur_rule in cur_rules:
+                rule_id, rule_targets = vocab_rule.encode(cur_rule)
+                if rule_targets is not None:
+                    tmp.append((rule_id, [self.vocab_simple.encode(rule_target) for rule_target in rule_targets]))
+            data.append(tmp)
+        return data
 
     def populate_data(self, data_path, vocab, need_raw=False):
         # Populate data into memory
@@ -198,12 +219,16 @@ class TrainData:
 
     def get_data_sample(self):
         i = rd.sample(range(self.size), 1)[0]
+        supplement = {}
         if self.model_config.ppdb_mode != 'none':
             data_simple, data_weight, attn_weight = self.ppdb.simplify(
                 self.data_simple[i], self.data_complex[i],
                 self.ppdb_simp_rules[i], self.ppdb_comp_rules[i],
                 self.vocab_simple, self.vocab_complex)
             if data_simple:
-                return i, data_simple, cp.deepcopy(self.data_complex[i]), data_weight, attn_weight
+                return i, data_simple, cp.deepcopy(self.data_complex[i]), data_weight, attn_weight, supplement
 
-        return i, cp.deepcopy(self.data_simple[i]), cp.deepcopy(self.data_complex[i]), cp.deepcopy([1.0] * len(self.data_simple[i])), cp.deepcopy([1.0] * len(self.data_complex[i]))
+        if self.model_config.memory == 'rule':
+            supplement['mem'] = self.rules[i]
+        # print('get data idx:\t' + str(i))
+        return i, cp.deepcopy(self.data_simple[i]), cp.deepcopy(self.data_complex[i]), cp.deepcopy([1.0] * len(self.data_simple[i])), cp.deepcopy([1.0] * len(self.data_complex[i])), supplement

@@ -3,9 +3,10 @@
 from collections import Counter
 
 from nltk import word_tokenize
+import operator
 
 from data_generator.vocab import Vocab
-from model.model_config import WikiDressLargeDefault, DefaultConfig, WikiTransBaseCfg, list_config
+from model.model_config import WikiDressLargeDefault, DefaultConfig, WikiTransBaseCfg, WikiTransLegacyTrainCfg, list_config
 from util.arguments import get_args
 from util.data.text_encoder import SubwordTextEncoder
 from util.data import text_encoder
@@ -23,6 +24,30 @@ class VocabPrepare:
         self.data_file2 = data_file2
         self.output = output
         self.model_config = model_config
+
+    def prepare_rule(self):
+        rule2score = {}
+        for line in open(self.model_config.train_dataset_complex_ppdb, encoding='utf-8'):
+            rules = line.split('\t')
+            for rule in rules:
+                rule_items = rule.split('=>')
+                if len(rule_items) != 4:
+                    continue
+                rule_pair = rule_items[1] + '=>' + rule_items[2]
+                rule_score = float(rule_items[3])
+                if rule_pair not in rule2score:
+                    rule2score[rule_pair] = 0
+                rule2score[rule_pair] += rule_score
+
+        writer = open(self.model_config.vocab_rules, 'w')
+        for rule, score in sorted(
+                rule2score.items(), key=operator.itemgetter(1), reverse=True):
+            writer.write(rule)
+            writer.write('\t')
+            writer.write(str(score))
+            writer.write('\n')
+        writer.close()
+        print('Processed vocab with size %d' % len(rule2score))
 
     def prepare_vocab(self):
         c = Counter()
@@ -79,23 +104,27 @@ if __name__ == '__main__':
     elif args.mode == 'wiki':
         config = WikiTransBaseCfg()
         config.subword_vocab_size = 30000
+    elif args.mode == 'wikilegacy':
+        config = WikiTransLegacyTrainCfg()
     print(list_config(config))
 
     if config.subword_vocab_size <= 0:
         voc = VocabPrepare(config.train_dataset_complex,
                            config.vocab_complex,
                            config)
-        voc.prepare_vocab()
+        # voc.prepare_vocab()
         voc = VocabPrepare(config.train_dataset_simple,
                            config.vocab_simple,
                            config)
-        voc.prepare_vocab()
+        # voc.prepare_vocab()
 
         voc = VocabPrepare(config.train_dataset_complex,
                            config.vocab_all,
                            config,
                            config.train_dataset_simple)
-        voc.prepare_vocab()
+        # voc.prepare_vocab()
+
+        voc.prepare_rule()
     else:
         voc = VocabPrepare(config.train_dataset_complex,
                            config.subword_vocab_complex,

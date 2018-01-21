@@ -15,11 +15,11 @@ class DefaultConfig():
     warm_start = args.warm_start
     use_partial_restore = args.use_partial_restore
     use_gpu = True
-    batch_size = 3
-    dimension = 30
-    max_complex_sentence = 20
-    max_simple_sentence = 15
-    min_simple_sentence = 5 #Used for Beam Search
+    batch_size = 1
+    dimension = 10
+    max_complex_sentence = 10
+    max_simple_sentence = 8
+    # min_simple_sentence = 5 #Used for Beam Search
     model_eval_freq = args.model_eval_freq
     it_train = args.it_train
     model_print_freq = 1
@@ -73,9 +73,6 @@ class DefaultConfig():
     if ppdb_emode == 'weight':
         ppdb_emode_args = float(ppdb_emode_args)
 
-    # Seq2seq config
-    num_rnn_encoder_layers = 1
-
     # post process
     replace_unk_by_attn = False
     replace_unk_by_emb = True
@@ -98,10 +95,12 @@ class DefaultConfig():
     train_dataset_simple_ppdb = get_path('data/train_dummy_simple_dataset.rules')
     train_dataset_simple_syntax = get_path('data/train_dummy_simple_dataset.syntax')
     train_dataset_complex = get_path('data/train_dummy_complex_dataset')
-    train_dataset_complex_ppdb = get_path('data/train_dummy_complex_dataset.rules2')
+    train_dataset_complex_ppdb = get_path('data/train_dummy_complex_dataset.rules')
+    val_dataset_complex_ppdb = get_path('data/eval_dummy_complex_dataset.rules')
     vocab_simple = get_path('data/dummy_simple_vocab')
     vocab_complex = get_path('data/dummy_complex_vocab')
     vocab_all = get_path('data/dummy_vocab')
+    vocab_rules = get_path('data/dummy_rules_vocab')
     if args.lower_case:
         vocab_simple = vocab_simple + '.lower'
         vocab_complex = vocab_complex + '.lower'
@@ -145,19 +144,26 @@ class DefaultConfig():
     # For Exp
     penalty_alpha = args.penalty_alpha
 
+    # For Memory
+    memory = args.memory
+    max_cand_rules = 15
+    rule_size = 7
+    memory_prepare_step = args.memory_prepare_step
+
+
 class DefaultTrainConfig(DefaultConfig):
     beam_search_size = 0
 
 
 class DefaultTestConfig(DefaultConfig):
-    beam_search_size = 4
+    beam_search_size = 1
     batch_size = 2
     output_folder = args.output_folder
     resultdor = get_path('../' + output_folder + '/result/test1')
 
 
 class DefaultTestConfig2(DefaultConfig):
-    beam_search_size = 4
+    beam_search_size = 1
     batch_size = 2
     output_folder = args.output_folder
     resultdor = get_path('../' + output_folder + '/result/test2')
@@ -375,9 +381,16 @@ For experiment after Jan 2018
 """
 
 class WikiTransLegacyBaseCfg(WikiDressLargeDefault):
+    train_dataset_complex_syntax = get_path(
+        '../text_simplification_data/train/dress/wikilarge2/src.jsyntax.txt')
+    train_dataset_complex_ppdb = get_path(
+        '../text_simplification_data/train/dress/wikilarge2/src.rules.txt')
+    vocab_rules = get_path(
+        '../text_simplification_data/train/dress/wikilarge2/rules.txt')
     train_dataset_simple = get_path('../text_simplification_data/train/dress/wikilarge2/dst.txt')
     train_dataset_complex = get_path('../text_simplification_data/train/dress/wikilarge2/src.txt')
     batch_size = args.batch_size
+    rule_size = 72445
 
 class WikiTransLegacyTrainCfg(WikiTransLegacyBaseCfg):
     beam_search_size = 0
@@ -403,6 +416,10 @@ class WikiTransLegacyTestCfg(WikiTransLegacyBaseCfg):
     val_dataset_simple_rawlines_file_references = 'test.8turkers.tok.turk.'
     val_dataset_simple_rawlines_file = 'test.8turkers.tok.simp'
     num_refs = 8
+    val_dataset_complex_syntax = get_path(
+        '../text_simplification_data/test/wiki.full.aner.test.src.jsyntax')
+    val_dataset_complex_ppdb = get_path(
+        '../text_simplification_data/test/wiki.full.aner.test.src.rules')
 
 class WikiTransBaseCfg(DefaultConfig):
     model_print_freq = 50

@@ -1,7 +1,7 @@
 from model.model_config import get_path, WikiDressLargeDefault
 from data_generator.vocab import Vocab
 from collections import defaultdict
-from model.model_config import DefaultTrainConfig, WikiDressLargeTrainConfig, WikiDressSmallTrainConfig
+from model.model_config import DefaultTrainConfig, WikiDressLargeTrainConfig, WikiDressSmallTrainConfig, WikiTransLegacyTrainCfg, WikiTransLegacyTestCfg
 from util import constant
 
 from util.arguments import get_args
@@ -80,6 +80,37 @@ class PPDB:
     #         label = tree.label()
     #         outout_list.append('%s=>%s' % (label, words))
     #     return words
+
+    def process_test(self):
+        """From Java-generated words|pos to rules for each eval sentnece."""
+        from data_generator.rule import Rule
+        vocab_rule = Rule(self.model_config, self.model_config.vocab_rules)
+        output = ''
+        syntaxs = open(self.model_config.val_dataset_complex_syntax, encoding='utf-8').readlines()
+        for i, syntax in enumerate(syntaxs):
+            rules = []
+            syntax = syntax.strip()
+            if len(syntax) > 0:
+                syntax_pairs = [p.split('=>') for p in syntax.split('\t')]
+                for syntax_pair in syntax_pairs:
+                    ori_words = syntax_pair[1].lower()
+                    tag = syntax_pair[0]
+                    if ori_words not in self.rules or tag not in self.rules[ori_words]:
+                        continue
+                    target_words = self.rules[ori_words][tag]
+                    for target_word in target_words:
+                        score = self.rules[ori_words][tag][target_word]
+                        rule = '=>'.join([tag, ori_words, target_word, str(score)])
+                        rule_id, _ = vocab_rule.encode(rule)
+                        if rule_id is not None:
+                            rules.append(rule)
+            line = '\t'.join(rules)
+            output = output + line + '\n'
+
+        f = open(self.model_config.val_dataset_complex_ppdb, 'w')
+        f.write(output)
+        f.close()
+
 
     def process_training(self, line_sep='\n', is_comp=False):
         """From Java-generated words|pos to rules for each training sentnece."""
@@ -419,9 +450,10 @@ if __name__ == '__main__':
     # elif args.mode == 'dress':
     #     config = WikiDressLargeTrainConfig()
     # get_refine_data()
-    config = WikiDressSmallTrainConfig()
+    config = WikiTransLegacyTestCfg()
     ppdb = PPDB(config)
-    ppdb.process_training(is_comp=True)
+    # ppdb.process_training(is_comp=False)
+    ppdb.process_test()
     # ppdb.simplify(
     #     'There is manuscript evidence that PERSON@1 continued to work on these pieces as late as the period NUMBER@1 â '' NUMBER@2 , and that her niece and nephew , PERSON@2 and PERSON@3 , made further additions as late as NUMBER@3 .',
     #     'manuscript	evidence that	continued	to work on	the period	niece	further')

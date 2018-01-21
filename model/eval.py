@@ -49,7 +49,7 @@ def get_graph_val_data(objs,
 
     for obj in objs:
         (tmp_sentence_simple, tmp_sentence_complex,
-         tmp_sentence_complex_raw, tmp_sentence_complex_raw_lines) = [], [], [], []
+         tmp_sentence_complex_raw, tmp_sentence_complex_raw_lines, tmp_sups) = [], [], [], [], {}
         tmp_mapper = []
         tmp_ref_raw_lines = [[] for _ in range(model_config.num_refs)]
         effective_batch_size = 0
@@ -57,7 +57,7 @@ def get_graph_val_data(objs,
         for i in range(model_config.batch_size):
             if not is_end:
                 (sentence_simple, sentence_complex, sentence_complex_raw, sentence_complex_raw_lines,
-                 mapper, ref_raw_lines) = next(it)
+                 mapper, ref_raw_lines, sup) = next(it)
                 effective_batch_size += 1
             if sentence_simple is None or is_end:
                 # End of data set
@@ -89,12 +89,48 @@ def get_graph_val_data(objs,
             tmp_sentence_complex_raw.append(sentence_complex_raw)
             tmp_sentence_complex_raw_lines.append(sentence_complex_raw_lines)
 
+            if model_config.memory == 'rule':
+                if 'rule_id_input_placeholder' not in tmp_sups:
+                    tmp_sups['rule_id_input_placeholder'] = []
+                if 'rule_target_input_placeholder' not in tmp_sups:
+                    tmp_sups['rule_target_input_placeholder'] = []
+
+                cur_rule_id_input_placeholder = []
+                cur_rule_target_input_placeholder = []
+                if sup is not None:
+                    for rule_tuple in sup['mem']:
+                        rule_id = rule_tuple[0]
+                        rule_targets = rule_tuple[1]
+                        for target in rule_targets:
+                            cur_rule_id_input_placeholder.append(rule_id)
+                            cur_rule_target_input_placeholder.append(target)
+
+                if len(cur_rule_id_input_placeholder) < model_config.max_cand_rules:
+                    num_pad = model_config.max_cand_rules - len(cur_rule_id_input_placeholder)
+                    cur_rule_id_input_placeholder.extend(num_pad * [0])
+                    cur_rule_target_input_placeholder.extend(num_pad * pad_id)
+                else:
+                    cur_rule_id_input_placeholder = cur_rule_id_input_placeholder[:model_config.max_cand_rules]
+                    cur_rule_target_input_placeholder = cur_rule_target_input_placeholder[:model_config.max_cand_rules]
+
+                tmp_sups['rule_id_input_placeholder'].append(cur_rule_id_input_placeholder)
+                tmp_sups['rule_target_input_placeholder'].append(cur_rule_target_input_placeholder)
+
         for step in range(model_config.max_simple_sentence):
             input_feed[obj['sentence_simple_input_placeholder'][step].name] = [tmp_sentence_simple[batch_idx][step]
                                                             for batch_idx in range(model_config.batch_size)]
         for step in range(model_config.max_complex_sentence):
             input_feed[obj['sentence_complex_input_placeholder'][step].name] = [tmp_sentence_complex[batch_idx][step]
                                                              for batch_idx in range(model_config.batch_size)]
+
+        if model_config.memory == 'rule':
+            for step in range(model_config.max_cand_rules):
+                input_feed[obj['rule_id_input_placeholder'][step].name] = [
+                    tmp_sups['rule_id_input_placeholder'][batch_idx][step]
+                    for batch_idx in range(model_config.batch_size)]
+                input_feed[obj['rule_target_input_placeholder'][step].name] = [
+                    tmp_sups['rule_target_input_placeholder'][batch_idx][step]
+                    for batch_idx in range(model_config.batch_size)]
 
         output_tmp_sentence_simple.append(tmp_sentence_simple)
         output_tmp_sentence_complex.append(tmp_sentence_complex)
@@ -161,12 +197,12 @@ def eval(model_config=None, ckpt=None):
         if model_config.replace_unk_by_emb:
             fetches.update(
                 {'encoder_embs': [obj['encoder_embs'] for obj in graph.objs],
-                 'decoder_outputs': [obj['decoder_outputs'] for obj in graph.objs]})
+                 'final_outputs': [obj['final_outputs'] for obj in graph.objs]})
         results = sess.run(fetches, input_feed)
         output_target, loss, step = (results['decoder_target_list'], results['loss'],
                                           results['global_step'])
         if model_config.replace_unk_by_emb:
-            output_encoder_embs, output_decoder_outputs = results['encoder_embs'], results['decoder_outputs']
+            output_encoder_embs, output_final_outputs = results['encoder_embs'], results['final_outputs']
         batch_perplexity = math.exp(loss)
         perplexitys_all.append(batch_perplexity)
 
@@ -183,7 +219,7 @@ def eval(model_config=None, ckpt=None):
             target = output_target[i]
             if model_config.replace_unk_by_emb:
                 encoder_embs = output_encoder_embs[i]
-                decoder_outputs = output_decoder_outputs[i]
+                final_outputs = output_final_outputs[i]
 
             # Replace UNK for sentence_complex_raw and ref_raw
             # Note that sentence_complex_raw_lines and ref_raw_lines are original file lines
@@ -208,7 +244,7 @@ def eval(model_config=None, ckpt=None):
                 target_raw = postprocess.replace_unk_by_attn(sentence_complex_raw, None, target_raw)
             elif model_config.replace_unk_by_emb:
                 target_raw = postprocess.replace_unk_by_emb(
-                    sentence_complex_raw, encoder_embs, decoder_outputs, target_raw)
+                    sentence_complex_raw, encoder_embs, final_outputs, target_raw)
             elif model_config.replace_unk_by_cnt:
                 target_raw = postprocess.replace_unk_by_cnt(sentence_complex_raw, target_raw)
             if model_config.replace_ner:
