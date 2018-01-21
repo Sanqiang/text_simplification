@@ -108,11 +108,7 @@ def prepare_decoder(targets, target_space_emb):
 @registry.register_model
 class MultiModel(t2t_model.T2TModel):
 
-  @property
-  def use_body_sharded(self):
-    return True
-
-  def body_sharded(self, sharded_features):
+  def model_fn_body_sharded(self, sharded_features):
     train = self._hparams.mode == tf.estimator.ModeKeys.TRAIN
     dp = self._data_parallelism
     hparams = self._hparams

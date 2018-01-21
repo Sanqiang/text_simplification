@@ -43,7 +43,7 @@ class TransformerRevnet(transformer.Transformer):
   g: Feed-forward
   """
 
-  def body(self, features):
+  def model_fn_body(self, features):
     hparams = self._hparams
     targets = features["targets"]
     inputs = features["inputs"]

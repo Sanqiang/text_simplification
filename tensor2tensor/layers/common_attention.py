@@ -614,24 +614,6 @@ def attention_bias_lower_triangle(length):
 
 
 @expert_utils.add_name_scope()
-def attention_bias_same_segment(query_segment_id, memory_segment_id):
-  """Create an bias tensor to be added to attention logits.
-
-  Positions with the same segment_ids can see each other.
-
-  Args:
-    query_segment_id: a float `Tensor` with shape [batch, query_length].
-    memory_segment_id: a float `Tensor` with shape [batch, memory_length].
-
-  Returns:
-    a `Tensor` with shape [batch, 1, query_length, memory_length].
-  """
-  ret = tf.to_float(tf.not_equal(tf.expand_dims(query_segment_id, 2),
-                                 tf.expand_dims(memory_segment_id, 1))) * -1e9
-  return tf.expand_dims(ret, axis=1)
-
-
-@expert_utils.add_name_scope()
 def attention_bias_ignore_padding(memory_padding):
   """Create an bias tensor to be added to attention logits.
 
@@ -1182,8 +1164,7 @@ def dot_product_attention(q,
                           dropout_rate=0.0,
                           image_shapes=None,
                           name=None,
-                          make_image_summary=True,
-                          save_weights_to=None):
+                          make_image_summary=True):
   """dot-product attention.
 
   Args:
@@ -1196,22 +1177,17 @@ def dot_product_attention(q,
       see comments for attention_image_summary()
     name: an optional string
     make_image_summary: True if you want an image summary.
-    save_weights_to: an optional dictionary to capture attention weights
-      for vizualization; the weights tensor will be appended there under
-      a string key created from the variable scope (including name).
 
   Returns:
     A Tensor.
   """
   with tf.variable_scope(
-      name, default_name="dot_product_attention", values=[q, k, v]) as scope:
+      name, default_name="dot_product_attention", values=[q, k, v]):
     # [batch, num_heads, query_length, memory_length]
     logits = tf.matmul(q, k, transpose_b=True)
     if bias is not None:
       logits += bias
     weights = tf.nn.softmax(logits, name="attention_weights")
-    if save_weights_to is not None:
-      save_weights_to[scope.name] = weights
     # dropping out the attention links for each of the heads
     weights = tf.nn.dropout(weights, 1.0 - dropout_rate)
     if (not tf.get_variable_scope().reuse and
@@ -2251,7 +2227,6 @@ def multihead_attention(query_antecedent,
                         gap_size=0,
                         num_memory_blocks=2,
                         name=None,
-                        save_weights_to=None,
                         **kwargs):
   """Multihead scaled-dot-product attention with input/output transformations.
 
@@ -2291,10 +2266,7 @@ def multihead_attention(query_antecedent,
               memory blocks.
     num_memory_blocks: Integer option to indicate how many memory blocks to look
                        at.
-    name: an optional string.
-    save_weights_to: an optional dictionary to capture attention weights
-      for vizualization; the weights tensor will be appended there under
-      a string key created from the variable scope (including name).
+    name: an optional string
     **kwargs (dict): Parameters for the attention function
 
   Caching:
@@ -2355,8 +2327,7 @@ def multihead_attention(query_antecedent,
       if isinstance(x, tuple):
         x, additional_returned_value = x  # Unpack
     elif attention_type == "dot_product":
-      x = dot_product_attention(q, k, v, bias, dropout_rate, image_shapes,
-                                save_weights_to=save_weights_to)
+      x = dot_product_attention(q, k, v, bias, dropout_rate, image_shapes)
     elif attention_type == "dot_product_relative":
       x = dot_product_attention_relative(q, k, v, bias, max_relative_position,
                                          dropout_rate, image_shapes)
@@ -3449,8 +3420,6 @@ def scaled_dot_product_attention_simple(q, k, v, bias, name=None):
     if bias is not None:
       logits += bias
     weights = tf.nn.softmax(logits, name="attention_weights")
-    tf.summary.image(
-        "attention", tf.expand_dims(tf.pow(weights, 0.2), 3), max_outputs=1)
     return tf.matmul(weights, v)
 
 

@@ -59,11 +59,9 @@ SEP_FF = "-"
 class TransformerMoe(t2t_model.T2TModel):
   """Attention net.  See file docstring."""
 
-  @property
-  def use_body_sharded(self):
-    return True
+  @expert_utils.add_var_scope("transformer_moe")
+  def model_fn_body_sharded(self, sharded_features):
 
-  def body_sharded(self, sharded_features):
     # ========= Prepare the input and target =========
 
     hparams = self._hparams

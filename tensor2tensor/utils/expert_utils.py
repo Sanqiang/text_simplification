@@ -33,7 +33,6 @@ from six.moves import xrange  # pylint: disable=redefined-builtin
 from six.moves import zip  # pylint: disable=redefined-builtin
 import tensorflow as tf
 
-from tensorflow.python.eager import context
 from tensorflow.python.framework import function
 
 DEFAULT_DEV_STRING = "existing_device"
@@ -130,10 +129,9 @@ class Parallelism(object):
 
   def __init__(self,
                device_names_or_functions,
-               reuse=True,
+               reuse=None,
                caching_devices=None,
-               daisy_chain_variables=False,
-               ps_devices=None):
+               daisy_chain_variables=False):
     """Create a Parallelism.
 
     Args:
@@ -145,7 +143,6 @@ class Parallelism(object):
         names.
       daisy_chain_variables: a boolean - if true, then copies variables in a
         daisy chain between devices.
-      ps_devices: list<str>, list of devices for experts.
 
     Returns:
       a Parallelism.
@@ -156,7 +153,6 @@ class Parallelism(object):
     self._reuse = reuse
     self._caching_devices = self._maybe_repeat(caching_devices)
     self._daisy_chain_variables = daisy_chain_variables
-    self._ps_devices = ps_devices or [""]
 
   def __call__(self, fn, *args, **kwargs):
     """A parallel set of function calls (using the specified devices).
@@ -190,7 +186,6 @@ class Parallelism(object):
     # Now make the parallel call.
     outputs = []
     cache = {}
-    tensor_to_var = {}
     for i in xrange(self.n):
 
       def daisy_chain_getter(getter, name, *args, **kwargs):
@@ -201,16 +196,11 @@ class Parallelism(object):
           return cache[device_var_key]
         if name in cache:
           # if we have it on a different device, copy it from the last device
-          last_device_v = cache[name]
-          var = tensor_to_var[last_device_v]
-          v = tf.identity(last_device_v)
+          v = tf.identity(cache[name])
         else:
           var = getter(name, *args, **kwargs)
           v = tf.identity(var._ref())  # pylint: disable=protected-access
-
-        # keep track of the original variable
-        tensor_to_var[v] = var
-        _add_variable_proxy_methods(tensor_to_var[v], v)
+          _add_variable_proxy_methods(var, v)
         # update the cache
         cache[name] = v
         cache[device_var_key] = v
@@ -266,10 +256,6 @@ class Parallelism(object):
   @property
   def devices(self):
     return self._devices
-
-  @property
-  def ps_devices(self):
-    return self._ps_devices
 
   def _maybe_repeat(self, x):
     """Utility function for processing arguments that are singletons or lists.
@@ -560,10 +546,9 @@ class PadRemover(object):
           x,
           indices=self.nonpad_ids,
       )
-      if not context.in_eager_mode():
-        # This is a hack but for some reason, gather_nd return a tensor of
-        # undefined shape, so the shape is set up manually
-        x.set_shape([None] + x_shape[1:])
+      # This is a hack but for some reason, gather_nd return a tensor of
+      # undefined shape, so the shape is set up manually
+      x.set_shape([None] + x_shape[1:])
     return x
 
   def restore(self, x):
@@ -909,16 +894,14 @@ def ffn_expert_fn(input_size,
 def reshape_like(a, b):
   """Reshapes a to match the shape of b in all but the last dimension."""
   ret = tf.reshape(a, tf.concat([tf.shape(b)[:-1], tf.shape(a)[-1:]], 0))
-  if not context.in_eager_mode():
-    ret.set_shape(b.get_shape().as_list()[:-1] + a.get_shape().as_list()[-1:])
+  ret.set_shape(b.get_shape().as_list()[:-1] + a.get_shape().as_list()[-1:])
   return ret
 
 
 def flatten_all_but_last(a):
   """Flatten all dimensions of a except the last."""
   ret = tf.reshape(a, [-1, tf.shape(a)[-1]])
-  if not context.in_eager_mode():
-    ret.set_shape([None] + a.get_shape().as_list()[-1:])
+  ret.set_shape([None] + a.get_shape().as_list()[-1:])
   return ret
 
 
@@ -962,8 +945,7 @@ def distributed_moe(data_parallelism,
   #   We use the default of reuse=False.  Otherwise, the experts would all
   #   use the same variables.
   ep = Parallelism(
-      [expert_devices[i % len(expert_devices)] for i in xrange(num_experts)],
-      reuse=None)
+      [expert_devices[i % len(expert_devices)] for i in xrange(num_experts)])
   # Experts expect 2d input tensors, so flatten the batch dimension and all
   # spatial dimensions together.
   xs_flat = dp(tf.reshape, xs, [[-1, input_size]] * dp.n)
@@ -1052,7 +1034,7 @@ def local_moe(x,
       v = flatten_all_but_last(v)
       expert_kwargs[k] = dispatcher.dispatch(v)
 
-    ep = Parallelism([DEFAULT_DEV_STRING] * num_experts, reuse=None)
+    ep = Parallelism([DEFAULT_DEV_STRING] * num_experts)
     expert_outputs = ep(expert_fn, **expert_kwargs)
 
     y_flat = dispatcher.combine(expert_outputs)

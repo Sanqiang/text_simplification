@@ -29,8 +29,6 @@ from tensor2tensor.utils import registry
 
 import tensorflow as tf
 
-from tensorflow.python.eager import context
-
 
 # TODO(noam): remove this function after TPUs do gather faster.
 def tpu_gather(params, indices):
@@ -76,7 +74,7 @@ class SymbolModality(modality.Modality):
     """Create or get concatenated embedding or softmax variable.
 
     Args:
-      hidden_dim: dim of the variable. Defaults to self._body_input_depth
+      hidden_dim: dim of the variable. Defaults fo self._body_input_depth
 
     Returns:
        a list of self._num_shards Tensors.
@@ -98,7 +96,7 @@ class SymbolModality(modality.Modality):
     else:
       ret = tf.concat(shards, 0)
     # Convert ret to tensor.
-    if not context.in_eager_mode():
+    if not self._model_hparams.use_eager_mode:
       ret = eu.convert_gradient_to_tensor(ret)
     return ret
 
@@ -207,7 +205,7 @@ class ImageModality(modality.Modality):
   def bottom(self, inputs):
     with tf.variable_scope(self.name):
       inputs = common_layers.standardize_images(inputs)
-      if not context.in_eager_mode():
+      if not self._model_hparams.use_eager_mode:
         tf.summary.image("inputs", inputs, max_outputs=2)
       return tf.to_float(inputs)
 
@@ -218,7 +216,8 @@ class ImageModality(modality.Modality):
           tf.to_int32(common_layers.flatten4d3d(inputs)),
           self.top_dimensionality,
           self._body_input_depth,
-          name="input_rgb_embedding")
+          name="input_rgb_embedding",
+          use_eager_mode=self._model_hparams.use_eager_mode)
       if self._model_hparams.multiply_embedding_mode == "sqrt_depth":
         ret *= self._body_input_depth**0.5
 
@@ -433,6 +432,7 @@ class ClassLabelModality(modality.Modality):
 @registry.register_generic_modality("default")
 @registry.register_audio_modality("identity")
 @registry.register_image_modality("identity")
+@registry.register_symbol_modality("identity")
 @registry.register_class_label_modality("identity")
 @registry.register_real_modality("identity")
 class IdentityModality(modality.Modality):
@@ -501,17 +501,3 @@ class IdentityZeroLossModality(IdentityModality):
 
   def loss(self, top_out, targets):
     return tf.constant(0., tf.float32), tf.constant(0., tf.float32)
-
-
-@registry.register_symbol_modality("identity")
-class IdentitySymbolModality(SymbolModality):
-  """Symbol modality with identity top and bottom transformations.
-
-  Uses the weights_fn from SymbolModality so that loss/metrics ignore padding.
-  """
-
-  def bottom(self, x):
-    return tf.to_float(x)
-
-  def top(self, body_output, _):
-    return body_output

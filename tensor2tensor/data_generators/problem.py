@@ -120,21 +120,6 @@ def preprocess_example_common(example, hparams, mode):
   return example
 
 
-def _file_num_records_cached(filename):
-  """Return the number of TFRecords in a file."""
-  # Cache the result, as this is expensive to compute
-  if filename in _file_num_records_cache:
-    return _file_num_records_cache[filename]
-  ret = 0
-  for _ in tf.python_io.tf_record_iterator(filename):
-    ret += 1
-  _file_num_records_cache[filename] = ret
-  return ret
-
-
-_file_num_records_cache = {}
-
-
 class Problem(object):
   """Problem base class. Specifies a T2T problem.
 
@@ -383,39 +368,6 @@ class Problem(object):
     # Construct the Problem's hparams so that items within it are accessible
     _ = self.get_hparams(hparams)
 
-    is_training = mode == tf.estimator.ModeKeys.TRAIN
-    data_filepattern = self.filepattern(data_dir, dataset_split, shard=shard)
-    tf.logging.info("Reading data files from %s", data_filepattern)
-    data_files = tf.contrib.slim.parallel_reader.get_data_files(
-        data_filepattern)
-    if shuffle_files or shuffle_files is None and is_training:
-      # In addition to shuffling the list of file names, we skip a random
-      # fraction of the first file.  The skip is essential for synchronous
-      # highly-parallel training.  Otherwise, we have multiple replicas
-      # reading the same shard in lock-step.
-      num_skip = random.randint(0, _file_num_records_cached(data_files[0]))
-      random.shuffle(data_files)
-      dataset = tf.data.TFRecordDataset(data_files).skip(num_skip)
-    else:
-      dataset = tf.data.TFRecordDataset(data_files)
-
-    def _preprocess(example):
-      example = self.preprocess_example(example, mode, hparams)
-      self.maybe_reverse_features(example)
-      self.maybe_copy_features(example)
-      return example
-
-    dataset = dataset.map(self.decode_example, num_parallel_calls=num_threads)
-
-    if preprocess:
-      dataset = dataset.map(_preprocess, num_parallel_calls=num_threads)
-    if output_buffer_size:
-      dataset = dataset.prefetch(output_buffer_size)
-
-    return dataset
-
-  def decode_example(self, serialized_example):
-    """Return a dict of Tensors from a serialized tensorflow.Example."""
     data_fields, data_items_to_decoders = self.example_reading_spec()
     if data_items_to_decoders is None:
       data_items_to_decoders = {
@@ -423,12 +375,39 @@ class Problem(object):
           for field in data_fields
       }
 
-    decoder = tf.contrib.slim.tfexample_decoder.TFExampleDecoder(
-        data_fields, data_items_to_decoders)
+    is_training = mode == tf.estimator.ModeKeys.TRAIN
+    data_filepattern = self.filepattern(data_dir, dataset_split, shard=shard)
+    tf.logging.info("Reading data files from %s", data_filepattern)
+    data_files = tf.contrib.slim.parallel_reader.get_data_files(
+        data_filepattern)
+    if shuffle_files or shuffle_files is None and is_training:
+      random.shuffle(data_files)
+    dataset = tf.contrib.data.TFRecordDataset(data_files)
 
-    decode_items = list(data_items_to_decoders)
-    decoded = decoder.decode(serialized_example, items=decode_items)
-    return dict(zip(decode_items, decoded))
+    def decode_record(record):
+      """Serialized Example to dict of <feature name, Tensor>."""
+      decoder = tf.contrib.slim.tfexample_decoder.TFExampleDecoder(
+          data_fields, data_items_to_decoders)
+
+      decode_items = list(data_items_to_decoders)
+      decoded = decoder.decode(record, items=decode_items)
+      return dict(zip(decode_items, decoded))
+
+    def _preprocess(example):
+      example = self.preprocess_example(example, mode, hparams)
+      self.maybe_reverse_features(example)
+      self.maybe_copy_features(example)
+      return example
+
+    dataset = dataset.map(decode_record, num_threads=num_threads)
+
+    if preprocess:
+      dataset = dataset.map(
+          _preprocess,
+          num_threads=num_threads,
+          output_buffer_size=output_buffer_size)
+
+    return dataset
 
   @property
   def has_inputs(self):
@@ -479,151 +458,89 @@ class Problem(object):
     self._feature_info = features
     return features
 
-  def make_estimator_input_fn(self, mode, hparams, data_dir=None,
-                              dataset_kwargs=None):
-    """Return input_fn wrapped for Estimator."""
+  def make_estimator_input_fn(self, mode, hparams):
 
     def estimator_input_fn(params, config):
-      return self.input_fn(mode, hparams, data_dir=data_dir, params=params,
-                           config=config, dataset_kwargs=dataset_kwargs)
+      return self.input_pipeline(mode, hparams, params=params, config=config)
 
     return estimator_input_fn
 
-  def input_fn(self, mode, hparams, data_dir=None, params=None, config=None,
-               dataset_kwargs=None):
+  def input_pipeline(self, mode, hparams, params=None, config=None):
     """Builds input pipeline for problem.
 
     Args:
       mode: tf.estimator.ModeKeys
       hparams: HParams, model hparams
-      data_dir: str, data directory; if None, will use hparams.data_dir
       params: dict, may include "batch_size"
-      config: RunConfig; should have the data_parallelism attribute if not using
-        TPU
-      dataset_kwargs: dict, if passed, will pass as kwargs to self.dataset
-        method when called
+      config: RunConfig; if passed, should include t2t_device_info dict
 
     Returns:
       (features_dict<str name, Tensor feature>, Tensor targets)
     """
+    tf.logging.warning("Problem.input_pipeline implements a subset of "
+                       "input_fn_builder.build_input_fn and is currently only "
+                       "used in tpu_trainer.")
     is_training = mode == tf.estimator.ModeKeys.TRAIN
     num_threads = 4 if is_training else 1
+    batch_size = _get_batch_size(params, hparams, config)
 
-    def tpu_valid_size(example):
+    def valid_size(example):
       return data_reader.example_valid_size(example, hparams.min_length,
                                             hparams.max_length)
 
-    def gpu_valid_size(example):
-      drop_long_sequences = is_training or hparams.eval_drop_long_sequences
-      return data_reader.example_valid_size(
-          example,
-          hparams.min_length,
-          hparams.max_length if drop_long_sequences else 10**9)
-
     def define_shapes(example):
-      batch_size = config and config.use_tpu and params["batch_size"]
-      return standardize_shapes(example, batch_size=batch_size)
+      """Set the right shapes for the features."""
+      inputs = example["inputs"]
+      targets = example["targets"]
+
+      # Ensure inputs and targets are proper rank.
+      while len(inputs.get_shape()) < 4:
+        inputs = tf.expand_dims(inputs, axis=-1)
+      while len(targets.get_shape()) < 4:
+        targets = tf.expand_dims(targets, axis=-1)
+
+      example["inputs"] = inputs
+      example["targets"] = targets
+
+      # Ensure batch size is set on all features
+      for _, t in six.iteritems(example):
+        shape = t.get_shape().as_list()
+        shape[0] = batch_size
+        t.set_shape(t.get_shape().merge_with(shape))
+        # Assert shapes are fully known
+        t.get_shape().assert_is_fully_defined()
+
+      return example
 
     # Read and preprocess
-    data_dir = data_dir or hparams.data_dir
-
-    dataset_kwargs = dataset_kwargs or {}
-    dataset_kwargs.update({
-        "mode": mode,
-        "data_dir": data_dir,
-        "num_threads": num_threads,
-        "hparams": hparams})
-
-    dataset = self.dataset(**dataset_kwargs)
+    data_dir = hparams.data_dir
+    dataset = self.dataset(
+        mode=mode, data_dir=data_dir, num_threads=num_threads, hparams=hparams)
     dataset = dataset.map(
-        data_reader.cast_int64_to_int32, num_parallel_calls=num_threads)
+        data_reader.cast_int64_to_int32, num_threads=num_threads)
     if is_training:
       dataset = dataset.repeat(None)
 
-    # Batching
+    # Batch (and pad)
+    # TODO(rsepassi): Add support for bucketing by length
     if _are_shapes_fully_defined(dataset.output_shapes):
-      # Static shape features (e.g. images)
-      if config and config.use_tpu:
-        tpu_batch_size = params["batch_size"]
-        dataset = dataset.apply(
-            tf.contrib.data.batch_and_drop_remainder(tpu_batch_size))
-      else:
-        num_shards = (config and config.data_parallelism.n) or 1
-        dataset = dataset.batch(hparams.batch_size * num_shards)
+      dataset = dataset.apply(
+          tf.contrib.data.batch_and_drop_remainder(batch_size))
     else:
-      # Variable length features
-      if config and config.use_tpu:
-        # On TPU, pad to hparams.max_length
-        dataset = dataset.filter(tpu_valid_size)
-        padded_shapes = _fill_shape_nones(
-            dataset.output_shapes, none_filler=hparams.max_length)
-        dataset = dataset.apply(
-            tf.contrib.data.padded_batch_and_drop_remainder(
-                params["batch_size"], padded_shapes))
-      else:
-        # On GPU, bucket by length
-        dataset = dataset.filter(gpu_valid_size)
-        batching_scheme = data_reader.hparams_to_batching_scheme(
-            hparams,
-            shard_multiplier=(config and config.data_parallelism.n) or 1,
-            length_multiplier=self.get_hparams().batch_size_multiplier)
-        if hparams.use_fixed_batch_size:
-          batching_scheme["batch_sizes"] = [hparams.batch_size]
-          batching_scheme["boundaries"] = []
-        dataset = data_reader.bucket_by_sequence_length(
-            dataset,
-            data_reader.example_length,
-            batching_scheme["boundaries"],
-            batching_scheme["batch_sizes"])
-
-        if not is_training:
-          def _pad_batch(features):
-            if not config or config.data_parallelism.n <= 1:
-              return features
-            tf.logging.warn(
-                "Padding the batch to ensure that remainder eval batches have "
-                "a batch size divisible by the number of data shards. This may "
-                "lead to incorrect metrics for non-zero-padded features, e.g. "
-                "images. Use a single datashard (i.e. 1 GPU) in that case.")
-            return pad_batch(features, config.data_parallelism.n)
-
-          dataset = dataset.map(_pad_batch, num_parallel_calls=num_threads)
+      # If shapes are not fully defined, filter out long ones and pad to
+      # hparams.max_length
+      dataset = dataset.filter(valid_size)
+      padded_shapes = _fill_shape_nones(
+          dataset.output_shapes, none_filler=hparams.max_length)
+      dataset = dataset.apply(
+          tf.contrib.data.padded_batch_and_drop_remainder(batch_size,
+                                                          padded_shapes))
 
     dataset = dataset.map(define_shapes, num_parallel_calls=num_threads)
     dataset = dataset.prefetch(1)
     features = dataset.make_one_shot_iterator().get_next()
-    if not config or not config.use_tpu:
-      _summarize_features(features, (config and config.data_parallelism.n) or 1)
-
-    if mode == tf.estimator.ModeKeys.PREDICT:
-      features["infer_targets"] = features["targets"]
-      features["targets"] = None
-      # This is because of a bug in the Estimator that short-circuits prediction
-      # if it doesn't see a QueueRunner. DummyQueueRunner implements the
-      # minimal expected interface but does nothing.
-      tf.add_to_collection(tf.GraphKeys.QUEUE_RUNNERS,
-                           data_reader.DummyQueueRunner())
 
     return features, features["targets"]
-
-  def serving_input_fn(self, hparams):
-    """Input fn for serving export, starting from serialized example."""
-    mode = tf.estimator.ModeKeys.PREDICT
-    serialized_example = tf.placeholder(
-        dtype=tf.string, shape=[None], name="serialized_example")
-    dataset = tf.data.Dataset.from_tensor_slices(serialized_example)
-    dataset = dataset.map(self.decode_example)
-    dataset = dataset.map(lambda ex: self.preprocess_example(ex, mode, hparams))
-    dataset = dataset.map(data_reader.cast_int64_to_int32)
-    dataset = dataset.padded_batch(1000, dataset.output_shapes)
-    dataset = dataset.map(standardize_shapes)
-    features = tf.contrib.data.get_single_element(dataset)
-
-    if self.has_inputs:
-      features.pop("targets", None)
-
-    return tf.estimator.export.ServingInputReceiver(
-        features=features, receiver_tensors=serialized_example)
 
 
 class FeatureInfo(object):
@@ -753,15 +670,20 @@ class Text2TextProblem(Problem):
     """
     raise NotImplementedError()
 
+  def maybe_combine_examples(self, generator):
+    if self.combine_to_length:
+      if self.has_inputs:
+        return generator_utils.combine_examples_with_inputs(
+            generator, self.combine_to_length)
+      else:
+        return generator_utils.combine_examples_no_inputs(
+            generator, self.combine_to_length)
+    else:
+      return generator
+
   @property
-  def packed_length(self):
-    """Pack multiple examples into a single example of constant length.
-
-    This is useful for TPU training.  See generator_utils.pack_examples().
-
-    Returns:
-      an optional integer
-    """
+  def combine_to_length(self):
+    """An optional integer. Concatenate examples into bigger examples."""
     return None
 
   @property
@@ -801,15 +723,6 @@ class Text2TextProblem(Problem):
   def has_inputs(self):
     return True  # Set to False for language models.
 
-  def _maybe_pack_examples(self, generator):
-    """Helper to generate_data()."""
-    if self.packed_length:
-      return generator_utils.pack_examples(
-          generator, self.has_inputs, self.packed_length,
-          chop_long_sequences=not self.has_inputs)
-    else:
-      return generator
-
   def generate_data(self, data_dir, tmp_dir, task_id=-1):
     train_paths = self.training_filepaths(
         data_dir, self.num_shards, shuffled=False)
@@ -818,14 +731,14 @@ class Text2TextProblem(Problem):
     if self.use_train_shards_for_dev:
       all_paths = train_paths + dev_paths
       generator_utils.generate_files(
-          self._maybe_pack_examples(self.generator(data_dir, tmp_dir, True)),
+          self.maybe_combine_examples(self.generator(data_dir, tmp_dir, True)),
           all_paths)
       generator_utils.shuffle_dataset(all_paths)
     else:
       generator_utils.generate_dataset_and_shuffle(
-          self._maybe_pack_examples(self.generator(data_dir, tmp_dir, True)),
+          self.maybe_combine_examples(self.generator(data_dir, tmp_dir, True)),
           train_paths,
-          self._maybe_pack_examples(self.generator(data_dir, tmp_dir, False)),
+          self.maybe_combine_examples(self.generator(data_dir, tmp_dir, False)),
           dev_paths)
 
   def feature_encoders(self, data_dir):
@@ -857,30 +770,6 @@ class Text2TextProblem(Problem):
     p.target_space_id = self.target_space_id
     if self.is_character_level:
       p.loss_multiplier = 2.0
-    if self.packed_length:
-      identity = (registry.Modalities.GENERIC, None)
-      if self.has_inputs:
-        p.input_modality["inputs_segmentation"] = identity
-        p.input_modality["inputs_position"] = identity
-      p.input_modality["targets_segmentation"] = identity
-      p.input_modality["targets_position"] = identity
-
-  def example_reading_spec(self):
-    data_fields = {
-        "targets": tf.VarLenFeature(tf.int64)
-    }
-    if self.has_inputs:
-      data_fields["inputs"] = tf.VarLenFeature(tf.int64)
-
-    if self.packed_length:
-      if self.has_inputs:
-        data_fields["inputs_segmentation"] = tf.VarLenFeature(tf.int64)
-        data_fields["inputs_position"] = tf.VarLenFeature(tf.int64)
-      data_fields["targets_segmentation"] = tf.VarLenFeature(tf.int64)
-      data_fields["targets_position"] = tf.VarLenFeature(tf.int64)
-
-    data_items_to_decoders = None
-    return (data_fields, data_items_to_decoders)
 
   def eval_metrics(self):
     return [
@@ -898,6 +787,22 @@ def _are_shapes_fully_defined(shapes_dict):
   return True
 
 
+def _get_batch_size(params, hparams, config):
+  """Batch size determined by params dict, HParams, and RunConfig."""
+  # If params specifies batch size, use that. TPUEstimator passes batch size in
+  # params.
+  batch_size = params and params.get("batch_size")
+
+  # If not set, then we're running on CPU/GPU, so use the batch size from the
+  # hparams, and multiply by the number of data shards.
+  if not batch_size:
+    batch_size = hparams.tpu_batch_size_per_shard
+    if config:
+      batch_size *= config.t2t_device_info["num_shards"]
+
+  return batch_size
+
+
 def _fill_shape_nones(shapes_dict, none_filler=None):
   padded_shapes = {}
   for key, shape in six.iteritems(shapes_dict):
@@ -905,61 +810,3 @@ def _fill_shape_nones(shapes_dict, none_filler=None):
         (dim if dim is not None else none_filler) for dim in shape.as_list()
     ]
   return padded_shapes
-
-
-def _summarize_features(features, num_shards=1):
-  with tf.name_scope("input_stats"):
-    for (k, v) in six.iteritems(features):
-      if isinstance(v, tf.Tensor) and v.get_shape().ndims > 1:
-        tf.summary.scalar("%s_batch" % k, tf.shape(v)[0] // num_shards)
-        tf.summary.scalar("%s_length" % k, tf.shape(v)[1])
-        nonpadding = tf.to_float(tf.not_equal(v, 0))
-        nonpadding_tokens = tf.reduce_sum(nonpadding)
-        tf.summary.scalar("%s_nonpadding_tokens" % k, nonpadding_tokens)
-        tf.summary.scalar("%s_nonpadding_fraction" % k,
-                          tf.reduce_mean(nonpadding))
-
-
-def standardize_shapes(features, batch_size=None):
-  """Set the right shapes for the features."""
-
-  for fname in ["inputs", "targets"]:
-    if fname not in features:
-      continue
-
-    f = features[fname]
-    while len(f.get_shape()) < 4:
-      f = tf.expand_dims(f, axis=-1)
-
-    features[fname] = f
-
-  if batch_size:
-    # Ensure batch size is set on all features
-    for _, t in six.iteritems(features):
-      shape = t.get_shape().as_list()
-      shape[0] = batch_size
-      t.set_shape(t.get_shape().merge_with(shape))
-      # Assert shapes are fully known
-      t.get_shape().assert_is_fully_defined()
-
-  return features
-
-
-def pad_batch(features, batch_multiple):
-  """Pad batch dim of features to nearest multiple of batch_multiple."""
-  feature = list(features.items())[0][1]
-  batch_size = tf.shape(feature)[0]
-  mod = batch_size % batch_multiple
-  has_mod = tf.cast(tf.cast(mod, tf.bool), tf.int32)
-  batch_padding = batch_multiple * has_mod - mod
-
-  padded_features = {}
-  for k, feature in features.items():
-    rank = len(feature.shape)
-    paddings = []
-    for _ in range(rank):
-      paddings.append([0, 0])
-    paddings[0][1] = batch_padding
-    padded_feature = tf.pad(feature, paddings)
-    padded_features[k] = padded_feature
-  return padded_features

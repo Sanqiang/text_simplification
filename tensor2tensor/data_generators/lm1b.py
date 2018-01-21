@@ -224,11 +224,11 @@ class LanguagemodelLm1b32k(problem.Text2TextProblem):
 
 
 @registry.register_problem
-class LanguagemodelLm1b8kPacked(LanguagemodelLm1b32k):
+class LanguagemodelLm1b8kConcat512(LanguagemodelLm1b32k):
   """A language model on the 1B words corpus.
 
   8k vocabualry.
-  Training/eval examples are concatenated to a maximum length of 256.
+  Training/eval examples are concatenated to a maximum length of 512.
 
   Happy TPU Training.
 
@@ -241,8 +241,8 @@ class LanguagemodelLm1b8kPacked(LanguagemodelLm1b32k):
     return 2**13  # 8192
 
   @property
-  def packed_length(self):
-    return 256
+  def combine_to_length(self):
+    return 512
 
 
 @registry.register_problem

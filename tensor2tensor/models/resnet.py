@@ -233,7 +233,7 @@ def resnet50(inputs, hparams):
 @registry.register_model
 class Resnet50(t2t_model.T2TModel):
 
-  def body(self, features):
+  def model_fn_body(self, features):
     return resnet50(features["inputs"], self.hparams)
 
 
@@ -247,6 +247,5 @@ def resnet_base():
   hparams.add_hparam("strides", [1, 2, 2, 2])
 
   # Can run with a batch size of 128 with Problem ImageImagenet224
-  hparams.batch_size = 128
   hparams.tpu_batch_size_per_shard = 128
   return hparams
