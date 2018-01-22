@@ -17,6 +17,7 @@ import tensorflow as tf
 import tensorflow.contrib.slim as slim
 from util.arguments import get_args
 from datetime import datetime
+from util.sys_moniter import print_cpu_memory, print_gpu_memory
 
 
 args = get_args()
@@ -233,6 +234,9 @@ def train(model_config=None):
             from model.model_config import DefaultTestConfig, DefaultTestConfig2
             from model.model_config import SubTestWikiSmallConfig, SubTestWikiSmallPPDBConfig
             ckpt = get_ckpt(model_config.modeldir, model_config.logdir)
+            print("==============================Before Eval Stat==============================")
+            print_cpu_memory()
+            print_gpu_memory()
             if ckpt:
                 if args.mode == 'dummy':
                     eval(DefaultTestConfig(), ckpt)
@@ -249,6 +253,9 @@ def train(model_config=None):
                     eval(WikiTransValCfg(), ckpt)
                 elif args.mode == 'wikilegacy':
                     eval(WikiTransLegacyTestCfg(), ckpt)
+                print("==============================After Eval Stat==============================")
+                print_cpu_memory()
+                print_gpu_memory()
 
 if __name__ == '__main__':
     config = None
