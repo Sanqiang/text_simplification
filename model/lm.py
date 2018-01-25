@@ -1,3 +1,6 @@
+"""
+Deprecated: Will train our new language model in language_model folder.
+"""
 import tensorflow as tf
 import numpy as np
 from collections import defaultdict

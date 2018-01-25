@@ -71,6 +71,8 @@ def get_args():
     # For Memory
     parser.add_argument('-mem', '--memory', default=None,
                         help='Separate memory?')
+    parser.add_argument('-memcfg', '--memory_config', default='',
+                        help='Memory Config?')
     parser.add_argument('-memstep', '--memory_prepare_step', default=300, type=int,
                         help='Number of steps for memory prepare?')
 

@@ -1,5 +1,17 @@
 import tensorflow as tf
 
+
+def linear_3d(args, output_size, bias, bias_start=0.0, scope=None):
+  args_shapes = args.get_shape()
+  with tf.variable_scope(scope or "Linear3D"):
+    matrix = tf.get_variable('Matrix', shape=(1, args_shapes[-1], output_size))
+    res = tf.nn.conv1d(args, matrix, 1, 'SAME')
+    if bias:
+      bias_term = tf.get_variable(
+        "Bias", [output_size], initializer=tf.constant_initializer(bias_start))
+      res = res + bias_term
+    return res
+
 def linear(args, output_size, bias, bias_start=0.0, scope=None):
   """Linear map: sum_i(args[i] * W[i]), where W[i] is a variable.
   Args:

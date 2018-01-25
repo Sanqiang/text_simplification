@@ -16,7 +16,7 @@ class DefaultConfig():
     use_partial_restore = args.use_partial_restore
     use_gpu = True
     batch_size = 1
-    dimension = 10
+    dimension = 16
     max_complex_sentence = 10
     max_simple_sentence = 8
     # min_simple_sentence = 5 #Used for Beam Search
@@ -146,9 +146,10 @@ class DefaultConfig():
 
     # For Memory
     memory = args.memory
-    max_cand_rules = 15
-    rule_size = 7
+    max_cand_rules = 3
+    rule_size = 5
     memory_prepare_step = args.memory_prepare_step
+    memory_config = args.memory_config
 
 
 class DefaultTrainConfig(DefaultConfig):

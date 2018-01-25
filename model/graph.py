@@ -115,9 +115,18 @@ class Graph:
             rule_id_input_placeholder, rule_target_input_placeholder = [], []
             if self.model_config.memory == 'rule':
                 with tf.device('/cpu:0'):
-                    mem_contexts = tf.constant(0, shape=(self.model_config.rule_size, self.model_config.dimension), dtype=tf.float32)
-                    mem_outputs = tf.constant(0, shape=(self.model_config.rule_size, self.model_config.dimension), dtype=tf.float32)
-                    mem_counter = tf.zeros(shape=self.model_config.rule_size, dtype=tf.int32)
+                    mem_contexts = tf.get_variable(
+                        'mem_contexts',
+                        initializer=tf.constant(1e-13, dtype=tf.float32, shape=(self.model_config.rule_size, self.model_config.dimension)),
+                        trainable=False, dtype=tf.float32)
+                    mem_outputs = tf.get_variable(
+                        'mem_outputs',
+                        initializer=tf.constant(1e-13, dtype=tf.float32, shape=(self.model_config.rule_size, self.model_config.dimension)),
+                        trainable=False, dtype=tf.float32)
+                    mem_counter = tf.get_variable(
+                        'mem_counter',
+                        initializer=tf.constant(0, dtype=tf.int32, shape=(self.model_config.rule_size, 1)),
+                        trainable=False, dtype=tf.int32)
 
                 for step in range(self.model_config.max_cand_rules):
                     rule_id_input_placeholder.append(tf.zeros(self.model_config.batch_size, tf.int32, name='rule_id_input'))
@@ -167,58 +176,57 @@ class Graph:
                     obj['rule_target_input_placeholder'] = rule_target_input_placeholder
                 return loss, obj
             else:
-                #Memory Populate
+                # Memory Populate
                 if self.model_config.memory == 'rule':
                     # Update Memory through python injection
                     def update_memory(
                             mem_contexts_tmp, mem_outputs_tmp, mem_counter_tmp,
                             decoder_targets, decoder_outputs, contexts,
                             rule_target_input_placeholder, rule_id_input_placeholder,
-                            global_step):
+                            global_step, emb_simple, encoder_outputs):
                         if global_step <= self.model_config.memory_prepare_step:
                             return mem_contexts_tmp, mem_outputs_tmp, mem_counter_tmp
-                        # print('global_step\t' + str(global_step))
-                        # print('mem_contexts\t' + str(mem_contexts_tmp))
-                        # print('mem_outputs\t' + str(mem_outputs_tmp))
-                        # print('mem_counter\t' + str(mem_counter_tmp))
-                        # print('decoder_outputs\t' + str(decoder_outputs))
-                        batch_size = np.shape(decoder_targets)[0]
-                        max_rules = np.shape(decoder_targets)[1]
+                        batch_size = np.shape(rule_target_input_placeholder)[0]
+                        max_rules = np.shape(rule_target_input_placeholder)[1]
                         for batch_id in range(batch_size):
                             cur_decoder_targets = decoder_targets[batch_id, :]
                             cur_decoder_outputs = decoder_outputs[batch_id, :]
+                            cur_contexts = contexts[batch_id, :]
                             cur_rule_target_input_placeholder = rule_target_input_placeholder[batch_id, :]
                             cur_rule_id_input_placeholder = rule_id_input_placeholder[batch_id, :]
 
                             for step in range(max_rules):
-                                # print('cur_decoder_targets[step]' + str(cur_decoder_targets[step]))
-                                if cur_decoder_targets[step] > constant.REVERED_VOCAB_SIZE and cur_decoder_targets[step] in cur_rule_target_input_placeholder:
-                                    # print('np.where(cur_rule_target_input_placeholder==cur_decoder_targets[step])'
-                                    #       + str(np.where(cur_rule_target_input_placeholder==cur_decoder_targets[step])))
-                                    rule_id = cur_rule_id_input_placeholder[
-                                        np.where(cur_rule_target_input_placeholder==cur_decoder_targets[step])]
-                                    if mem_counter_tmp[rule_id] == 0:
-                                        # print('batch_id' + str(batch_id))
-                                        # print('step' + str(step))
-                                        # print('mem_contexts[rule_id, :]' + str(mem_contexts_tmp[rule_id, :]))
-                                        # print('mem_outputs[rule_id, :]' + str(mem_outputs_tmp[rule_id, :]))
-                                        # print('cur_decoder_outputs[step, :]' + str(cur_decoder_outputs[step, :]))
-                                        # print('contexts[batch_id, step, :]' + str(contexts[batch_id, step, :]))
-                                        mem_contexts_tmp[rule_id, :] = contexts[batch_id, step, :]
-                                        mem_outputs_tmp[rule_id, :] = cur_decoder_outputs[step, :]
-                                    else:
-                                        mem_contexts_tmp[rule_id, :] = (contexts[batch_id, step, :] + mem_contexts_tmp[rule_id, :]) / 2
-                                        mem_outputs_tmp[rule_id, :] = (cur_decoder_outputs[step, :] + mem_outputs_tmp[rule_id, :]) / 2
-                                    mem_counter_tmp[rule_id] += 1
+                                decoder_target = cur_rule_target_input_placeholder[step]
+                                if decoder_target in cur_decoder_targets:
+                                    decoder_target_orders = np.where(cur_decoder_targets==decoder_target)[0]
+                                    for decoder_target_order in decoder_target_orders:
+                                        cur_context = cur_contexts[decoder_target_order,:]
+                                        rule_id = cur_rule_id_input_placeholder[step]
+                                        mem_counter_tmp[rule_id, 0] += 1
+                                        # decoder_target_emb = emb_simple[decoder_target]
+                                        if mem_counter_tmp[rule_id][0] == 0:
+                                            mem_contexts_tmp[rule_id, :] = cur_context
+                                            mem_outputs_tmp[rule_id, :] = cur_decoder_outputs[decoder_target_order, :]
+                                        else:
+                                            mem_contexts_tmp[rule_id, :] = (cur_context + mem_contexts_tmp[rule_id, :]) / 2
+                                            mem_outputs_tmp[rule_id, :] = (cur_decoder_outputs[decoder_target_order, :] + mem_outputs_tmp[rule_id, :])/2
+
                         return mem_contexts_tmp, mem_outputs_tmp, mem_counter_tmp
 
+                    mem_output_input = None
+                    if 'mofinal' in self.model_config.memory_config:
+                        mem_output_input = final_outputs
+                    elif 'modecode' in self.model_config.memory_config:
+                        mem_output_input = decoder_outputs
                     mem_contexts, mem_outputs, mem_counter = tf.py_func(update_memory,
                                                                         [mem_contexts, mem_outputs, mem_counter,
-                                                                         tf.stack(output.decoder_target_list, axis=1), decoder_outputs,
+                                                                         tf.stack(output.decoder_target_list, axis=1), mem_output_input,
                                                                          output.contexts,
                                                                          tf.stack(rule_target_input_placeholder, axis=1),
                                                                          tf.stack(rule_id_input_placeholder, axis=1),
-                                                                         self.global_step],
+                                                                         self.global_step,
+                                                                         emb_simple,
+                                                                         output.encoder_outputs],
                                                                         [tf.float32, tf.float32, tf.int32],
                                                                         stateful=False, name='update_memory')
 
@@ -344,6 +352,10 @@ class ModelOutput:
     # @property
     # def encoder_outputs_list(self):
     #     return self._decoder_outputs_list
+
+    @property
+    def encoder_outputs(self):
+        return self._encoder_outputs
 
     @property
     def encoder_embed_inputs_list(self):

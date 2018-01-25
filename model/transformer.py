@@ -6,6 +6,7 @@ from tensor2tensor.utils import beam_search
 from util import constant
 from model.graph import Graph
 from model.graph import ModelOutput
+from util.nn import linear_3d, linear
 
 
 class TransformerGraph(Graph):
@@ -170,20 +171,31 @@ class TransformerGraph(Graph):
 
             weights = tf.nn.softmax(tf.matmul(contexts, cur_mem_contexts, transpose_b=True))
             mem_output = tf.matmul(weights, cur_mem_outputs)
-            mem_output = tf.cond(
-                tf.greater(global_step, tf.constant(2*self.model_config.memory_prepare_step, dtype=tf.int64)),
-                lambda : mem_output, lambda : decoder_output)
 
-            temp_output = tf.concat((decoder_output, mem_output), axis=-1)
-            temp1_w = tf.get_variable('temp1_w', shape=(1, self.model_config.dimension*2, self.model_config.dimension))
-            gate1 = tf.tanh(tf.nn.conv1d(temp_output, temp1_w, 1, 'SAME'))
-            decoder_output = decoder_output * gate1
+            if 'cgate' in self.model_config.memory_config:
+                temp_output = tf.concat((decoder_output, mem_output), axis=-1)
+                temp1_w = tf.get_variable('temp1_w', shape=(1, self.model_config.dimension*2, self.model_config.dimension))
+                gate1 = tf.tanh(tf.nn.conv1d(temp_output, temp1_w, 1, 'SAME'))
+                decoder_output = decoder_output * gate1
 
-            temp2_w = tf.get_variable('temp2_w', shape=(1, self.model_config.dimension*2, self.model_config.dimension))
-            gate2 = tf.tanh(tf.nn.conv1d(temp_output, temp2_w, 1, 'SAME'))
-            mem_output = mem_output * gate2
+                temp2_w = tf.get_variable('temp2_w', shape=(1, self.model_config.dimension*2, self.model_config.dimension))
+                gate2 = tf.tanh(tf.nn.conv1d(temp_output, temp2_w, 1, 'SAME'))
+                mem_output = mem_output * gate2
 
-            final_output = decoder_output + mem_output
+                final_output = tf.cond(
+                    tf.greater(global_step, tf.constant(2 * self.model_config.memory_prepare_step, dtype=tf.int64)),
+                    lambda: mem_output, lambda: decoder_output)
+                print('Use Gate for Combine Memory!')
+            elif 'cffn' in self.model_config.memory_config:
+                temp_output = tf.concat((decoder_output, mem_output), axis=-1)
+                w = tf.get_variable('temp',
+                                          shape=(1, self.model_config.dimension*2, self.model_config.dimension))
+                mem_output = tf.nn.conv1d(temp_output, w, 1, 'SAME')
+
+                final_output = tf.cond(tf.greater(global_step, tf.constant(2*self.model_config.memory_prepare_step, dtype=tf.int64)),
+                                       lambda : mem_output, lambda : decoder_output)
+
+                print('Use FFN for Combine Memory!')
         else:
             final_output = decoder_output
 

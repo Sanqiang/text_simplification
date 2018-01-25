@@ -240,7 +240,7 @@ def train(model_config=None):
             if ckpt:
                 if args.mode == 'dummy':
                     eval(DefaultTestConfig(), ckpt)
-                    eval(DefaultTestConfig2(), ckpt)
+                    # eval(DefaultTestConfig2(), ckpt)
                 elif args.mode == 'dress' or args.mode == 'all' :
                     # eval(SubValWikiEightRefConfig(), ckpt)
                     eval(SubTestWikiEightRefConfig(), ckpt)
