@@ -5,8 +5,11 @@ from util.arguments import get_args
 args = get_args()
 
 
-def get_path(file_path):
-    return os.path.dirname(os.path.abspath(__file__)) + '/../' + file_path
+def get_path(file_path, zfs=False):
+    if zfs:
+        return "/zfs1/hdaqing/saz31/" + file_path
+    else:
+        return os.path.dirname(os.path.abspath(__file__)) + '/../' + file_path
 
 
 class DefaultConfig():
@@ -125,9 +128,9 @@ class DefaultConfig():
     num_refs = 3
 
     output_folder = args.output_folder
-    logdir = get_path('../' + output_folder + '/log/')
-    modeldir = get_path('../' + output_folder + '/model/')
-    resultdor = get_path('../' + output_folder + '/result/')
+    logdir = get_path('../' + output_folder + '/log/', True)
+    modeldir = get_path('../' + output_folder + '/model/', True)
+    resultdor = get_path('../' + output_folder + '/result/', True)
 
     allow_growth = True
     # per_process_gpu_memory_fraction = 1.0

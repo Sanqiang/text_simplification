@@ -9,7 +9,6 @@
 #SBATCH --cpus-per-task=1
 #SBATCH --time=6-00:00:00 # This is the max
 #SBATCH --qos=long
-#SBATCH --mem=16g
 
 # Load modules
 module restore
