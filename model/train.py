@@ -203,8 +203,8 @@ def train(model_config=None):
             model_config)
 
         fetches = [graph.train_op, graph.loss, graph.global_step,
-                   graph.perplexity, graph.ops]
-        _, loss, step, perplexity, _ = sess.run(fetches, input_feed)
+                   graph.perplexity, graph.ops, graph.bias]
+        _, loss, step, perplexity, _, bias = sess.run(fetches, input_feed)
         perplexitys.append(perplexity)
 
         if step % model_config.model_print_freq == 0:
@@ -245,7 +245,7 @@ def train(model_config=None):
                     # eval(SubValWikiEightRefConfig(), ckpt)
                     eval(SubTestWikiEightRefConfig(), ckpt)
                     # eval(SubValWikiEightRefPPDBConfigConfig(), ckpt)
-                    eval(SubTestWikiEightRefPPDBConfig(), ckpt)
+                    # eval(SubTestWikiEightRefPPDBConfig(), ckpt)
                 elif args.mode == 'dress2':
                     eval(SubTestWikiSmallConfig(), ckpt)
                     eval(SubTestWikiSmallPPDBConfig(), ckpt)

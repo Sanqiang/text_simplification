@@ -62,6 +62,7 @@ class TrainData:
             self.vocab_rule = Rule(model_config, self.model_config.vocab_rules)
             self.rules = self.populate_rules(
                 self.model_config.train_dataset_complex_ppdb, self.vocab_rule)
+            assert len(self.rules) == self.size
 
     def populate_ppdb(self, data_path):
         rules = []

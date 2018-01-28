@@ -9,7 +9,7 @@ import copy as cp
 
 
 class ValData:
-    def __init__(self, model_config, ):
+    def __init__(self, model_config):
         self.model_config = model_config
 
         vocab_simple_path = self.model_config.vocab_simple
@@ -69,6 +69,7 @@ class ValData:
             self.vocab_rule = Rule(model_config, self.model_config.vocab_rules)
             self.rules = self.populate_rules(
                 self.model_config.val_dataset_complex_ppdb, self.vocab_rule)
+            assert len(self.rules) == self.size
 
     def populate_rules(self, rule_path, vocab_rule):
         data = []

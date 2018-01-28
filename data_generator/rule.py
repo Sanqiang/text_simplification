@@ -4,13 +4,12 @@ class Rule:
     def __init__(self, model_config, rule_path=None):
         self.model_config = model_config
         self.rule_path = rule_path
-        self.populate_rulebase(0)
+        self.populate_rulebase(model_config.min_count_rule)
 
     def populate_rulebase(self, minscore):
         self.r2i = {'pad':0}
         self.i2r = ['pad']
 
-        minscore = 0 #max(minscore, self.model_config.min_count)
         for line in open(self.rule_path, encoding='utf-8'):
             items = line.strip().split('\t')
             w = items[0]

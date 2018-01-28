@@ -7,7 +7,7 @@ args = get_args()
 
 def get_path(file_path, zfs=False):
     if zfs:
-        return "/zfs1/hdaqing/saz31/" + file_path
+        return "/zfs1/hdaqing/saz31/text_simplification/tmp/" + file_path
     else:
         return os.path.dirname(os.path.abspath(__file__)) + '/../' + file_path
 
@@ -18,7 +18,7 @@ class DefaultConfig():
     warm_start = args.warm_start
     use_partial_restore = args.use_partial_restore
     use_gpu = True
-    batch_size = 1
+    batch_size = 32
     dimension = 16
     max_complex_sentence = 10
     max_simple_sentence = 8
@@ -130,7 +130,7 @@ class DefaultConfig():
     output_folder = args.output_folder
     logdir = get_path('../' + output_folder + '/log/', True)
     modeldir = get_path('../' + output_folder + '/model/', True)
-    resultdor = get_path('../' + output_folder + '/result/', True)
+    resultdir = get_path('../' + output_folder + '/result/', True)
 
     allow_growth = True
     # per_process_gpu_memory_fraction = 1.0
@@ -149,10 +149,15 @@ class DefaultConfig():
 
     # For Memory
     memory = args.memory
-    max_cand_rules = 3
+    max_cand_rules = 15
     rule_size = 5
     memory_prepare_step = args.memory_prepare_step
     memory_config = args.memory_config
+    min_count_rule = 0
+    if 'mincnt' in memory_config:
+        # Assume single digit for min_count_rule
+        cnt_idx = memory_config.index('mincnt') + len("mincnt")
+        min_count_rule = int(memory_config[cnt_idx: cnt_idx+1])
 
 
 class DefaultTrainConfig(DefaultConfig):
@@ -163,7 +168,7 @@ class DefaultTestConfig(DefaultConfig):
     beam_search_size = 1
     batch_size = 2
     output_folder = args.output_folder
-    resultdor = get_path('../' + output_folder + '/result/test1')
+    resultdor = get_path('../' + output_folder + '/result/test1', True)
 
 
 class DefaultTestConfig2(DefaultConfig):
@@ -179,15 +184,20 @@ class WikiDressLargeDefault(DefaultConfig):
     model_eval_freq = args.model_eval_freq
 
     train_dataset_simple = get_path('../text_simplification_data/train/dress/wikilarge/wiki.full.aner.train.dst')
-    train_dataset_simple_ppdb = get_path('../text_simplification_data/train/dress/wikilarge/wiki.full.aner.train.dst.rules')
+    # train_dataset_simple_ppdb = get_path('../text_simplification_data/train/dress/wikilarge/wiki.full.aner.train.dst.rules')
     train_dataset_simple_syntax = get_path(
         '../text_simplification_data/train/dress/wikilarge/wiki.full.aner.train.dst.jsyntax')
     train_dataset_complex_syntax = get_path(
         '../text_simplification_data/train/dress/wikilarge/wiki.full.aner.train.src.jsyntax')
     train_dataset_complex = get_path('../text_simplification_data/train/dress/wikilarge/wiki.full.aner.train.src')
     train_dataset_complex_ppdb = get_path(args.train_dataset_complex_ppdb)
+
     # train_dataset_complex_ppdb = get_path('../text_simplification_data/train/dress/wikilarge/wiki.full.aner.train.src.rules')
     # add .dress extention will be same vocab as dress by add .dress in the end
+    vocab_rules = get_path(
+        '../text_simplification_data/train/dress/wikilarge/wiki.full.aner.train.rules')
+    max_cand_rules = 15
+    rule_size = 44186
     if args.our_vocab:
         vocab_simple = get_path('../text_simplification_data/train/dress/wikilarge/wiki.full.aner.train.dst.vocab')
         vocab_complex = get_path('../text_simplification_data/train/dress/wikilarge/wiki.full.aner.train.src.vocab')
@@ -304,13 +314,15 @@ class SubValWikiEightRefConfigBeam4(SubValWikiEightRefConfig):
 
 class SubTestWikiEightRefConfig(SubTest):
     output_folder = args.output_folder
-    resultdor = get_path('../' + output_folder + '/result/eightref_test')
+    resultdor = get_path('../' + output_folder + '/result/eightref_test', True)
 
     val_dataset_simple_folder = get_path('../text_simplification_data/test/')
     # use the original dress
     val_dataset_simple_file = 'wiki.full.aner.test.dst'
     val_dataset_complex = get_path('../text_simplification_data/test/wiki.full.aner.test.src')
     val_mapper = get_path('../text_simplification_data/test/test.8turkers.tok.map.dress')
+    val_dataset_complex_ppdb = get_path(
+        '../text_simplification_data/test/wiki.full.aner.test.src.sorted.rules')
     # wiki.full.aner.ori.test.dst is uppercase whereas test.8turkers.tok.simp is lowercase
     val_dataset_complex_rawlines_file = get_path(
         '../text_simplification_data/test/test.8turkers.tok.norm')
@@ -388,13 +400,14 @@ class WikiTransLegacyBaseCfg(WikiDressLargeDefault):
     train_dataset_complex_syntax = get_path(
         '../text_simplification_data/train/dress/wikilarge2/src.jsyntax.txt')
     train_dataset_complex_ppdb = get_path(
-        '../text_simplification_data/train/dress/wikilarge2/src.rules.txt')
+        '../text_simplification_data/train/dress/wikilarge2/src.sorted.rules.txt')
     vocab_rules = get_path(
         '../text_simplification_data/train/dress/wikilarge2/rules.txt')
     train_dataset_simple = get_path('../text_simplification_data/train/dress/wikilarge2/dst.txt')
     train_dataset_complex = get_path('../text_simplification_data/train/dress/wikilarge2/src.txt')
     batch_size = args.batch_size
     rule_size = 72445
+    max_cand_rules = 15
 
 class WikiTransLegacyTrainCfg(WikiTransLegacyBaseCfg):
     beam_search_size = 0
@@ -407,7 +420,7 @@ class WikiTransLegacyTestCfg(WikiTransLegacyBaseCfg):
     beam_search_size = 1
 
     output_folder = args.output_folder
-    resultdor = get_path('../' + output_folder + '/result/eightref_test')
+    resultdor = get_path('../' + output_folder + '/result/eightref_test', True)
 
     val_dataset_simple_folder = get_path('../text_simplification_data/test/')
     # use the original dress
@@ -423,7 +436,7 @@ class WikiTransLegacyTestCfg(WikiTransLegacyBaseCfg):
     val_dataset_complex_syntax = get_path(
         '../text_simplification_data/test/wiki.full.aner.test.src.jsyntax')
     val_dataset_complex_ppdb = get_path(
-        '../text_simplification_data/test/wiki.full.aner.test.src.rules')
+        '../text_simplification_data/test/wiki.full.aner.test.src.sorted.rules')
 
 class WikiTransBaseCfg(DefaultConfig):
     model_print_freq = 50
