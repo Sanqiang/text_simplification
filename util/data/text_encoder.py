@@ -36,7 +36,7 @@ from util.data import tokenizer
 from util import constant
 
 import tensorflow as tf
-
+from datetime import datetime
 # Reserved tokens for things like padding and EOS symbols.
 SYMBOL_GO = constant.SYMBOL_GO
 SYMBOL_PAD = constant.SYMBOL_PAD
@@ -651,7 +651,12 @@ class SubwordTextEncoder(TextEncoder):
     # with high enough counts for our new vocabulary.
     if min_count < 1:
       min_count = 1
+    pretime = datetime.now()
     for i in xrange(num_iterations):
+      nowtime = datetime.now()
+      span = nowtime - pretime
+      pretime = nowtime
+      print('Finished Loop %s using %s' % (i, span))
       tf.logging.info("Iteration {0}".format(i))
 
       # Collect all substrings of the encoded token that break along current
