@@ -61,7 +61,7 @@ def get_args():
                         default='../text_simplification_data/ppdb/SimplePPDB.enrich',
                         help='The path for PPDB rules?')
     parser.add_argument('-complex_ppdb', '--train_dataset_complex_ppdb',
-                        default='../text_simplification_data/train/dress/wikilarge/wiki.full.aner.train.src.rules',
+                        default='../text_simplification_data/train/dress/wikilarge/wiki.full.aner.train.src.sorted.rules',
                         help='The path for PPDB comp rules?')
 
     # For Memory
