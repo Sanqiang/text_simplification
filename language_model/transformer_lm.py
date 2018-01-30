@@ -15,6 +15,15 @@ args = get_args()
 
 
 class TransformerLM:
+    def setup_hparams(self, hparams):
+        hparams.num_heads = args.num_heads
+        hparams.num_hidden_layers = args.num_hidden_layers
+        hparams.num_decoder_layers = args.num_hidden_layers
+        hparams.hidden_size = args.dimension
+        hparams.layer_prepostprocess_dropout = args.layer_prepostprocess_dropout
+        return hparams
+
+
     def create_model_multigpu(self, data):
         losses = []
         grads = []
@@ -51,12 +60,12 @@ class TransformerLM:
                     'embedding', [data.vocab.vocab_size(), args.dimension], tf.float32,
                     initializer=tf.random_uniform_initializer(-0.08, 0.08))
 
-                proj_w = tf.get_variable(
-                    'output_w', [data.vocab.vocab_size(), args.dimension], tf.float32,
-                    initializer=tf.random_uniform_initializer(-0.08, 0.08))
-                proj_b = tf.get_variable(
-                    'output_b', shape=[data.vocab.vocab_size()],
-                    initializer=tf.random_uniform_initializer(-0.08, 0.08))
+            proj_w = tf.get_variable(
+                'output_w', [data.vocab.vocab_size(), args.dimension], tf.float32,
+                initializer=tf.random_uniform_initializer(-0.08, 0.08))
+            proj_b = tf.get_variable(
+                'output_b', shape=[data.vocab.vocab_size()],
+                initializer=tf.random_uniform_initializer(-0.08, 0.08))
 
         with tf.variable_scope('variables'):
             sentence_inputs = []

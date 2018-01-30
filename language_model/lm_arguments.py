@@ -28,5 +28,12 @@ def get_args():
                         default=get_path('../lm/log/'),
                         help='The path for Log?')
 
+    parser.add_argument('-nh', '--num_heads', default=5, type=int,
+                        help='Number of heads?')
+    parser.add_argument('-nhl', '--num_hidden_layers', default=6, type=int,
+                        help='Number of hidden layer?')
+    parser.add_argument('-ldropout', '--layer_prepostprocess_dropout', default=0.2, type=float,
+                        help='Dropout rate?')
+
     args = parser.parse_args()
     return args
