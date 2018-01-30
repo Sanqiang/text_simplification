@@ -164,14 +164,16 @@ class DefaultConfig():
     rl_config = args.rl_config
     # sari: add sari metric for optimize
     # sari_ppdb_simp_weight: the weight for ppdb in sari
-    # sample: sari|sari_ppdb_simp_weight：1.5
+    # sample: sari|rule|rule_weight:2.0
     rl_configs = {}
     for cfg in rl_config.split('|'):
         kv = cfg.split(':')
         if kv[0] == 'sari':
             rl_configs['sari'] = True
-        if kv[0] == 'sari_ppdb_simp_weight':
-            rl_configs['sari_ppdb_simp_weight'] = float(kv[1])
+        if kv[0] == 'rule':
+            rl_configs['rule'] = True
+        if kv[0] == 'rule_weight':
+            rl_configs['rule_weight'] = float(kv[1])
 
 class DefaultTrainConfig(DefaultConfig):
     beam_search_size = 0

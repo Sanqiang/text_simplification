@@ -250,7 +250,8 @@ class Graph:
                                          [tf.stack(output.sample_target_list, axis=-1),
                                           tf.stack(output.decoder_target_list, axis=-1),
                                           tf.stack(sentence_simple_input_placeholder, axis=-1),
-                                          tf.stack(sentence_complex_input_placeholder, axis=-1)],
+                                          tf.stack(sentence_complex_input_placeholder, axis=-1),
+                                          tf.stack(rule_target_input_placeholder, axis=1)],
                                          tf.float32, stateful=False, name='update_memory')
                     rewards.set_shape((self.model_config.batch_size, self.model_config.max_simple_sentence))
                     rewards = tf.unstack(rewards, axis=1)
