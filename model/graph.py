@@ -26,11 +26,13 @@ class Graph:
         self.metric = Metric(self.model_config, self.data)
 
     def embedding_fn(self, inputs, embedding):
-        # with tf.device(self.device_config):
-        if not inputs:
-            return []
+        if type(inputs) == list:
+            if not inputs:
+                return []
+            else:
+                return [tf.nn.embedding_lookup(embedding, inp) for inp in inputs]
         else:
-            return [tf.nn.embedding_lookup(embedding, inp) for inp in inputs]
+            return tf.nn.embedding_lookup(embedding, inputs)
 
     def create_model_multigpu(self):
         # with tf.Graph().as_default():
@@ -117,11 +119,11 @@ class Graph:
                 with tf.device('/cpu:0'):
                     mem_contexts = tf.get_variable(
                         'mem_contexts',
-                        initializer=tf.constant(1e-13, dtype=tf.float32, shape=(self.model_config.rule_size, self.model_config.dimension)),
+                        initializer=tf.constant(0, dtype=tf.float32, shape=(self.model_config.rule_size, self.model_config.dimension)),
                         trainable=False, dtype=tf.float32)
                     mem_outputs = tf.get_variable(
                         'mem_outputs',
-                        initializer=tf.constant(1e-13, dtype=tf.float32, shape=(self.model_config.rule_size, self.model_config.dimension)),
+                        initializer=tf.constant(0, dtype=tf.float32, shape=(self.model_config.rule_size, self.model_config.dimension)),
                         trainable=False, dtype=tf.float32)
                     mem_counter = tf.get_variable(
                         'mem_counter',
@@ -218,6 +220,7 @@ class Graph:
                         mem_output_input = final_outputs
                     elif 'modecode' in self.model_config.memory_config:
                         mem_output_input = decoder_outputs
+
                     mem_contexts, mem_outputs, mem_counter = tf.py_func(update_memory,
                                                                         [mem_contexts, mem_outputs, mem_counter,
                                                                          tf.stack(output.decoder_target_list, axis=1), mem_output_input,
@@ -232,30 +235,61 @@ class Graph:
 
 
                 #Loss and corresponding prior/mask
-                decode_word_weight = tf.stack(
-                    [tf.to_float(tf.not_equal(d, self.data.vocab_simple.encode(constant.SYMBOL_PAD)))
-                     for d in output.gt_target_list], axis=1)
+                decode_word_weight_list = [tf.to_float(tf.not_equal(d, self.data.vocab_simple.encode(constant.SYMBOL_PAD)))
+                     for d in output.gt_target_list]
+                decode_word_weight = tf.stack(decode_word_weight_list, axis=1)
 
                 prior_weight = tf.stack(sentence_simple_input_prior_placeholder, axis=1)
                 decode_word_weight = tf.multiply(prior_weight, decode_word_weight)
 
                 gt_target = tf.stack(output.gt_target_list, axis=1)
 
-                if self.model_config.number_samples > 0:
-                    loss_fn = tf.nn.sampled_softmax_loss
-                else:
-                    loss_fn = None
+                def self_critical_loss():
+                    # For minimize the negative log of probabilities
+                    rewards = tf.py_func(self.metric.self_crititcal_reward,
+                                         [tf.stack(output.sample_target_list, axis=-1),
+                                          tf.stack(output.decoder_target_list, axis=-1),
+                                          tf.stack(sentence_simple_input_placeholder, axis=-1),
+                                          tf.stack(sentence_complex_input_placeholder, axis=-1)],
+                                         tf.float32, stateful=False, name='update_memory')
+                    rewards.set_shape((self.model_config.batch_size, self.model_config.max_simple_sentence))
+                    rewards = tf.unstack(rewards, axis=1)
 
-                loss = sequence_loss(logits=tf.stack(output.decoder_logit_list, axis=1),
-                                     targets=gt_target,
-                                     weights=decode_word_weight,
-                                     softmax_loss_function=loss_fn,
-                                     data=self.data,
-                                     w=w,
-                                     b=b,
-                                     decoder_outputs=decoder_outputs,
-                                     number_samples=self.model_config.number_samples
-                                     )
+                    weighted_probs = [rewards[i] * decode_word_weight_list[i] * -tf.log(output.sample_logit_list[i])
+                                      for i in range(len(decode_word_weight_list))]
+                    total_size = tf.reduce_sum(decode_word_weight_list)
+                    total_size += 1e-12
+                    weighted_probs = tf.reduce_sum(weighted_probs) / total_size
+                    loss = weighted_probs
+                    return loss
+
+                def teacherforce_loss():
+                    if self.model_config.number_samples > 0:
+                        loss_fn = tf.nn.sampled_softmax_loss
+                    else:
+                        loss_fn = None
+                    loss = sequence_loss(logits=tf.stack(output.decoder_logit_list, axis=1),
+                                         targets=gt_target,
+                                         weights=decode_word_weight,
+                                         softmax_loss_function=loss_fn,
+                                         data=self.data,
+                                         w=w,
+                                         b=b,
+                                         decoder_outputs=decoder_outputs,
+                                         number_samples=self.model_config.number_samples
+                                         )
+                    return loss
+
+
+                if self.model_config.train_mode == 'self-critical':
+                    loss = tf.cond(
+                        # tf.greater(self.global_step, 1000),
+                        tf.logical_and(tf.greater(self.global_step, 100000), tf.equal(tf.mod(self.global_step, 2), 0)),
+                        lambda : self_critical_loss(),
+                        lambda : teacherforce_loss())
+                else:
+                    loss = teacherforce_loss()
+
                 obj = {
                     'sentence_idxs': sentence_idxs,
                     'sentence_simple_input_placeholder': sentence_simple_input_placeholder,
@@ -338,7 +372,7 @@ class Graph:
 class ModelOutput:
     def __init__(self, decoder_outputs_list=None, decoder_logit_list=None, decoder_target_list=None,
                  decoder_score=None, gt_target_list=None, encoder_embed_inputs_list=None, encoder_outputs=None,
-                 contexts=None, final_outputs_list=None):
+                 contexts=None, final_outputs_list=None, sample_target_list=None, sample_logit_list=None):
         self._decoder_outputs_list = decoder_outputs_list
         self._decoder_logit_list = decoder_logit_list
         self._decoder_target_list = decoder_target_list
@@ -348,10 +382,8 @@ class ModelOutput:
         self._encoder_outputs = encoder_outputs
         self._contexts = contexts
         self._final_outputs_list = final_outputs_list
-
-    # @property
-    # def encoder_outputs_list(self):
-    #     return self._decoder_outputs_list
+        self._sample_target_list = sample_target_list
+        self._sample_logit_list = sample_logit_list
 
     @property
     def encoder_outputs(self):
@@ -389,3 +421,11 @@ class ModelOutput:
     @property
     def gt_target_list(self):
         return self._gt_target_list
+
+    @property
+    def sample_target_list(self):
+        return self._sample_target_list
+
+    @property
+    def sample_logit_list(self):
+        return self._sample_logit_list

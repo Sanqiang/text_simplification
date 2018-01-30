@@ -39,18 +39,65 @@ class TransformerGraph(Graph):
 
         encoder_embed_inputs_list = tf.unstack(encoder_embed_inputs, axis=1)
         with tf.variable_scope('transformer_decoder'):
-            if self.is_train:
+            train_mode = self.model_config.train_mode
+            if self.is_train and train_mode == 'teacher':
                 # General train
                 print('Use Generally Process.')
-                decoder_embed_inputs = self.embedding_fn(
+                decoder_embed_inputs_list = self.embedding_fn(
                     sentence_simple_input_placeholder[:-1], emb_simple)
                 final_output_list, decoder_output_list, contexts = self.decode_step(
-                    decoder_embed_inputs, encoder_outputs, encoder_attn_bias,
+                    decoder_embed_inputs_list, encoder_outputs, encoder_attn_bias,
                     rule_id_input_placeholder, mem_contexts, mem_outputs, global_step)
-                gt_target_list = sentence_simple_input_placeholder
                 decoder_logit_list = [self.output_to_logit(o, w, b) for o in final_output_list]
                 decoder_target_list = [tf.argmax(o, output_type=tf.int32, axis=-1)
                                        for o in decoder_logit_list]
+            elif self.is_train and train_mode == 'seq':
+                decoder_target_list = []
+                decoder_logit_list =[]
+                decoder_embed_inputs_list = []
+                # Will Override for following 3 lists
+                final_output_list = []
+                decoder_output_list = []
+                contexts = []
+                for step in range(self.model_config.max_simple_sentence):
+                    if step > 0:
+                        tf.get_variable_scope().reuse_variables()
+                    final_output_list, decoder_output_list, contexts = self.decode_step(
+                        decoder_embed_inputs_list, encoder_outputs, encoder_attn_bias,
+                        rule_id_input_placeholder, mem_contexts, mem_outputs, global_step)
+                    last_logit_list = self.output_to_logit(final_output_list[-1], w, b)
+                    last_target_list = tf.argmax(last_logit_list, output_type=tf.int32, axis=-1)
+                    decoder_logit_list.append(last_logit_list)
+                    decoder_target_list.append(last_target_list)
+                    decoder_embed_inputs_list.append(self.embedding_fn(last_target_list, emb_simple))
+            elif self.is_train and train_mode == 'self-critical':
+                decoder_target_list = []
+                sample_target_list = []
+                sample_logit_list =[]
+
+                decoder_logit_list = []
+                decoder_embed_inputs_list = []
+                # Will Override for following 3 lists
+                final_output_list = []
+                decoder_output_list = []
+                contexts = []
+                for step in range(self.model_config.max_simple_sentence):
+                    if step > 0:
+                        tf.get_variable_scope().reuse_variables()
+                    final_output_list, decoder_output_list, contexts = self.decode_step(
+                        decoder_embed_inputs_list, encoder_outputs, encoder_attn_bias,
+                        rule_id_input_placeholder, mem_contexts, mem_outputs, global_step)
+                    last_logit_list = self.output_to_logit(final_output_list[-1], w, b)
+                    last_target_list = tf.argmax(last_logit_list, output_type=tf.int32, axis=-1)
+                    last_sample_list = tf.multinomial(last_logit_list, 1)
+                    decoder_logit_list.append(last_logit_list)
+                    decoder_target_list.append(last_target_list)
+                    sample_target_list.append(last_sample_list)
+                    decoder_embed_inputs_list.append(self.embedding_fn(last_target_list, emb_simple))
+                    indices = tf.stack(
+                        [tf.range(0, self.model_config.batch_size, dtype=tf.int64), tf.squeeze(last_sample_list)],
+                        axis=-1)
+                    sample_logit_list.append(tf.gather_nd(tf.nn.softmax(last_logit_list), indices))
             else:
                 # Beam Search
                 print('Use Beam Search with Beam Search Size %d.' % self.model_config.beam_search_size)
@@ -58,6 +105,7 @@ class TransformerGraph(Graph):
                                                     sentence_complex_input_placeholder, emb_simple, w, b,
                                                     rule_id_input_placeholder, mem_contexts, mem_outputs, global_step)
 
+        gt_target_list = sentence_simple_input_placeholder
         output = ModelOutput(
             contexts=contexts,
             encoder_outputs=encoder_outputs,
@@ -66,7 +114,9 @@ class TransformerGraph(Graph):
             decoder_logit_list=decoder_logit_list,
             gt_target_list=gt_target_list,
             encoder_embed_inputs_list=tf.unstack(encoder_embed_inputs, axis=1),
-            decoder_target_list=decoder_target_list
+            decoder_target_list=decoder_target_list,
+            sample_logit_list=sample_logit_list,
+            sample_target_list=sample_target_list
         )
         return output
 
@@ -169,24 +219,14 @@ class TransformerGraph(Graph):
             cur_mem_contexts = tf.stack(self.embedding_fn(rule_id_input_placeholder, mem_contexts), axis=1)
             cur_mem_outputs = tf.stack(self.embedding_fn(rule_id_input_placeholder, mem_outputs), axis=1)
 
-            weights = tf.nn.softmax(tf.matmul(contexts, cur_mem_contexts, transpose_b=True))
+            bias = tf.expand_dims(
+                -1e9 * tf.to_float(tf.equal(tf.stack(rule_id_input_placeholder, axis=1), 0)),
+                axis=1)
+            weights = tf.nn.softmax(bias + tf.matmul(contexts, cur_mem_contexts, transpose_b=True))
+            self.bias = weights
             mem_output = tf.matmul(weights, cur_mem_outputs)
 
-            if 'cgate' in self.model_config.memory_config:
-                temp_output = tf.concat((decoder_output, mem_output), axis=-1)
-                temp1_w = tf.get_variable('temp1_w', shape=(1, self.model_config.dimension*2, self.model_config.dimension))
-                gate1 = tf.tanh(tf.nn.conv1d(temp_output, temp1_w, 1, 'SAME'))
-                decoder_output = decoder_output * gate1
-
-                temp2_w = tf.get_variable('temp2_w', shape=(1, self.model_config.dimension*2, self.model_config.dimension))
-                gate2 = tf.tanh(tf.nn.conv1d(temp_output, temp2_w, 1, 'SAME'))
-                mem_output = mem_output * gate2
-
-                final_output = tf.cond(
-                    tf.greater(global_step, tf.constant(2 * self.model_config.memory_prepare_step, dtype=tf.int64)),
-                    lambda: mem_output, lambda: decoder_output)
-                print('Use Gate for Combine Memory!')
-            elif 'cffn' in self.model_config.memory_config:
+            if 'cffn' in self.model_config.memory_config:
                 temp_output = tf.concat((decoder_output, mem_output), axis=-1)
                 w = tf.get_variable('temp',
                                           shape=(1, self.model_config.dimension*2, self.model_config.dimension))

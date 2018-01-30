@@ -13,13 +13,14 @@ def get_path(file_path, zfs=False):
 
 
 class DefaultConfig():
+    train_mode = args.train_mode
     num_gpus = args.num_gpus
     framework = args.framework
     warm_start = args.warm_start
     use_partial_restore = args.use_partial_restore
     use_gpu = True
-    batch_size = 32
-    dimension = 16
+    batch_size = 9
+    dimension = 150
     max_complex_sentence = 10
     max_simple_sentence = 8
     # min_simple_sentence = 5 #Used for Beam Search
@@ -159,6 +160,18 @@ class DefaultConfig():
         cnt_idx = memory_config.index('mincnt') + len("mincnt")
         min_count_rule = int(memory_config[cnt_idx: cnt_idx+1])
 
+    # For RL
+    rl_config = args.rl_config
+    # sari: add sari metric for optimize
+    # sari_ppdb_simp_weight: the weight for ppdb in sari
+    # sample: sari|sari_ppdb_simp_weight：1.5
+    rl_configs = {}
+    for cfg in rl_config.split('|'):
+        kv = cfg.split(':')
+        if kv[0] == 'sari':
+            rl_configs['sari'] = True
+        if kv[0] == 'sari_ppdb_simp_weight':
+            rl_configs['sari_ppdb_simp_weight'] = float(kv[1])
 
 class DefaultTrainConfig(DefaultConfig):
     beam_search_size = 0

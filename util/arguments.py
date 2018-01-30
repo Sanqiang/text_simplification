@@ -15,6 +15,8 @@ def get_args():
                         help='Path for warm start checkpoint?')
     parser.add_argument('-upr', '--use_partial_restore', default=True, type=bool,
                         help='Whether to use partial restore?')
+    parser.add_argument('-tmode', '--train_mode', default='teacher',
+                        help='The mode of training?')
 
     parser.add_argument('-mode', '--mode', default='wiki',
                         help='The Usage Model?')
@@ -72,6 +74,9 @@ def get_args():
     parser.add_argument('-memstep', '--memory_prepare_step', default=300, type=int,
                         help='Number of steps for memory prepare?')
 
+    # For RL
+    parser.add_argument('-rlcfg', '--rl_config', default='',
+                        help='reinforce learning Config?')
 
     # For Transformer
     parser.add_argument('-pos', '--hparams_pos', default='timing',
@@ -87,10 +92,6 @@ def get_args():
                         help='Number of multi-attention heads?')
     parser.add_argument('-penalty_alpha', '--penalty_alpha', default=0.6, type=float,
                         help='The alpha for length penalty?')
-
-    # For Experiment
-
-
 
     # For Test
     parser.add_argument('-test_ckpt', '--test_ckpt', default='',

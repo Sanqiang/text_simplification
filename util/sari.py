@@ -106,6 +106,77 @@ def SARIngram(sgrams, cgrams, rgramslist, numref):
     return (keepscore, delscore_precision, addscore)
 
 
+def WeightedSARIsent(ssent, csent, rsents, wkeep, wdel, wadd):
+    numref = len(rsents)
+
+    s1grams = ssent.lower().split(" ")
+    c1grams = csent.lower().split(" ")
+    s2grams = []
+    c2grams = []
+    s3grams = []
+    c3grams = []
+    s4grams = []
+    c4grams = []
+
+    r1gramslist = []
+    r2gramslist = []
+    r3gramslist = []
+    r4gramslist = []
+    for rsent in rsents:
+        r1grams = rsent.lower().split(" ")
+        r2grams = []
+        r3grams = []
+        r4grams = []
+        r1gramslist.append(r1grams)
+        for i in range(0, len(r1grams) - 1):
+            if i < len(r1grams) - 1:
+                r2gram = r1grams[i] + " " + r1grams[i + 1]
+                r2grams.append(r2gram)
+            if i < len(r1grams) - 2:
+                r3gram = r1grams[i] + " " + r1grams[i + 1] + " " + r1grams[i + 2]
+                r3grams.append(r3gram)
+            if i < len(r1grams) - 3:
+                r4gram = r1grams[i] + " " + r1grams[i + 1] + " " + r1grams[i + 2] + " " + r1grams[i + 3]
+                r4grams.append(r4gram)
+        r2gramslist.append(r2grams)
+        r3gramslist.append(r3grams)
+        r4gramslist.append(r4grams)
+
+    for i in range(0, len(s1grams) - 1):
+        if i < len(s1grams) - 1:
+            s2gram = s1grams[i] + " " + s1grams[i + 1]
+            s2grams.append(s2gram)
+        if i < len(s1grams) - 2:
+            s3gram = s1grams[i] + " " + s1grams[i + 1] + " " + s1grams[i + 2]
+            s3grams.append(s3gram)
+        if i < len(s1grams) - 3:
+            s4gram = s1grams[i] + " " + s1grams[i + 1] + " " + s1grams[i + 2] + " " + s1grams[i + 3]
+            s4grams.append(s4gram)
+
+    for i in range(0, len(c1grams) - 1):
+        if i < len(c1grams) - 1:
+            c2gram = c1grams[i] + " " + c1grams[i + 1]
+            c2grams.append(c2gram)
+        if i < len(c1grams) - 2:
+            c3gram = c1grams[i] + " " + c1grams[i + 1] + " " + c1grams[i + 2]
+            c3grams.append(c3gram)
+        if i < len(c1grams) - 3:
+            c4gram = c1grams[i] + " " + c1grams[i + 1] + " " + c1grams[i + 2] + " " + c1grams[i + 3]
+            c4grams.append(c4gram)
+
+    (keep1score, del1score, add1score) = SARIngram(s1grams, c1grams, r1gramslist, numref)
+    (keep2score, del2score, add2score) = SARIngram(s2grams, c2grams, r2gramslist, numref)
+    (keep3score, del3score, add3score) = SARIngram(s3grams, c3grams, r3gramslist, numref)
+    (keep4score, del4score, add4score) = SARIngram(s4grams, c4grams, r4gramslist, numref)
+
+    avgkeepscore = sum([keep1score, keep2score, keep3score, keep4score]) / 4
+    avgdelscore = sum([del1score, del2score, del3score, del4score]) / 4
+    avgaddscore = sum([add1score, add2score, add3score, add4score]) / 4
+    finalscore = (avgkeepscore * wkeep + avgdelscore * wdel + avgaddscore * wadd) / (wkeep + wdel + wadd)
+
+    return finalscore
+
+
 def SARIsent(ssent, csent, rsents):
     numref = len(rsents)
 

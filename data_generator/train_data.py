@@ -221,6 +221,9 @@ class TrainData:
     def get_data_sample(self):
         i = rd.sample(range(self.size), 1)[0]
         supplement = {}
+        if self.model_config.memory == 'rule':
+            supplement['mem'] = self.rules[i]
+
         if self.model_config.ppdb_mode != 'none':
             data_simple, data_weight, attn_weight = self.ppdb.simplify(
                 self.data_simple[i], self.data_complex[i],
@@ -229,7 +232,5 @@ class TrainData:
             if data_simple:
                 return i, data_simple, cp.deepcopy(self.data_complex[i]), data_weight, attn_weight, supplement
 
-        if self.model_config.memory == 'rule':
-            supplement['mem'] = self.rules[i]
         # print('get data idx:\t' + str(i))
         return i, cp.deepcopy(self.data_simple[i]), cp.deepcopy(self.data_complex[i]), cp.deepcopy([1.0] * len(self.data_simple[i])), cp.deepcopy([1.0] * len(self.data_complex[i])), supplement
