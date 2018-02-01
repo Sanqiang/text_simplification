@@ -50,6 +50,8 @@ def get_args():
                         help='The frequency of evaluation at training? not use if = 0.')
     parser.add_argument('-itrain', '--it_train', default=False, type=bool,
                         help='Whether to iterate train data set?')
+    parser.add_argument('-rdec', '--rnn_decoder', default=False, type=bool,
+                        help='Whether to RNN decoder?')
 
     # For Graph
     parser.add_argument('-dim', '--dimension', default=300, type=int,

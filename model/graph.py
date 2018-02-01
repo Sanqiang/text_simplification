@@ -163,7 +163,16 @@ class Graph:
             if not self.is_train:
                 # in beam search, it directly provide decoder target list
                 decoder_target = tf.stack(output.decoder_target_list, axis=1)
-                loss = tf.reduce_mean(output.decoder_score)
+                if self.model_config.rnn_decoder:
+                    decode_word_weight_list = [
+                        tf.to_float(tf.not_equal(d, self.data.vocab_simple.encode(constant.SYMBOL_PAD)))
+                        for d in output.gt_target_list]
+                    decode_word_weight = tf.stack(decode_word_weight_list, axis=1)
+                    loss = sequence_loss(logits=tf.stack(output.decoder_logit_list, axis=1),
+                                         targets=tf.stack(output.gt_target_list, axis=1),
+                                         weights=decode_word_weight)
+                else:
+                    loss = tf.reduce_mean(output.decoder_score)
                 obj = {
                            'sentence_idxs': sentence_idxs,
                            'sentence_simple_input_placeholder': sentence_simple_input_placeholder,
@@ -188,6 +197,9 @@ class Graph:
                             global_step, emb_simple, encoder_outputs):
                         if global_step <= self.model_config.memory_prepare_step:
                             return mem_contexts_tmp, mem_outputs_tmp, mem_counter_tmp
+                        # print(mem_counter_tmp)
+                        # print(mem_contexts_tmp)
+                        # print(mem_outputs_tmp)
                         batch_size = np.shape(rule_target_input_placeholder)[0]
                         max_rules = np.shape(rule_target_input_placeholder)[1]
                         for batch_id in range(batch_size):
@@ -220,6 +232,10 @@ class Graph:
                         mem_output_input = final_outputs
                     elif 'modecode' in self.model_config.memory_config:
                         mem_output_input = decoder_outputs
+                    elif 'moemb' in self.model_config.memory_config:
+                        mem_output_input = tf.stack(
+                            self.embedding_fn(sentence_simple_input_placeholder, emb_simple),
+                            axis=1)
 
                     mem_contexts, mem_outputs, mem_counter = tf.py_func(update_memory,
                                                                         [mem_contexts, mem_outputs, mem_counter,
@@ -232,7 +248,6 @@ class Graph:
                                                                          output.encoder_outputs],
                                                                         [tf.float32, tf.float32, tf.int32],
                                                                         stateful=False, name='update_memory')
-
 
                 #Loss and corresponding prior/mask
                 decode_word_weight_list = [tf.to_float(tf.not_equal(d, self.data.vocab_simple.encode(constant.SYMBOL_PAD)))
@@ -281,7 +296,6 @@ class Graph:
                                          )
                     return loss
 
-
                 if self.model_config.train_mode == 'self-critical':
                     loss = tf.cond(
                         # tf.greater(self.global_step, 1000),
@@ -295,7 +309,7 @@ class Graph:
                     'sentence_idxs': sentence_idxs,
                     'sentence_simple_input_placeholder': sentence_simple_input_placeholder,
                     'sentence_complex_input_placeholder': sentence_complex_input_placeholder,
-                    'sentence_simple_input_prior_placeholder': sentence_simple_input_prior_placeholder,
+                    'sentence_simple_input_prior_placeholder': sentence_simple_input_prior_placeholder
                 }
                 if self.model_config.memory == 'rule':
                     obj['rule_id_input_placeholder'] = rule_id_input_placeholder

@@ -175,6 +175,9 @@ class DefaultConfig():
         if kv[0] == 'rule_weight':
             rl_configs['rule_weight'] = float(kv[1])
 
+    # RNN decoder
+    rnn_decoder = args.rnn_decoder
+
 class DefaultTrainConfig(DefaultConfig):
     beam_search_size = 0
 
