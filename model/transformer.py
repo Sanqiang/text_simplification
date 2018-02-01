@@ -81,6 +81,31 @@ class TransformerGraph(Graph):
                         decoder_logit_list.append(last_logit_list)
                         decoder_target_list.append(last_target_list)
                         decoder_embed_inputs_list.append(self.embedding_fn(last_target_list, emb_simple))
+                elif self.is_train and train_mode == 'ttt':
+                    decoder_target_tensor = tf.zeros([self.model_config.batch_size], tf.int32)
+                    decoder_logit_tensor = tf.zeros(
+                        [self.model_config.batch_size, self.model_config.dimension], tf.float32)
+                    decoder_embed_inputs_tensor = tf.zeros(
+                        [self.model_config.batch_size, self.model_config.dimension], tf.float32)
+                    final_output_list = tf.zeros(
+                        [self.model_config.batch_size, self.model_config.dimension], tf.float32)
+                    decoder_output_list = tf.zeros(
+                        [self.model_config.batch_size, self.model_config.dimension], tf.float32)
+                    contexts = tf.zeros(
+                        [self.model_config.batch_size, self.model_config.dimension], tf.float32)
+                    def _is_finished():
+                        return
+
+                    def recursive():
+                        return
+
+
+                    (_, decoder_target_tensor, decoder_logit_tensor, decoder_embed_inputs_tensor,
+                                   final_output_list, decoder_output_list, contexts) = tf.while_loop(
+                        _is_finished, recursive,
+                        [tf.constant(0), decoder_target_tensor, decoder_logit_tensor, decoder_embed_inputs_tensor,
+                         final_output_list, decoder_output_list, contexts])
+
                 elif self.is_train and train_mode == 'self-critical':
                     decoder_target_list = []
                     sample_target_list = []
@@ -220,11 +245,9 @@ class TransformerGraph(Graph):
         decoder_embed_inputs = tf.nn.dropout(decoder_embed_inputs,
                                              1.0 - self.hparams.layer_prepostprocess_dropout)
 
-        decoder_output, contexts = transformer.transformer_decoder(decoder_embed_inputs,
-                                                             encoder_outputs,
-                                                             decoder_attn_bias,
-                                                             encoder_attn_bias,
-                                                             self.hparams)
+        decoder_output, contexts = transformer.transformer_decoder(
+            decoder_embed_inputs, encoder_outputs, decoder_attn_bias,
+            encoder_attn_bias, self.hparams, ctxly=self.model_config.ctxly)
 
         if self.model_config.memory == 'rule':
             cur_mem_contexts = tf.stack(self.embedding_fn(rule_id_input_placeholder, mem_contexts), axis=1)

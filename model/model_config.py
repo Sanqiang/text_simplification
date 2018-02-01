@@ -159,6 +159,10 @@ class DefaultConfig():
         # Assume single digit for min_count_rule
         cnt_idx = memory_config.index('mincnt') + len("mincnt")
         min_count_rule = int(memory_config[cnt_idx: cnt_idx+1])
+    ctxly = None
+    if 'ctxly' in memory_config:
+        ctxly_idx = memory_config.index('ctxly') + len("ctxly")
+        ctxly = int(memory_config[ctxly_idx: ctxly_idx+1])
 
     # For RL
     rl_config = args.rl_config

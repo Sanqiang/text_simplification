@@ -519,7 +519,8 @@ def transformer_decoder(decoder_input,
                         encoder_decoder_attention_bias,
                         hparams,
                         cache=None,
-                        name="decoder"):
+                        name="decoder",
+                        ctxly=None):
   """A stack of transformer layers.
 
   Args:
@@ -539,6 +540,9 @@ def transformer_decoder(decoder_input,
   """
   x = decoder_input
   contexts = None
+  if ctxly is None:
+      ctxly = (hparams.num_decoder_layers or hparams.num_hidden_layers) - 1
+  print('Use Context layer %s for output' % ctxly)
   with tf.variable_scope(name):
     for layer in xrange(hparams.num_decoder_layers or
                         hparams.num_hidden_layers):
@@ -569,7 +573,7 @@ def transformer_decoder(decoder_input,
                 hparams.attention_value_channels or hparams.hidden_size,
                 hparams.hidden_size, hparams.num_heads,
                 hparams.attention_dropout)
-            if layer == (hparams.num_decoder_layers or hparams.num_hidden_layers) - 1:
+            if layer == ctxly:
                 contexts = tf.identity(y)
             x = common_layers.layer_postprocess(x, y, hparams)
         with tf.variable_scope("ffn"):
