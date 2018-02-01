@@ -7,7 +7,7 @@ from os import listdir
 from collections import Counter
 
 dict = {}
-for line in open('/Users/zhaosanqiang916/git/text_simplification_data/wiki/voc/voc_all.txt'):
+for line in open('/Users/zhaosanqiang916/git/text_simplification_data/wiki/voc/voc_comp.txt'):
     items = line.split('\t')
     word = items[0]
     cnt = int(items[1])
