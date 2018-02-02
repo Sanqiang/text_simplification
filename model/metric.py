@@ -16,6 +16,7 @@ class Metric:
 
     def self_crititcal_reward(self, sample_target_list, greed_target_list, gt_simp_list, gt_comp_list,
                               rule_target_input_placeholder):
+        sari_weight = self.model_config.rl_configs['sari_weight']
         rewards = []
         batch_size = np.shape(gt_simp_list)[0]
         num_steps = np.shape(gt_simp_list)[1]
@@ -30,8 +31,8 @@ class Metric:
                 cur_greed_target_str = ' '.join([str(o) for o in cur_greed_target_list])
                 cur_gt_simp_str = ' '.join([str(o) for o in cur_gt_simp_list])
                 cur_gt_comp_str = ' '.join([str(o) for o in cur_gt_comp_list])
-                reward_sample = SARIsent(cur_gt_comp_str, cur_sample_target_str, [cur_gt_simp_str])
-                reward_greed = SARIsent(cur_gt_comp_str, cur_greed_target_str, [cur_gt_simp_str])
+                reward_sample = sari_weight * SARIsent(cur_gt_comp_str, cur_sample_target_str, [cur_gt_simp_str]) + (1-sari_weight) * SARIsent(cur_gt_comp_str, cur_gt_simp_str, [cur_sample_target_str])
+                reward_greed = sari_weight * SARIsent(cur_gt_comp_str, cur_greed_target_str, [cur_gt_simp_str]) + (1-sari_weight) * SARIsent(cur_gt_comp_str, cur_gt_simp_str, [cur_greed_target_str])
                 reward = [r * (reward_sample-reward_greed) for r in reward]
             if 'rule' in self.model_config.rl_configs:
                 rule_weight = self.model_config.rl_configs['rule_weight']
