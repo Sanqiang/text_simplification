@@ -62,7 +62,7 @@ class TransformerGraph(Graph):
                     decoder_logit_list = [self.output_to_logit(o, w, b) for o in final_output_list]
                     decoder_target_list = [tf.argmax(o, output_type=tf.int32, axis=-1)
                                            for o in decoder_logit_list]
-                elif self.is_train and train_mode == 'static_seq':
+                elif self.is_train and (train_mode == 'static_seq' or train_mode == 'static_self-critical'):
                     decoder_target_list = []
                     decoder_logit_list =[]
                     decoder_embed_inputs_list = []
@@ -70,6 +70,8 @@ class TransformerGraph(Graph):
                     final_output_list = []
                     decoder_output_list = []
                     contexts = []
+                    sample_target_list = []
+                    sample_logit_list =[]
                     for step in range(self.model_config.max_simple_sentence):
                         if step > 0:
                             tf.get_variable_scope().reuse_variables()
@@ -81,8 +83,17 @@ class TransformerGraph(Graph):
                         decoder_logit_list.append(last_logit_list)
                         decoder_target_list.append(last_target_list)
                         decoder_embed_inputs_list.append(self.embedding_fn(last_target_list, emb_simple))
-                elif self.is_train and train_mode == 'dynamic_seq':
-                    decoder_target_tensor = tf.TensorArray(tf.int32, size=self.model_config.max_simple_sentence,
+                        if train_mode == 'static_self-critical':
+                            last_sample_list = tf.multinomial(last_logit_list, 1)
+                            sample_target_list.append(last_sample_list)
+                            indices = tf.stack(
+                                [tf.range(0, self.model_config.batch_size, dtype=tf.int64),
+                                 tf.squeeze(last_sample_list)],
+                                axis=-1)
+                            sample_logit_list.append(tf.gather_nd(tf.nn.softmax(last_logit_list), indices))
+
+                elif self.is_train and (train_mode == 'dynamic_seq' or train_mode == 'dynamic_self-critical'):
+                    decoder_target_tensor = tf.TensorArray(tf.int64, size=self.model_config.max_simple_sentence,
                                                            clear_after_read=False,
                                                            element_shape=[self.model_config.batch_size, ])
                     decoder_logit_tensor = tf.TensorArray(tf.float32, size=self.model_config.max_simple_sentence,
@@ -106,14 +117,23 @@ class TransformerGraph(Graph):
                                               clear_after_read=False,
                                               element_shape=[self.model_config.batch_size, self.model_config.dimension])
 
+                    sample_target_tensor = tf.TensorArray(tf.int64, size=self.model_config.max_simple_sentence,
+                                                           clear_after_read=False,
+                                                           element_shape=[self.model_config.batch_size, ])
+                    sample_logit_tensor = tf.TensorArray(tf.float32, size=self.model_config.max_simple_sentence,
+                                                           clear_after_read=False,
+                                                           element_shape=[self.model_config.batch_size, ])
+
                     decoder_embed_inputs_tensor = decoder_embed_inputs_tensor.write(
                         0, tf.zeros([self.model_config.batch_size, self.model_config.dimension]))
                     def _is_finished(step, decoder_target_tensor, decoder_logit_tensor,
-                                     decoder_embed_inputs_tensor, final_output_tensor, decoder_output_tensor, contexts):
+                                     decoder_embed_inputs_tensor, final_output_tensor, decoder_output_tensor, contexts,
+                                     sample_target_tensor, sample_logit_tensor):
                         return tf.less(step, self.model_config.max_simple_sentence)
 
                     def recursive(step, decoder_target_tensor, decoder_logit_tensor, decoder_embed_inputs_tensor,
-                                   final_output_tensor, decoder_output_tensor, contexts):
+                                   final_output_tensor, decoder_output_tensor, contexts,
+                                  sample_target_tensor, sample_logit_tensor):
 
                         cur_decoder_embed_inputs_tensor = decoder_embed_inputs_tensor.stack()
                         cur_decoder_embed_inputs_tensor = tf.transpose(cur_decoder_embed_inputs_tensor, perm=[1,0,2])
@@ -126,22 +146,32 @@ class TransformerGraph(Graph):
                         context = context_ret[:, -1, :]
 
                         decoder_logit = tf.add(tf.matmul(final_output, tf.transpose(w)), b)
-                        decoder_target = tf.argmax(decoder_logit, output_type=tf.int32, axis=-1)
+                        decoder_target =  tf.stop_gradient(tf.argmax(decoder_logit, output_type=tf.int64, axis=-1))
                         decoder_output_tensor = decoder_output_tensor.write(step, decoder_output)
                         final_output_tensor = final_output_tensor.write(step, final_output)
                         contexts = contexts.write(step, context)
                         decoder_logit_tensor = decoder_logit_tensor.write(step, decoder_logit)
                         decoder_target_tensor = decoder_target_tensor.write(step, decoder_target)
                         decoder_embed_inputs_tensor = decoder_embed_inputs_tensor.write(step+1, tf.nn.embedding_lookup(emb_simple, decoder_target))
-                        return step+1, decoder_target_tensor, decoder_logit_tensor, decoder_embed_inputs_tensor, final_output_tensor, decoder_output_tensor, contexts
+
+                        if train_mode == 'dynamic_self-critical':
+                            sample_target = tf.squeeze(tf.multinomial(decoder_logit, 1), axis=1)
+                            sample_target_tensor = sample_target_tensor.write(step, sample_target)
+                            indices = tf.stack(
+                                [tf.range(0, self.model_config.batch_size, dtype=tf.int64),
+                                 sample_target], axis=-1)
+                            sample_logit = tf.gather_nd(tf.nn.softmax(decoder_logit), indices)
+                            sample_logit_tensor = sample_logit_tensor.write(step, sample_logit)
+
+                        return step+1, decoder_target_tensor, decoder_logit_tensor, decoder_embed_inputs_tensor, final_output_tensor, decoder_output_tensor, contexts, sample_target_tensor, sample_logit_tensor
 
 
                     step = tf.constant(0)
                     (_, decoder_target_tensor, decoder_logit_tensor, decoder_embed_inputs_tensor,
-                                   final_output_tensor, decoder_output_tensor, contexts) = tf.while_loop(
+                                   final_output_tensor, decoder_output_tensor, contexts, sample_target_tensor, sample_logit_tensor) = tf.while_loop(
                         _is_finished, recursive,
                         [step, decoder_target_tensor, decoder_logit_tensor, decoder_embed_inputs_tensor,
-                         final_output_tensor, decoder_output_tensor, contexts],
+                         final_output_tensor, decoder_output_tensor, contexts, sample_target_tensor, sample_logit_tensor],
                         back_prop=True, parallel_iterations=1)
 
                     contexts = contexts.stack()
@@ -166,39 +196,23 @@ class TransformerGraph(Graph):
                         [self.model_config.max_simple_sentence, self.model_config.batch_size])
                     decoder_target_tensor = tf.transpose(decoder_target_tensor, perm=[1, 0])
 
+                    if train_mode == 'dynamic_self-critical':
+                        sample_target_tensor = sample_target_tensor.stack()
+                        sample_target_tensor.set_shape([self.model_config.max_simple_sentence,
+                                                       self.model_config.batch_size])
+                        sample_target_tensor = tf.transpose(sample_target_tensor, perm=[1, 0])
+                        sample_target_list = tf.unstack(sample_target_tensor, axis=1)
+
+                        sample_logit_tensor = sample_logit_tensor.stack()
+                        sample_logit_tensor.set_shape([self.model_config.max_simple_sentence,
+                                                       self.model_config.batch_size])
+                        sample_logit_tensor = tf.transpose(sample_logit_tensor, perm=[1, 0])
+                        sample_logit_list = tf.unstack(sample_logit_tensor, axis=1)
+
                     decoder_output_list = tf.unstack(decoder_output_tensor, axis=1)
                     final_output_list = tf.unstack(final_output_tensor, axis=1)
                     decoder_logit_list = tf.unstack(decoder_logit_tensor, axis=1)
                     decoder_target_list = tf.unstack(decoder_target_tensor, axis=1)
-
-                elif self.is_train and train_mode == 'static_self-critical':
-                    decoder_target_list = []
-                    sample_target_list = []
-                    sample_logit_list =[]
-
-                    decoder_logit_list = []
-                    decoder_embed_inputs_list = []
-                    # Will Override for following 3 lists
-                    final_output_list = []
-                    decoder_output_list = []
-                    contexts = []
-                    for step in range(self.model_config.max_simple_sentence):
-                        if step > 0:
-                            tf.get_variable_scope().reuse_variables()
-                        final_output_list, decoder_output_list, contexts = self.decode_step(
-                            decoder_embed_inputs_list, encoder_outputs, encoder_attn_bias,
-                            rule_id_input_placeholder, mem_contexts, mem_outputs, global_step)
-                        last_logit_list = self.output_to_logit(final_output_list[-1], w, b)
-                        last_target_list = tf.argmax(last_logit_list, output_type=tf.int32, axis=-1)
-                        last_sample_list = tf.multinomial(last_logit_list, 1)
-                        decoder_logit_list.append(last_logit_list)
-                        decoder_target_list.append(last_target_list)
-                        sample_target_list.append(last_sample_list)
-                        decoder_embed_inputs_list.append(self.embedding_fn(last_target_list, emb_simple))
-                        indices = tf.stack(
-                            [tf.range(0, self.model_config.batch_size, dtype=tf.int64), tf.squeeze(last_sample_list)],
-                            axis=-1)
-                        sample_logit_list.append(tf.gather_nd(tf.nn.softmax(last_logit_list), indices))
                 else:
                     # Beam Search
                     print('Use Beam Search with Beam Search Size %d.' % self.model_config.beam_search_size)
@@ -216,8 +230,8 @@ class TransformerGraph(Graph):
                 gt_target_list=gt_target_list,
                 encoder_embed_inputs_list=tf.unstack(encoder_embed_inputs, axis=1),
                 decoder_target_list=decoder_target_list,
-                sample_logit_list=sample_logit_list if train_mode == 'self-critical' else None,
-                sample_target_list=sample_target_list if train_mode == 'self-critical' else None
+                sample_logit_list=sample_logit_list if train_mode == 'dynamic_self-critical' or train_mode == 'static_self-critical' else None,
+                sample_target_list=sample_target_list if train_mode == 'dynamic_self-critical' or train_mode == 'static_self-critical' else None
             )
             return output
 

@@ -262,8 +262,8 @@ class Graph:
                 def self_critical_loss():
                     # For minimize the negative log of probabilities
                     rewards = tf.py_func(self.metric.self_crititcal_reward,
-                                         [tf.stack(output.sample_target_list, axis=-1),
-                                          tf.stack(output.decoder_target_list, axis=-1),
+                                         [tf.stack(output.decoder_target_list, axis=-1),
+                                          tf.stack(output.sample_target_list, axis=-1),
                                           tf.stack(sentence_simple_input_placeholder, axis=-1),
                                           tf.stack(sentence_complex_input_placeholder, axis=-1),
                                           tf.stack(rule_target_input_placeholder, axis=1)],
@@ -296,10 +296,10 @@ class Graph:
                                          )
                     return loss
 
-                if self.model_config.train_mode == 'self-critical':
+                if self.model_config.train_mode == 'dynamic_self-critical' or self.model_config.train_mode == 'static_self-critical':
                     loss = tf.cond(
-                        # tf.greater(self.global_step, 1000),
-                        tf.logical_and(tf.greater(self.global_step, 100000), tf.equal(tf.mod(self.global_step, 2), 0)),
+                        tf.greater(self.global_step, 10000),
+                        # tf.logical_and(tf.greater(self.global_step, 100000), tf.equal(tf.mod(self.global_step, 2), 0)),
                         lambda : self_critical_loss(),
                         lambda : teacherforce_loss())
                 else:

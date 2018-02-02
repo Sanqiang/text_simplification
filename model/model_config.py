@@ -177,7 +177,7 @@ class DefaultConfig():
         if kv[0] == 'sari_weight':
             rl_configs['sari_weight'] = float(kv[1])
         else:
-            rl_configs['sari_weight'] = 0.1
+            rl_configs['sari_weight'] = 1.0
         if kv[0] == 'rule':
             rl_configs['rule'] = True
         if kv[0] == 'rule_weight':
