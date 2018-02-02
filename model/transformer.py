@@ -62,7 +62,7 @@ class TransformerGraph(Graph):
                     decoder_logit_list = [self.output_to_logit(o, w, b) for o in final_output_list]
                     decoder_target_list = [tf.argmax(o, output_type=tf.int32, axis=-1)
                                            for o in decoder_logit_list]
-                elif self.is_train and train_mode == 'seq':
+                elif self.is_train and train_mode == 'static_seq':
                     decoder_target_list = []
                     decoder_logit_list =[]
                     decoder_embed_inputs_list = []
@@ -81,32 +81,97 @@ class TransformerGraph(Graph):
                         decoder_logit_list.append(last_logit_list)
                         decoder_target_list.append(last_target_list)
                         decoder_embed_inputs_list.append(self.embedding_fn(last_target_list, emb_simple))
-                elif self.is_train and train_mode == 'ttt':
-                    decoder_target_tensor = tf.zeros([self.model_config.batch_size], tf.int32)
-                    decoder_logit_tensor = tf.zeros(
-                        [self.model_config.batch_size, self.model_config.dimension], tf.float32)
-                    decoder_embed_inputs_tensor = tf.zeros(
-                        [self.model_config.batch_size, self.model_config.dimension], tf.float32)
-                    final_output_list = tf.zeros(
-                        [self.model_config.batch_size, self.model_config.dimension], tf.float32)
-                    decoder_output_list = tf.zeros(
-                        [self.model_config.batch_size, self.model_config.dimension], tf.float32)
-                    contexts = tf.zeros(
-                        [self.model_config.batch_size, self.model_config.dimension], tf.float32)
-                    def _is_finished():
-                        return
+                elif self.is_train and train_mode == 'dynamic_seq':
+                    decoder_target_tensor = tf.TensorArray(tf.int32, size=self.model_config.max_simple_sentence,
+                                                           clear_after_read=False,
+                                                           element_shape=[self.model_config.batch_size, ])
+                    decoder_logit_tensor = tf.TensorArray(tf.float32, size=self.model_config.max_simple_sentence,
+                                                          clear_after_read=False,
+                                                          element_shape=[self.model_config.batch_size,
+                                                                         self.data.vocab_simple.vocab_size()])
+                    decoder_embed_inputs_tensor = tf.TensorArray(tf.float32,
+                                                                 size=1, dynamic_size=True,
+                                                                 clear_after_read=False,
+                                                                 element_shape=[self.model_config.batch_size,
+                                                                                self.model_config.dimension])
+                    final_output_tensor = tf.TensorArray(tf.float32, size=self.model_config.max_simple_sentence,
+                                                         clear_after_read=False,
+                                                         element_shape=[self.model_config.batch_size,
+                                                                        self.model_config.dimension])
+                    decoder_output_tensor = tf.TensorArray(tf.float32, size=self.model_config.max_simple_sentence,
+                                                           clear_after_read=False,
+                                                           element_shape=[self.model_config.batch_size,
+                                                                          self.model_config.dimension])
+                    contexts = tf.TensorArray(tf.float32, size=self.model_config.max_simple_sentence,
+                                              clear_after_read=False,
+                                              element_shape=[self.model_config.batch_size, self.model_config.dimension])
 
-                    def recursive():
-                        return
+                    decoder_embed_inputs_tensor = decoder_embed_inputs_tensor.write(
+                        0, tf.zeros([self.model_config.batch_size, self.model_config.dimension]))
+                    def _is_finished(step, decoder_target_tensor, decoder_logit_tensor,
+                                     decoder_embed_inputs_tensor, final_output_tensor, decoder_output_tensor, contexts):
+                        return tf.less(step, self.model_config.max_simple_sentence)
+
+                    def recursive(step, decoder_target_tensor, decoder_logit_tensor, decoder_embed_inputs_tensor,
+                                   final_output_tensor, decoder_output_tensor, contexts):
+
+                        cur_decoder_embed_inputs_tensor = decoder_embed_inputs_tensor.stack()
+                        cur_decoder_embed_inputs_tensor = tf.transpose(cur_decoder_embed_inputs_tensor, perm=[1,0,2])
+
+                        final_output_list, decoder_output_list, context_ret = self.decode_inputs_to_outputs(
+                            cur_decoder_embed_inputs_tensor, encoder_outputs, encoder_attn_bias,
+                            rule_id_input_placeholder, mem_contexts, mem_outputs, global_step)
+                        final_output = final_output_list[:, -1 , :]
+                        decoder_output = decoder_output_list[:, -1, :]
+                        context = context_ret[:, -1, :]
+
+                        decoder_logit = tf.add(tf.matmul(final_output, tf.transpose(w)), b)
+                        decoder_target = tf.argmax(decoder_logit, output_type=tf.int32, axis=-1)
+                        decoder_output_tensor = decoder_output_tensor.write(step, decoder_output)
+                        final_output_tensor = final_output_tensor.write(step, final_output)
+                        contexts = contexts.write(step, context)
+                        decoder_logit_tensor = decoder_logit_tensor.write(step, decoder_logit)
+                        decoder_target_tensor = decoder_target_tensor.write(step, decoder_target)
+                        decoder_embed_inputs_tensor = decoder_embed_inputs_tensor.write(step+1, tf.nn.embedding_lookup(emb_simple, decoder_target))
+                        return step+1, decoder_target_tensor, decoder_logit_tensor, decoder_embed_inputs_tensor, final_output_tensor, decoder_output_tensor, contexts
 
 
+                    step = tf.constant(0)
                     (_, decoder_target_tensor, decoder_logit_tensor, decoder_embed_inputs_tensor,
-                                   final_output_list, decoder_output_list, contexts) = tf.while_loop(
+                                   final_output_tensor, decoder_output_tensor, contexts) = tf.while_loop(
                         _is_finished, recursive,
-                        [tf.constant(0), decoder_target_tensor, decoder_logit_tensor, decoder_embed_inputs_tensor,
-                         final_output_list, decoder_output_list, contexts])
+                        [step, decoder_target_tensor, decoder_logit_tensor, decoder_embed_inputs_tensor,
+                         final_output_tensor, decoder_output_tensor, contexts],
+                        back_prop=True, parallel_iterations=1)
 
-                elif self.is_train and train_mode == 'self-critical':
+                    contexts = contexts.stack()
+                    contexts.set_shape([self.model_config.max_simple_sentence, self.model_config.batch_size,
+                                        self.model_config.dimension])
+                    contexts = tf.transpose(contexts, perm=[1,0,2])
+                    decoder_output_tensor = decoder_output_tensor.stack()
+                    decoder_output_tensor.set_shape(
+                        [self.model_config.max_simple_sentence, self.model_config.batch_size,
+                         self.model_config.dimension])
+                    decoder_output_tensor = tf.transpose(decoder_output_tensor, perm=[1, 0, 2])
+                    final_output_tensor = final_output_tensor.stack()
+                    final_output_tensor.set_shape([self.model_config.max_simple_sentence, self.model_config.batch_size,
+                                                   self.model_config.dimension])
+                    final_output_tensor = tf.transpose(final_output_tensor, perm=[1, 0, 2])
+                    decoder_logit_tensor = decoder_logit_tensor.stack()
+                    decoder_logit_tensor.set_shape([self.model_config.max_simple_sentence, self.model_config.batch_size,
+                                                    self.data.vocab_simple.vocab_size()])
+                    decoder_logit_tensor = tf.transpose(decoder_logit_tensor, perm=[1, 0, 2])
+                    decoder_target_tensor = decoder_target_tensor.stack()
+                    decoder_target_tensor.set_shape(
+                        [self.model_config.max_simple_sentence, self.model_config.batch_size])
+                    decoder_target_tensor = tf.transpose(decoder_target_tensor, perm=[1, 0])
+
+                    decoder_output_list = tf.unstack(decoder_output_tensor, axis=1)
+                    final_output_list = tf.unstack(final_output_tensor, axis=1)
+                    decoder_logit_list = tf.unstack(decoder_logit_tensor, axis=1)
+                    decoder_target_list = tf.unstack(decoder_target_tensor, axis=1)
+
+                elif self.is_train and train_mode == 'static_self-critical':
                     decoder_target_list = []
                     sample_target_list = []
                     sample_logit_list =[]

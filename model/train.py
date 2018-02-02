@@ -205,7 +205,6 @@ def train(model_config=None):
         fetches = [graph.train_op, graph.loss, graph.global_step,
                    graph.perplexity, graph.ops]
         _, loss, step, perplexity, _ = sess.run(fetches, input_feed)
-        # print(www)
         perplexitys.append(perplexity)
 
         if step % model_config.model_print_freq == 0:
