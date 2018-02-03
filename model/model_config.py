@@ -186,6 +186,8 @@ class DefaultConfig():
     # RNN decoder
     rnn_decoder = args.rnn_decoder
 
+    rule_base = args.rule_base
+
 class DefaultTrainConfig(DefaultConfig):
     beam_search_size = 0
 
@@ -216,14 +218,33 @@ class WikiDressLargeDefault(DefaultConfig):
     train_dataset_complex_syntax = get_path(
         '../text_simplification_data/train/dress/wikilarge/wiki.full.aner.train.src.jsyntax')
     train_dataset_complex = get_path('../text_simplification_data/train/dress/wikilarge/wiki.full.aner.train.src')
-    train_dataset_complex_ppdb = get_path(args.train_dataset_complex_ppdb)
+    val_dataset_complex_syntax = get_path(
+        '../text_simplification_data/test/wiki.full.aner.test.src.jsyntax')
+    rule_base = args.rule_base
+    if rule_base == 'sing':
+        # Only consider single word rules from v1
+        train_dataset_complex_ppdb = get_path(
+            '../text_simplification_data/train/dress/wikilarge/wiki.full.aner.train.src.sorted.rules')
+        vocab_rules = get_path(
+            '../text_simplification_data/train/dress/wikilarge/wiki.full.aner.train.rules.sing')
+        rule_size = 40246
+    elif rule_base == 'v3':
+        # Combine rules from v2 and single words from PPDB
+        train_dataset_complex_ppdb = get_path(
+            '../text_simplification_data/train/dress/wikilarge/wiki.full.aner.train.src.sorted.rules.v3')
+        vocab_rules = get_path(
+            '../text_simplification_data/train/dress/wikilarge/wiki.full.aner.train.rules.v3.sing')
+        rule_size = 55115
+    else:
+        # Original version of rules
+        train_dataset_complex_ppdb = get_path(
+            '../text_simplification_data/train/dress/wikilarge/wiki.full.aner.train.src.sorted.rules')
+        vocab_rules = get_path(
+            '../text_simplification_data/train/dress/wikilarge/wiki.full.aner.train.rules')
+        rule_size = 44186
 
-    # train_dataset_complex_ppdb = get_path('../text_simplification_data/train/dress/wikilarge/wiki.full.aner.train.src.rules')
     # add .dress extention will be same vocab as dress by add .dress in the end
-    vocab_rules = get_path(
-        '../text_simplification_data/train/dress/wikilarge/wiki.full.aner.train.rules')
     max_cand_rules = 15
-    rule_size = 44186
     if args.our_vocab:
         vocab_simple = get_path('../text_simplification_data/train/dress/wikilarge/wiki.full.aner.train.dst.vocab')
         vocab_complex = get_path('../text_simplification_data/train/dress/wikilarge/wiki.full.aner.train.src.vocab')
@@ -347,8 +368,12 @@ class SubTestWikiEightRefConfig(SubTest):
     val_dataset_simple_file = 'wiki.full.aner.test.dst'
     val_dataset_complex = get_path('../text_simplification_data/test/wiki.full.aner.test.src')
     val_mapper = get_path('../text_simplification_data/test/test.8turkers.tok.map.dress')
-    val_dataset_complex_ppdb = get_path(
-        '../text_simplification_data/test/wiki.full.aner.test.src.sorted.rules')
+    rule_base = args.rule_base
+    if rule_base == 'v3':
+        val_dataset_complex_ppdb = get_path('../text_simplification_data/test/wiki.full.aner.test.src.sorted.rules.v3')
+    else:
+        val_dataset_complex_ppdb = get_path(
+            '../text_simplification_data/test/wiki.full.aner.test.src.sorted.rules')
     # wiki.full.aner.ori.test.dst is uppercase whereas test.8turkers.tok.simp is lowercase
     val_dataset_complex_rawlines_file = get_path(
         '../text_simplification_data/test/test.8turkers.tok.norm')
@@ -356,12 +381,18 @@ class SubTestWikiEightRefConfig(SubTest):
     val_dataset_simple_rawlines_file = 'test.8turkers.tok.simp'
     num_refs = 8
 
-
+# Note that rule_base v3 is different from val_dataset_complex_ppdb v2
+# rule_base v2 indicates a new set of rules by combining PPDB
+# val_dataset_complex_ppdb v2 indicates revised (add X and NEW tag) rules for rule_base v1
 class SubTestWikiEightRefConfigV2(SubTestWikiEightRefConfig):
     output_folder = args.output_folder
     resultdor = get_path('../' + output_folder + '/result/eightref_test_v2', True)
 
-    val_dataset_complex_ppdb = get_path(
+    rule_base = args.rule_base
+    if rule_base == 'v3':
+        val_dataset_complex_ppdb = get_path('../text_simplification_data/test/wiki.full.aner.test.src.sorted.rules.v3')
+    else:
+        val_dataset_complex_ppdb = get_path(
         '../text_simplification_data/test/wiki.full.aner.test.src.sorted.rules.v2')
 
 
@@ -369,7 +400,11 @@ class SubTestWikiEightRefConfigV2Sing(SubTestWikiEightRefConfig):
     output_folder = args.output_folder
     resultdor = get_path('../' + output_folder + '/result/eightref_test_v2sing', True)
 
-    val_dataset_complex_ppdb = get_path(
+    rule_base = args.rule_base
+    if rule_base == 'v3':
+        val_dataset_complex_ppdb = get_path('../text_simplification_data/test/wiki.full.aner.test.src.sorted.rules.v3')
+    else:
+        val_dataset_complex_ppdb = get_path(
         '../text_simplification_data/test/wiki.full.aner.test.src.sorted.rules.v2.sing')
 
 
@@ -384,7 +419,11 @@ class SubTestWikiEightRefPPDBConfigV2(SubTestWikiEightRefPPDBConfig):
     output_folder = args.output_folder
     resultdor = get_path('../' + output_folder + '/result/eightref_test_ppdbe_v2', True)
 
-    val_dataset_complex_ppdb = get_path(
+    rule_base = args.rule_base
+    if rule_base == 'v3':
+        val_dataset_complex_ppdb = get_path('../text_simplification_data/test/wiki.full.aner.test.src.sorted.rules.v3')
+    else:
+        val_dataset_complex_ppdb = get_path(
         '../text_simplification_data/test/wiki.full.aner.test.src.sorted.rules.v2')
 
 
@@ -392,7 +431,11 @@ class SubTestWikiEightRefPPDBConfigV2Sing(SubTestWikiEightRefPPDBConfig):
     output_folder = args.output_folder
     resultdor = get_path('../' + output_folder + '/result/eightref_test_ppdbe_v2sing', True)
 
-    val_dataset_complex_ppdb = get_path(
+    rule_base = args.rule_base
+    if rule_base == 'v3':
+        val_dataset_complex_ppdb = get_path('../text_simplification_data/test/wiki.full.aner.test.src.sorted.rules.v3')
+    else:
+        val_dataset_complex_ppdb = get_path(
         '../text_simplification_data/test/wiki.full.aner.test.src.sorted.rules.v2.sing')
 
 

@@ -348,6 +348,15 @@ class TransformerGraph(Graph):
                                        lambda : mem_output, lambda : decoder_output)
 
                 print('Use FFN for Combine Memory!')
+            elif 'cgate' in self.model_config.memory_config:
+                temp_output = tf.concat((decoder_output, mem_output), axis=-1)
+                w1 = tf.get_variable('w1',
+                                     shape=(1, self.model_config.dimension * 2, self.model_config.dimension))
+                w2 = tf.get_variable('w2',
+                                     shape=(1, self.model_config.dimension * 2, self.model_config.dimension))
+                gate1 = tf.tanh(tf.nn.conv1d(temp_output, w1, 1, 'SAME'))
+                gate2 = tf.tanh(tf.nn.conv1d(temp_output, w2, 1, 'SAME'))
+                mem_output = gate1 * mem_output + gate2 * decoder_output
         else:
             final_output = decoder_output
 

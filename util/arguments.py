@@ -64,9 +64,6 @@ def get_args():
     parser.add_argument('-path_ppdb', '--path_ppdb_refine',
                         default='../text_simplification_data/ppdb/SimplePPDB.enrich',
                         help='The path for PPDB rules?')
-    parser.add_argument('-complex_ppdb', '--train_dataset_complex_ppdb',
-                        default='../text_simplification_data/train/dress/wikilarge/wiki.full.aner.train.src.sorted.rules',
-                        help='The path for PPDB comp rules?')
 
     # For Memory
     parser.add_argument('-mem', '--memory', default=None,
@@ -98,6 +95,9 @@ def get_args():
     # For Test
     parser.add_argument('-test_ckpt', '--test_ckpt', default='',
                         help='Path for test ckpt checkpoint?')
+
+    parser.add_argument('-rbase', '--rule_base', default='v1',
+                        help='Which rule base to use?')
 
     args = parser.parse_args()
     return args

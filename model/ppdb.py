@@ -113,7 +113,7 @@ class PPDB:
             line = '\t'.join(rules)
             output = output + line + '\n'
 
-        f = open(self.model_config.val_dataset_complex_ppdb + '.v2.sing.tmp', 'w')
+        f = open(self.model_config.val_dataset_complex_ppdb + '.v3.sing.tmp', 'w')
         f.write(output)
         f.close()
 
@@ -456,9 +456,9 @@ if __name__ == '__main__':
     # elif args.mode == 'dress':
     #     config = WikiDressLargeTrainConfig()
     # get_refine_data()
-    config = WikiTransLegacyTestCfg()
+    config = WikiDressLargeDefault()
     ppdb = PPDB(config)
-    # ppdb.process_training(is_comp=False)
+    # ppdb.process_training(is_comp=True)
     ppdb.process_test()
     # ppdb.simplify(
     #     'There is manuscript evidence that PERSON@1 continued to work on these pieces as late as the period NUMBER@1 â '' NUMBER@2 , and that her niece and nephew , PERSON@2 and PERSON@3 , made further additions as late as NUMBER@3 .',

@@ -1,7 +1,7 @@
 import operator
 
-f = open('/Users/zhaosanqiang916/git/text_simplification_data/test/wiki.full.aner.test.src.rules')
-fn = open('/Users/zhaosanqiang916/git/text_simplification_data/test/wiki.full.aner.test.src.sorted.rules', 'w')
+f = open('/Users/zhaosanqiang916/git/text_simplification_data/test/eval_dummy_complex_dataset.rules.v3.sing.tmp')
+fn = open('/Users/zhaosanqiang916/git/text_simplification_data/test/eval_dummy_complex_dataset.rules.v3.sing', 'w')
 nlines = []
 maxn = -1
 maxl =  ''
