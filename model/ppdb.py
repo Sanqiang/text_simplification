@@ -94,20 +94,26 @@ class PPDB:
                 syntax_pairs = [p.split('=>') for p in syntax.split('\t')]
                 for syntax_pair in syntax_pairs:
                     ori_words = syntax_pair[1].lower()
-                    tag = syntax_pair[0]
-                    if ori_words not in self.rules or tag not in self.rules[ori_words]:
+                    ctag = syntax_pair[0]
+                    if ori_words not in self.rules and ctag not in self.rules[ori_words] and 'NEW' not in self.rules[ori_words] and 'X' not in self.rules[ori_words]:
                         continue
-                    target_words = self.rules[ori_words][tag]
-                    for target_word in target_words:
-                        score = self.rules[ori_words][tag][target_word]
-                        rule = '=>'.join([tag, ori_words, target_word, str(score)])
-                        rule_id, _ = vocab_rule.encode(rule)
-                        if rule_id is not None:
-                            rules.append(rule)
+                    for tag in [ctag, 'NEW', 'X']:
+                        if tag not in self.rules[ori_words]:
+                            continue
+                        target_words = self.rules[ori_words][tag]
+                        # For SINGLE version
+                        for target_word in target_words:
+                            if ' ' in target_word or ' ' in ori_words:
+                                continue
+                            score = self.rules[ori_words][tag][target_word]
+                            rule = '=>'.join([tag, ori_words, target_word, str(score)])
+                            rule_id, _ = vocab_rule.encode(rule)
+                            if rule_id is not None:
+                                rules.append(rule)
             line = '\t'.join(rules)
             output = output + line + '\n'
 
-        f = open(self.model_config.val_dataset_complex_ppdb, 'w')
+        f = open(self.model_config.val_dataset_complex_ppdb + '.v2.sing.tmp', 'w')
         f.write(output)
         f.close()
 

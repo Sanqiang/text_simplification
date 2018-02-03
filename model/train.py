@@ -233,6 +233,8 @@ def train(model_config=None):
             from model.model_config import SubValWikiEightRefPPDBConfig, SubTestWikiEightRefPPDBConfig
             from model.model_config import DefaultTestConfig, DefaultTestConfig2
             from model.model_config import SubTestWikiSmallConfig, SubTestWikiSmallPPDBConfig
+            from model.model_config import SubTestWikiEightRefConfigV2, SubTestWikiEightRefConfigV2Sing
+            from model.model_config import SubTestWikiEightRefPPDBConfigV2, SubTestWikiEightRefPPDBConfigV2Sing
             ckpt = get_ckpt(model_config.modeldir, model_config.logdir)
             print("==============================Before Eval Stat==============================")
             print_cpu_memory()
@@ -244,8 +246,12 @@ def train(model_config=None):
                 elif args.mode == 'dress' or args.mode == 'all' :
                     # eval(SubValWikiEightRefConfig(), ckpt)
                     eval(SubTestWikiEightRefConfig(), ckpt)
+                    eval(SubTestWikiEightRefConfigV2(), ckpt)
+                    eval(SubTestWikiEightRefConfigV2Sing(), ckpt)
                     # eval(SubValWikiEightRefPPDBConfigConfig(), ckpt)
-                    # eval(SubTestWikiEightRefPPDBConfig(), ckpt)
+                    eval(SubTestWikiEightRefPPDBConfig(), ckpt)
+                    eval(SubTestWikiEightRefPPDBConfigV2(), ckpt)
+                    eval(SubTestWikiEightRefPPDBConfigV2Sing(), ckpt)
                 elif args.mode == 'dress2':
                     eval(SubTestWikiSmallConfig(), ckpt)
                     eval(SubTestWikiSmallPPDBConfig(), ckpt)

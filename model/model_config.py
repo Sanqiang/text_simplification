@@ -357,11 +357,43 @@ class SubTestWikiEightRefConfig(SubTest):
     num_refs = 8
 
 
+class SubTestWikiEightRefConfigV2(SubTestWikiEightRefConfig):
+    output_folder = args.output_folder
+    resultdor = get_path('../' + output_folder + '/result/eightref_test_v2', True)
+
+    val_dataset_complex_ppdb = get_path(
+        '../text_simplification_data/test/wiki.full.aner.test.src.sorted.rules.v2')
+
+
+class SubTestWikiEightRefConfigV2Sing(SubTestWikiEightRefConfig):
+    output_folder = args.output_folder
+    resultdor = get_path('../' + output_folder + '/result/eightref_test_v2sing', True)
+
+    val_dataset_complex_ppdb = get_path(
+        '../text_simplification_data/test/wiki.full.aner.test.src.sorted.rules.v2.sing')
+
+
 class SubTestWikiEightRefPPDBConfig(SubTestWikiEightRefConfig):
     output_folder = args.output_folder
     resultdor = get_path('../' + output_folder + '/result/eightref_test_ppdbe')
     ppdb_emode = 'weight'
     ppdb_emode_args = 1.5
+
+
+class SubTestWikiEightRefPPDBConfigV2(SubTestWikiEightRefPPDBConfig):
+    output_folder = args.output_folder
+    resultdor = get_path('../' + output_folder + '/result/eightref_test_ppdbe_v2', True)
+
+    val_dataset_complex_ppdb = get_path(
+        '../text_simplification_data/test/wiki.full.aner.test.src.sorted.rules.v2')
+
+
+class SubTestWikiEightRefPPDBConfigV2Sing(SubTestWikiEightRefPPDBConfig):
+    output_folder = args.output_folder
+    resultdor = get_path('../' + output_folder + '/result/eightref_test_ppdbe_v2sing', True)
+
+    val_dataset_complex_ppdb = get_path(
+        '../text_simplification_data/test/wiki.full.aner.test.src.sorted.rules.v2.sing')
 
 
 class SubTestWikiEightRefConfigBeam4(SubTestWikiEightRefConfig):
