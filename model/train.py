@@ -155,9 +155,26 @@ def train(model_config=None):
         ckpt_path = ckpt_model
         var_list = [v for v in slim.get_variables_to_restore() if 'optim' not in v.name]
     if ckpt_path is not None:
+        # Handling missing vars by ourselves
+        available_vars = {}
+        reader = tf.train.NewCheckpointReader(ckpt_path)
+        var_dict = {var.op.name: var for var in var_list}
+        for var in var_dict:
+            if 'global_step' in var:
+                continue
+            if reader.has_tensor(var):
+                var_ckpt = reader.get_tensor(var)
+                var_cur = var_dict[var]
+                if any([var_cur.shape[i] != var_ckpt.shape[i] for i in range(len(var_ckpt.shape))]):
+                    print('Variable %s missing due to shape.', var)
+                else:
+                    available_vars[var] = var_dict[var]
+            else:
+                print('Variable %s missing.', var)
+
         partial_restore_ckpt = slim.assign_from_checkpoint_fn(
-            ckpt_path, var_list,
-            ignore_missing_vars=True, reshape_variables=False)
+            ckpt_path, available_vars,
+            ignore_missing_vars=False, reshape_variables=False)
 
     def init_fn(session):
         # if model_config.pretrained_embedding is not None and model_config.subword_vocab_size <= 0:
