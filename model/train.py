@@ -162,6 +162,8 @@ def train(model_config=None):
         for var in var_dict:
             if 'global_step' in var:
                 continue
+            if 'optimization' in var:
+                continue
             if reader.has_tensor(var):
                 var_ckpt = reader.get_tensor(var)
                 var_cur = var_dict[var]
