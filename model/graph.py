@@ -298,8 +298,8 @@ class Graph:
 
                 if self.model_config.train_mode == 'dynamic_self-critical' or self.model_config.train_mode == 'static_self-critical':
                     loss = tf.cond(
-                        tf.greater(self.global_step, 10000),
-                        # tf.logical_and(tf.greater(self.global_step, 100000), tf.equal(tf.mod(self.global_step, 2), 0)),
+                        # tf.greater(self.global_step, 10000),
+                        tf.logical_and(tf.greater(self.global_step, 100000), tf.equal(tf.mod(self.global_step, 2), 0)),
                         lambda : self_critical_loss(),
                         lambda : teacherforce_loss())
                 else:

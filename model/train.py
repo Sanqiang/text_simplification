@@ -268,9 +268,9 @@ def train(model_config=None):
                     eval(SubTestWikiEightRefConfigV2(), ckpt)
                     eval(SubTestWikiEightRefConfigV2Sing(), ckpt)
                     # eval(SubValWikiEightRefPPDBConfigConfig(), ckpt)
-                    eval(SubTestWikiEightRefPPDBConfig(), ckpt)
-                    eval(SubTestWikiEightRefPPDBConfigV2(), ckpt)
-                    eval(SubTestWikiEightRefPPDBConfigV2Sing(), ckpt)
+                    # eval(SubTestWikiEightRefPPDBConfig(), ckpt)
+                    # eval(SubTestWikiEightRefPPDBConfigV2(), ckpt)
+                    # eval(SubTestWikiEightRefPPDBConfigV2Sing(), ckpt)
                 elif args.mode == 'dress2':
                     eval(SubTestWikiSmallConfig(), ckpt)
                     eval(SubTestWikiSmallPPDBConfig(), ckpt)

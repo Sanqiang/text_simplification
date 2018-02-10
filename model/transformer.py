@@ -486,4 +486,8 @@ class TransformerGraph(Graph):
             self.hparams.add_hparam('mode', tf.estimator.ModeKeys.TRAIN)
         else:
             self.hparams.add_hparam('mode', tf.estimator.ModeKeys.EVAL)
-            self.hparams.layer_prepostprocess_dropout = 0
+            self.hparams.layer_prepostprocess_dropout = 0.0
+            self.hparams.attention_dropout = 0.0
+            self.hparams.dropout = 0.0
+            self.hparams.relu_dropout = 0.0
+
