@@ -196,14 +196,14 @@ class DefaultTestConfig(DefaultConfig):
     beam_search_size = 1
     batch_size = 2
     output_folder = args.output_folder
-    resultdor = get_path('../' + output_folder + '/result/test1', True)
+    resultdir = get_path('../' + output_folder + '/result/test1', True)
 
 
 class DefaultTestConfig2(DefaultConfig):
     beam_search_size = 1
     batch_size = 2
     output_folder = args.output_folder
-    resultdor = get_path('../' + output_folder + '/result/test2')
+    resultdir = get_path('../' + output_folder + '/result/test2')
 
 
 class WikiDressLargeDefault(DefaultConfig):
@@ -326,12 +326,12 @@ class SubTest(WikiDressLargeDefault):
     replace_unk_by_emb = True
     beam_search_size = 1
     output_folder = args.output_folder
-    resultdor = get_path('../' + output_folder + '/result/')
+    resultdir = get_path('../' + output_folder + '/result/')
 
 
 class SubValWikiEightRefConfig(SubTest):
     output_folder = args.output_folder
-    resultdor = get_path('../' + output_folder + '/result/eightref_val')
+    resultdir = get_path('../' + output_folder + '/result/eightref_val')
 
     val_dataset_simple_folder = get_path('../text_simplification_data/val/')
     # use the original dress
@@ -348,7 +348,7 @@ class SubValWikiEightRefConfig(SubTest):
 
 class SubValWikiEightRefPPDBConfig(SubValWikiEightRefConfig):
     output_folder = args.output_folder
-    resultdor = get_path('../' + output_folder + '/result/eightref_val_ppdbe')
+    resultdir = get_path('../' + output_folder + '/result/eightref_val_ppdbe')
     ppdb_emode = 'weight'
     ppdb_emode_args = 1.5
 
@@ -356,12 +356,12 @@ class SubValWikiEightRefPPDBConfig(SubValWikiEightRefConfig):
 class SubValWikiEightRefConfigBeam4(SubValWikiEightRefConfig):
     beam_search_size = 4
     output_folder = args.output_folder
-    resultdor = get_path('../' + output_folder + '/result/eightref_val_bm')
+    resultdir = get_path('../' + output_folder + '/result/eightref_val_bm')
 
 
 class SubTestWikiEightRefConfig(SubTest):
     output_folder = args.output_folder
-    resultdor = get_path('../' + output_folder + '/result/eightref_test', True)
+    resultdir = get_path('../' + output_folder + '/result/eightref_test', True)
 
     val_dataset_simple_folder = get_path('../text_simplification_data/test/')
     # use the original dress
@@ -386,7 +386,7 @@ class SubTestWikiEightRefConfig(SubTest):
 # val_dataset_complex_ppdb v2 indicates revised (add X and NEW tag) rules for rule_base v1
 class SubTestWikiEightRefConfigV2(SubTestWikiEightRefConfig):
     output_folder = args.output_folder
-    resultdor = get_path('../' + output_folder + '/result/eightref_test_v2', True)
+    resultdir = get_path('../' + output_folder + '/result/eightref_test_v2', True)
 
     rule_base = args.rule_base
     if rule_base == 'v3':
@@ -398,7 +398,7 @@ class SubTestWikiEightRefConfigV2(SubTestWikiEightRefConfig):
 
 class SubTestWikiEightRefConfigV2Sing(SubTestWikiEightRefConfig):
     output_folder = args.output_folder
-    resultdor = get_path('../' + output_folder + '/result/eightref_test_v2sing', True)
+    resultdir = get_path('../' + output_folder + '/result/eightref_test_v2sing', True)
 
     rule_base = args.rule_base
     if rule_base == 'v3':
@@ -410,14 +410,14 @@ class SubTestWikiEightRefConfigV2Sing(SubTestWikiEightRefConfig):
 
 class SubTestWikiEightRefPPDBConfig(SubTestWikiEightRefConfig):
     output_folder = args.output_folder
-    resultdor = get_path('../' + output_folder + '/result/eightref_test_ppdbe')
+    resultdir = get_path('../' + output_folder + '/result/eightref_test_ppdbe')
     ppdb_emode = 'weight'
     ppdb_emode_args = 1.5
 
 
 class SubTestWikiEightRefPPDBConfigV2(SubTestWikiEightRefPPDBConfig):
     output_folder = args.output_folder
-    resultdor = get_path('../' + output_folder + '/result/eightref_test_ppdbe_v2', True)
+    resultdir = get_path('../' + output_folder + '/result/eightref_test_ppdbe_v2', True)
 
     rule_base = args.rule_base
     if rule_base == 'v3':
@@ -429,7 +429,7 @@ class SubTestWikiEightRefPPDBConfigV2(SubTestWikiEightRefPPDBConfig):
 
 class SubTestWikiEightRefPPDBConfigV2Sing(SubTestWikiEightRefPPDBConfig):
     output_folder = args.output_folder
-    resultdor = get_path('../' + output_folder + '/result/eightref_test_ppdbe_v2sing', True)
+    resultdir = get_path('../' + output_folder + '/result/eightref_test_ppdbe_v2sing', True)
 
     rule_base = args.rule_base
     if rule_base == 'v3':
@@ -442,7 +442,7 @@ class SubTestWikiEightRefPPDBConfigV2Sing(SubTestWikiEightRefPPDBConfig):
 class SubTestWikiEightRefConfigBeam4(SubTestWikiEightRefConfig):
     beam_search_size = 4
     output_folder = args.output_folder
-    resultdor = get_path('../' + output_folder + '/result/eightref_test_bm')
+    resultdir = get_path('../' + output_folder + '/result/eightref_test_bm')
 
 
 class WikiDressSmallDefault(WikiDressLargeDefault):
@@ -467,7 +467,7 @@ class WikiDressSmallTrainConfig(WikiDressSmallDefault):
 
 class SubTestWikiSmallConfig(WikiDressSmallDefault):
     output_folder = args.output_folder
-    resultdor = get_path('../' + output_folder + '/result/small_test')
+    resultdir = get_path('../' + output_folder + '/result/small_test')
 
     val_dataset_simple_folder = get_path(
         '../text_simplification_data/train/dress/wikismall/')
@@ -486,7 +486,7 @@ class SubTestWikiSmallConfig(WikiDressSmallDefault):
 
 class SubTestWikiSmallPPDBConfig(SubTestWikiSmallConfig):
     output_folder = args.output_folder
-    resultdor = get_path('../' + output_folder + '/result/small_test_ppdbe')
+    resultdir = get_path('../' + output_folder + '/result/small_test_ppdbe')
     ppdb_emode = 'weight'
     ppdb_emode_args = 1.5
 
@@ -521,7 +521,7 @@ class WikiTransLegacyTestCfg(WikiTransLegacyBaseCfg):
     beam_search_size = 1
 
     output_folder = args.output_folder
-    resultdor = get_path('../' + output_folder + '/result/eightref_test', True)
+    resultdir = get_path('../' + output_folder + '/result/eightref_test', True)
 
     val_dataset_simple_folder = get_path('../text_simplification_data/test/')
     # use the original dress
@@ -600,7 +600,7 @@ class WikiTransValCfg(WikiTransBaseCfg):
     beam_search_size = 1
 
     output_folder = args.output_folder
-    resultdor = get_path('../' + output_folder + '/result/eightref_test')
+    resultdir = get_path('../' + output_folder + '/result/eightref_test')
 
     val_dataset_simple_folder = get_path('../text_simplification_data/test/')
     # use the original dress

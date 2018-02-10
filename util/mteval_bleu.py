@@ -35,9 +35,9 @@ class MtEval_BLEU:
 
 
     def get_bleu_from_decoderesult(self, step, sentence_complexs, sentence_simples, targets):
-        path_ref = self.model_config.resultdor + '/mteval_reference_%s.xml' % step
-        path_src = self.model_config.resultdor + '/mteval_source_%s.xml' % step
-        path_tar = self.model_config.resultdor + '/mteval_target_%s.xml' % step
+        path_ref = self.model_config.resultdir + '/mteval_reference_%s.xml' % step
+        path_src = self.model_config.resultdir + '/mteval_source_%s.xml' % step
+        path_tar = self.model_config.resultdir + '/mteval_target_%s.xml' % step
 
         mteval_reference = open(path_ref, 'w', encoding='utf-8')
         mteval_source = open(path_src, 'w', encoding='utf-8')
@@ -59,9 +59,9 @@ class MtEval_BLEU:
         if path_gt_complex is None:
             path_gt_complex = self.model_config.val_dataset_complex_rawlines_file
 
-        path_ref = self.model_config.resultdor + '/mteval_reference_real_%s.xml' % step
-        path_src = self.model_config.resultdor + '/mteval_source_real_%s.xml' % step
-        path_tar = self.model_config.resultdor + '/mteval_target_real_%s.xml' % step
+        path_ref = self.model_config.resultdir + '/mteval_reference_real_%s.xml' % step
+        path_src = self.model_config.resultdir + '/mteval_source_real_%s.xml' % step
+        path_tar = self.model_config.resultdir + '/mteval_target_real_%s.xml' % step
 
         mteval_reference = open(path_ref, 'w', encoding='utf-8')
         mteval_source = open(path_src, 'w', encoding='utf-8')
@@ -121,7 +121,7 @@ class MtEval_BLEU:
     """Get Result for script/multi-bleu.perl."""
 
     def get_bleu_from_decoderesult_multirefs(self, step, path_ref, targets, lowercase=False):
-        path_tar = self.model_config.resultdor + '/multibleu_target_%s.txt' % step
+        path_tar = self.model_config.resultdir + '/multibleu_target_%s.txt' % step
         f = open(path_tar, 'w', encoding='utf-8')
         f.write(self.result2txt(targets, lowercase=lowercase))
         f.close()
@@ -159,7 +159,7 @@ class MtEval_BLEU:
     """Get Result for joshua"""
 
     def get_bleu_from_joshua(self, step, path_dst, path_ref, targets):
-        path_tar = self.model_config.resultdor + '/joshua_target_%s.txt' % step
+        path_tar = self.model_config.resultdir + '/joshua_target_%s.txt' % step
         if not os.path.exists(path_tar):
             f = open(path_tar, 'w', encoding='utf-8')
             # joshua require lower case

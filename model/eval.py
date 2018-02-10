@@ -152,8 +152,8 @@ def get_graph_val_data(objs,
 def eval(model_config=None, ckpt=None):
     model_config = (DefaultConfig()
                     if model_config is None else model_config)
-    if not exists(model_config.resultdor):
-        makedirs(model_config.resultdor)
+    if not exists(model_config.resultdir):
+        makedirs(model_config.resultdir)
     print(list_config(model_config))
 
     val_data = ValData(model_config)
@@ -467,6 +467,6 @@ if __name__ == '__main__':
                 #         alpha = i/10
                 #         config.penalty_alpha = alpha
                 #         config.output_folder = args.output_folder
-                #         config.resultdor = get_path('../' + config.output_folder + '/result/eightref_test_alpha%s' % alpha)
+                #         config.resultdir = get_path('../' + config.output_folder + '/result/eightref_test_alpha%s' % alpha)
                 #         eval(config, ckpt)
 

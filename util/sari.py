@@ -258,7 +258,7 @@ from util.mteval_bleu import MtEval_BLEU
 class CorpusSARI(MtEval_BLEU):
 
     def get_sari_from_joshua(self, step, path_dst, path_ref, path_src, targets):
-        path_tar = self.model_config.resultdor + '/joshua_target_%s.txt' % step
+        path_tar = self.model_config.resultdir + '/joshua_target_%s.txt' % step
         if not os.path.exists(path_tar):
             f = open(path_tar, 'w', encoding='utf-8')
             # joshua require lower case

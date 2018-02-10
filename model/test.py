@@ -34,20 +34,17 @@ args = get_args()
 def test(model_config=None, ckpt=None):
     model_config = (DefaultConfig()
                     if model_config is None else model_config)
-    if not exists(model_config.resultdor):
-        makedirs(model_config.resultdor)
+    if not exists(model_config.resultdir):
+        makedirs(model_config.resultdir)
     print(list_config(model_config))
 
     val_data = ValData(model_config)
     graph = None
     if model_config.framework == 'transformer':
         graph = TransformerGraph(val_data, False, model_config)
-    elif model_config.framework == 'seq2seq':
-        graph = Seq2SeqGraph(val_data, False, model_config)
     tf.reset_default_graph()
     graph.create_model_multigpu()
 
-    # while True:
     ibleus_all = []
     perplexitys_all = []
     saris_all = []
@@ -67,142 +64,138 @@ def test(model_config=None, ckpt=None):
     sv = tf.train.Supervisor(init_fn=init_fn)
     sess = sv.PrepareSession(config=session.get_session_config(model_config))
     while True:
-        (input_feed, sentence_simple,
-         sentence_complex, sentence_complex_raw, sentence_complex_raw_lines,
-         mapper,
-         ref_raw_lines,
-         effective_batch_size, is_end) = get_graph_val_data(
-            graph.sentence_simple_input_placeholder,
-            graph.sentence_complex_input_placeholder,
-            model_config, it, val_data)
+        is_finish = False
+        (input_feed, output_sentence_simple,
+         output_sentence_complex, output_sentence_complex_raw, output_sentence_complex_raw_lines,
+         output_mapper,
+         output_ref_raw_lines,
+         out_effective_batch_size, output_is_end) = get_graph_val_data(graph.objs,
+                                                                       model_config, it, val_data)
 
         postprocess = PostProcess(model_config, val_data)
-        # Replace UNK for sentence_complex_raw and ref_raw
-        # Note that sentence_complex_raw_lines and ref_raw_lines are original file lines
-        sentence_complex_raw = postprocess.replace_ner(sentence_complex_raw, mapper)
-
-        fetches = {'decoder_target_list': graph.decoder_target_list,
+        fetches = {'decoder_target_list': [obj['decoder_target_list'] for obj in graph.objs],
                    'loss': graph.loss,
-                   'global_step': graph.global_step,
-                   'sent_complex': graph.sentence_complex_input_placeholder_stack}
+                   'global_step': graph.global_step}
         if model_config.replace_unk_by_emb:
-            fetches.update({'encoder_embs': graph.encoder_embs, 'decoder_outputs': graph.decoder_outputs})
-
-        enc_atts = []
-        dec_atts = []
-        encdec_atts = []
-        for layer_id in range(model_config.num_hidden_layers):
-            enc_att = tf.get_default_graph().get_operation_by_name(
-                "model/transformer_encoder/encoder/layer_%s/self_attention/multihead_attention/dot_product_attention/attention_weights" % layer_id).values()[
-                0]
-            dec_att = tf.get_default_graph().get_operation_by_name(
-                "model/transformer_decoder/decoder/layer_%s/self_attention/multihead_attention/dot_product_attention/attention_weights" % layer_id).values()[
-                0]
-            encdec_att = tf.get_default_graph().get_operation_by_name(
-                "model/transformer_decoder/decoder/layer_%s/encdec_attention/multihead_attention/dot_product_attention/attention_weights" % layer_id).values()[
-                0]
-
-
-            enc_atts.append(enc_att)
-            dec_atts.append(dec_att)
-            encdec_atts.append(encdec_att)
-        fetches.update({'enc_atts': enc_atts, 'dec_att': dec_atts, 'encdec_att': encdec_atts})
-
+            fetches.update(
+                {'encoder_embs': [obj['encoder_embs'] for obj in graph.objs],
+                 'final_outputs': [obj['final_outputs'] for obj in graph.objs]})
         results = sess.run(fetches, input_feed)
-        target, loss, step = (results['decoder_target_list'], results['loss'],
-                              results['global_step'])
+        output_target, loss, step = (results['decoder_target_list'], results['loss'],
+                                     results['global_step'])
         if model_config.replace_unk_by_emb:
-            encoder_embs, decoder_outputs = results['encoder_embs'], results['decoder_outputs']
-        venc_atts, vdec_att, encdec_att, sent_complex = results['enc_atts'], results['dec_att'], results['encdec_att'], results['sent_complex']
+            output_encoder_embs, output_final_outputs = results['encoder_embs'], results['final_outputs']
         batch_perplexity = math.exp(loss)
         perplexitys_all.append(batch_perplexity)
 
-        exclude_idxs = get_exclude_list(effective_batch_size, model_config.batch_size)
-        if exclude_idxs:
-            sentence_complex = exclude_list(sentence_complex, exclude_idxs)
-            sentence_complex_raw = exclude_list(sentence_complex_raw, exclude_idxs)
-            sentence_complex_raw_lines = exclude_list(sentence_complex_raw_lines, exclude_idxs)
+        for i, effective_batch_size in enumerate(out_effective_batch_size):
+            is_end = output_is_end[i]
+            exclude_idxs = get_exclude_list(effective_batch_size, model_config.batch_size)
+            sentence_simple = output_sentence_simple[i]
+            sentence_complex = output_sentence_complex[i]
+            sentence_complex_raw = output_sentence_complex_raw[i]
+            sentence_complex_raw_lines = output_sentence_complex_raw_lines[i]
+            mapper = output_mapper[i]
+            ref_raw_lines = output_ref_raw_lines[i]
 
-            sentence_simple = exclude_list(sentence_simple, exclude_idxs)
+            target = output_target[i]
+            if model_config.replace_unk_by_emb:
+                encoder_embs = output_encoder_embs[i]
+                final_outputs = output_final_outputs[i]
 
-            target = exclude_list(target, exclude_idxs)
-            mapper = exclude_list(mapper, exclude_idxs)
+            # Replace UNK for sentence_complex_raw and ref_raw
+            # Note that sentence_complex_raw_lines and ref_raw_lines are original file lines
+            sentence_complex_raw = postprocess.replace_ner(sentence_complex_raw, mapper)
 
-            for ref_i in range(model_config.num_refs):
-                ref_raw_lines[ref_i] = exclude_list(ref_raw_lines[ref_i], exclude_idxs)
+            if exclude_idxs:
+                sentence_complex = exclude_list(sentence_complex, exclude_idxs)
+                sentence_complex_raw = exclude_list(sentence_complex_raw, exclude_idxs)
+                sentence_complex_raw_lines = exclude_list(sentence_complex_raw_lines, exclude_idxs)
 
-        target = decode(target, val_data.vocab_simple, model_config.subword_vocab_size > 0)
-        target_raw = target
-        if model_config.replace_unk_by_attn:
-            target_raw = postprocess.replace_unk_by_attn(sentence_complex_raw, None, target_raw)
-        elif model_config.replace_unk_by_emb:
-            target_raw = postprocess.replace_unk_by_emb_dfs(
-                sentence_complex_raw, encoder_embs, decoder_outputs, target_raw)
-        elif model_config.replace_unk_by_cnt:
-            target_raw = postprocess.replace_unk_by_cnt(sentence_complex_raw, target_raw)
-        if model_config.replace_ner:
-            target_raw = postprocess.replace_ner(target_raw, mapper)
-        target_raw = postprocess.replace_others(target_raw)
-        sentence_simple = decode(sentence_simple, val_data.vocab_simple, model_config.subword_vocab_size > 0)
-        sentence_complex = decode(sentence_complex, val_data.vocab_complex, model_config.subword_vocab_size > 0)
-        sentence_complex_raw = truncate_sents(sentence_complex_raw)
+                sentence_simple = exclude_list(sentence_simple, exclude_idxs)
 
-        # Truncate decode results
-        target = truncate_sents(target)
-        target_raw = truncate_sents(target_raw)
-        sentence_simple = truncate_sents(sentence_simple)
-        sentence_complex = truncate_sents(sentence_complex)
+                target = exclude_list(target, exclude_idxs)
+                mapper = exclude_list(mapper, exclude_idxs)
 
-        targets.extend(target)
-        targets_raw.extend(target_raw)
-        sentence_simples.extend(sentence_simple)
-        sentence_complexs.extend(sentence_complex)
-        sentence_complexs_raw.extend(sentence_complex_raw)
-
-        ibleus = []
-        saris = []
-        fkgls = []
-
-        for batch_i in range(effective_batch_size):
-            # Compute iBLEU
-            try:
-                batch_ibleu = sentence_bleu([sentence_simple[batch_i]], target[batch_i])
-            except Exception as e:
-                print('Bleu error:\t' + str(e) + '\n' + str(target[batch_i]) + '\n')
-                batch_ibleu = 0
-            ibleus_all.append(batch_ibleu)
-            ibleus.append(batch_ibleu)
-
-            # Compute SARI
-            batch_sari = 0
-            if model_config.num_refs > 0:
-                rsents = []
                 for ref_i in range(model_config.num_refs):
-                    rsents.append(ref_raw_lines[ref_i][batch_i])
+                    ref_raw_lines[ref_i] = exclude_list(ref_raw_lines[ref_i], exclude_idxs)
+
+            target = decode(target, val_data.vocab_simple, model_config.subword_vocab_size > 0)
+            target_raw = target
+            if model_config.replace_unk_by_attn:
+                target_raw = postprocess.replace_unk_by_attn(sentence_complex_raw, None, target_raw)
+            elif model_config.replace_unk_by_emb:
+                target_raw = postprocess.replace_unk_by_emb(
+                    sentence_complex_raw, encoder_embs, final_outputs, target_raw)
+            elif model_config.replace_unk_by_cnt:
+                target_raw = postprocess.replace_unk_by_cnt(sentence_complex_raw, target_raw)
+            if model_config.replace_ner:
+                target_raw = postprocess.replace_ner(target_raw, mapper)
+            target_raw = postprocess.replace_others(target_raw)
+            sentence_simple = decode(sentence_simple, val_data.vocab_simple, model_config.subword_vocab_size > 0)
+            sentence_complex = decode(sentence_complex, val_data.vocab_complex, model_config.subword_vocab_size > 0)
+            sentence_complex_raw = truncate_sents(sentence_complex_raw)
+
+            # Truncate decode results
+            target = truncate_sents(target)
+            target_raw = truncate_sents(target_raw)
+            sentence_simple = truncate_sents(sentence_simple)
+            sentence_complex = truncate_sents(sentence_complex)
+
+            targets.extend(target)
+            targets_raw.extend(target_raw)
+            sentence_simples.extend(sentence_simple)
+            sentence_complexs.extend(sentence_complex)
+            sentence_complexs_raw.extend(sentence_complex_raw)
+
+            ibleus = []
+            saris = []
+            fkgls = []
+
+            for batch_i in range(effective_batch_size):
+                # Compute iBLEU
                 try:
-                    batch_sari = SARIsent(sentence_complex_raw_lines[batch_i],
-                                          ' '.join(target_raw[batch_i]),
-                                          rsents)
-                except:
-                    print('sari error: %s \n %s \n %s. \n' %
-                          (sentence_complex_raw_lines[batch_i],
-                           ' '.join(target_raw[batch_i]), rsents))
-            saris.append(batch_sari)
-            saris_all.append(batch_sari)
+                    batch_ibleu = sentence_bleu([sentence_simple[batch_i]], target[batch_i])
+                except Exception as e:
+                    print('Bleu error:\t' + str(e) + '\n' + str(target[batch_i]) + '\n')
+                    batch_ibleu = 0
+                ibleus_all.append(batch_ibleu)
+                ibleus.append(batch_ibleu)
 
-            # Compute FKGL
-            target_text = ' '.join(target_raw[batch_i])
-            batch_fkgl = 0
-            if len(target_text) > 0:
-                batch_fkgl = get_fkgl(' '.join(target_raw[batch_i]))
-            fkgls.append(batch_fkgl)
+                # Compute SARI
+                batch_sari = 0
+                if model_config.num_refs > 0:
+                    rsents = []
+                    for ref_i in range(model_config.num_refs):
+                        rsents.append(ref_raw_lines[ref_i][batch_i])
+                    try:
+                        batch_sari = SARIsent(sentence_complex_raw_lines[batch_i],
+                                              ' '.join(target_raw[batch_i]),
+                                              rsents)
+                    except:
+                        print('sari error: %s \n %s \n %s. \n' %
+                              (sentence_complex_raw_lines[batch_i],
+                               ' '.join(target_raw[batch_i]), rsents))
+                saris.append(batch_sari)
+                saris_all.append(batch_sari)
 
-        target_output = decode_to_output(target, sentence_simple, sentence_complex,
-                                         effective_batch_size, ibleus, target_raw, sentence_complex_raw,
-                                         saris, fkgls)
-        decode_outputs_all.append(target_output)
+                # Compute FKGL
+                target_text = ' '.join(target_raw[batch_i])
+                batch_fkgl = 0
+                if len(target_text) > 0:
+                    batch_fkgl = get_fkgl(' '.join(target_raw[batch_i]))
+                fkgls.append(batch_fkgl)
 
-        if is_end:
+            target_output = decode_to_output(target, sentence_simple, sentence_complex,
+                                             effective_batch_size, ibleus, target_raw, sentence_complex_raw,
+                                             saris, fkgls)
+            decode_outputs_all.append(target_output)
+
+            if is_end:
+                is_finish = True
+                break
+
+        if is_finish:
             break
 
     ibleu = np.mean(ibleus_all)
@@ -248,14 +241,14 @@ def test(model_config=None, ckpt=None):
 
     bleu_joshua = mteval.get_bleu_from_joshua(
         step, model_config.val_dataset_simple_folder + model_config.val_dataset_simple_rawlines_file,
-        model_config.val_dataset_simple_folder + model_config.val_dataset_simple_rawlines_file_references,
+              model_config.val_dataset_simple_folder + model_config.val_dataset_simple_rawlines_file_references,
         targets_raw)
 
     # Use corpus-level sari
     corpus_sari = CorpusSARI(model_config)
     sari_joshua = corpus_sari.get_sari_from_joshua(
         step, model_config.val_dataset_simple_folder + model_config.val_dataset_simple_rawlines_file,
-        model_config.val_dataset_simple_folder + model_config.val_dataset_simple_rawlines_file_references,
+              model_config.val_dataset_simple_folder + model_config.val_dataset_simple_rawlines_file_references,
         model_config.val_dataset_complex_rawlines_file, target_raw
     )
 
@@ -286,7 +279,7 @@ def test(model_config=None, ckpt=None):
                          ])
 
     # Output Result
-    f = open((model_config.resultdor + '/tstep' + str(step) +
+    f = open((model_config.resultdir + '/step' + str(step) +
               '-bleuraw' + str(bleu_raw) +
               '-bleurawoi' + str(bleu_oi_raw) +
               '-bleurawor' + str(bleu_or_raw) +
@@ -299,7 +292,7 @@ def test(model_config=None, ckpt=None):
              'w', encoding='utf-8')
     f.write(content)
     f.close()
-    f = open((model_config.resultdor + '/tstep' + str(step) +
+    f = open((model_config.resultdir + '/step' + str(step) +
               '-bleuraw' + str(bleu_raw) +
               '-bleurawoi' + str(bleu_oi_raw) +
               '-bleurawor' + str(bleu_or_raw) +
@@ -311,8 +304,6 @@ def test(model_config=None, ckpt=None):
              'w', encoding='utf-8')
     f.write('\n'.join(decode_outputs_all))
     f.close()
-    print('Final SARI:%s' % sari_joshua)
-    print('Final BLEU:%s' % bleu_joshua)
 
 
 if __name__ == '__main__':

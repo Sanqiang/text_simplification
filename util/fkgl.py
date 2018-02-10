@@ -318,7 +318,7 @@ def get_fkgl(text):
 class CorpusFKGL(MtEval_BLEU):
 
     def get_fkgl_from_joshua(self, step, targets):
-        path_tar = self.model_config.resultdor + '/joshua_target_%s.txt' % step
+        path_tar = self.model_config.resultdir + '/joshua_target_%s.txt' % step
         if not os.path.exists(path_tar):
             f = open(path_tar, 'w', encoding='utf-8')
             # joshua require lower case

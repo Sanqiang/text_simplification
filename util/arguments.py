@@ -30,7 +30,7 @@ def get_args():
                         help='Whether to change the optimizer?')
 
     # For Data
-    parser.add_argument('-lc', '--lower_case', default=False, type=bool,
+    parser.add_argument('-lc', '--lower_case', default=True, type=bool,
                         help='Whether to lowercase the vocabulary?')
     parser.add_argument('-mc', '--min_count', default=5, type=int,
                         help='Truncate the vocabulary less than equal to the count?')
@@ -81,11 +81,11 @@ def get_args():
     parser.add_argument('-pos', '--hparams_pos', default='timing',
                         help='Whether to use positional encoding?')
 
-    parser.add_argument('-nhl', '--num_hidden_layers', default=6, type=int,
+    parser.add_argument('-nhl', '--num_hidden_layers', default=4, type=int,
                         help='Number of hidden layer?')
-    parser.add_argument('-nel', '--num_encoder_layers', default=6, type=int,
+    parser.add_argument('-nel', '--num_encoder_layers', default=4, type=int,
                         help='Number of encoder layer?')
-    parser.add_argument('-ndl', '--num_decoder_layers', default=6, type=int,
+    parser.add_argument('-ndl', '--num_decoder_layers', default=4, type=int,
                         help='Number of decoder layer?')
     parser.add_argument('-nh', '--num_heads', default=5, type=int,
                         help='Number of multi-attention heads?')
