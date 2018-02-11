@@ -188,7 +188,7 @@ def test(model_config=None, ckpt=None):
 
             target_output = decode_to_output(target, sentence_simple, sentence_complex,
                                              effective_batch_size, ibleus, target_raw, sentence_complex_raw,
-                                             saris, fkgls)
+                                             saris, fkgls, ref_raw_lines, model_config)
             decode_outputs_all.append(target_output)
 
             if is_end:
@@ -307,12 +307,12 @@ def test(model_config=None, ckpt=None):
 
 
 if __name__ == '__main__':
-    from model.model_config import WikiDressLargeDefault
+    from model.model_config import WikiDressLargeDefault, SubTestWikiEightRefConfigV2Sing, SubTestWikiEightRefPPDBConfigV2Sing
     from model.model_config import SubValWikiEightRefConfig, SubTestWikiEightRefConfig, SubTestWikiEightRefPPDBConfig
     from model.model_config import SubValWikiEightRefConfigBeam4, SubTestWikiEightRefConfigBeam4, SubTestWikiSmallPPDBConfig
 
     ckpt = args.test_ckpt
     # test(SubTestWikiSmallPPDBConfig(), ckpt)
-    test(SubTestWikiEightRefConfig(), ckpt)
+    test(SubTestWikiEightRefPPDBConfigV2Sing(), ckpt)
     # test(SubTestWikiEightRefPPDBConfig(), ckpt)
     # test(SubTestWikiEightRefConfigBeam4(), ckpt)
