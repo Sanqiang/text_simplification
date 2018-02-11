@@ -24,6 +24,8 @@ from __future__ import print_function
 from tensor2tensor.layers import common_layers
 
 import tensorflow as tf
+import numpy as np
+from util import constant
 
 from tensorflow.python.util import nest
 
@@ -177,7 +179,10 @@ def beam_search(symbols_to_logits_fn,
                 alpha,
                 states=None,
                 eos_id=EOS_ID,
-                stop_early=True):
+                stop_early=True,
+                data=None,
+                model_config=None,
+                encoder_input_list=None):
   """Beam search with length penalties.
 
   Requires a function that can take the currently decoded sybmols and return
@@ -242,6 +247,137 @@ def beam_search(symbols_to_logits_fn,
   # Setting the scores of the initial to negative infinity.
   finished_scores = tf.ones([batch_size, beam_size]) * -INF
   finished_flags = tf.zeros([batch_size, beam_size], tf.bool)
+
+  encoder_input = tf.stack(encoder_input_list, axis=1)
+
+  def top_k(flat_curr_scores, k=beam_size * 2):
+      flat_curr_scores.set_shape(
+          (model_config.batch_size, model_config.beam_search_size*len(data.vocab_simple.i2w)))
+
+      def augment_score(flat_curr_scores, encoder_input):
+          for batch_i in range(model_config.batch_size):
+              ppdb_cands = {}
+              cands = set(encoder_input[batch_i])
+              for cand_wid in cands:
+                  cand_word = data.vocab_complex.describe(cand_wid)
+                  if cand_word in data.ppdb.rules:
+                      for tag in data.ppdb.rules[cand_word]:
+                          for word in data.ppdb.rules[cand_word][tag]:
+                              wid = data.vocab_simple.encode(word)
+                              if wid != data.vocab_simple.encode(constant.SYMBOL_UNK):
+                                ppdb_cands[wid] = data.ppdb.rules[cand_word][tag][word]
+
+              for cand_id in ppdb_cands:
+                  for beam_id in range(model_config.beam_search_size):
+                      flat_curr_scores[batch_i][beam_id*len(data.vocab_simple.i2w) + cand_id] += (
+                          model_config.ppdb_emode_args * ppdb_cands[cand_id])
+
+
+              # for res_id in [data.vocab_simple.encode(constant.SYMBOL_UNK)]:
+              #     for beam_id in range(model_config.beam_search_size):
+              #         flat_curr_scores[batch_i][beam_id * len(data.vocab_simple.i2w) + res_id] += 1.5
+          return np.array(flat_curr_scores, dtype=np.float32)
+
+      # NAACL
+      flat_curr_scores = tf.py_func(augment_score, [flat_curr_scores, encoder_input],
+                                    tf.float32,
+                                    stateful=False,
+                                    name='augment_score')
+      flat_curr_scores.set_shape(
+          (model_config.batch_size, model_config.beam_search_size*len(data.vocab_simple.i2w)))
+
+      def our_topk(flat_curr_scores, encoder_input, k):
+          topk_scores, topk_ids = [], []
+          for batch_i in range(model_config.batch_size):
+              cur_scors = np.copy(np.array(flat_curr_scores[batch_i]))
+              cur_scors_exp = np.exp(cur_scors)
+              tacc = np.sum(cur_scors_exp)
+              # print('min\t' + str(np.min(cur_scors)))
+              # print('max\t' + str(np.max(cur_scors)))
+              acc = 0.0
+
+              cand_wids, cands_scores, cands_scores_exp  = [], [], []
+              for j in range(k):
+                  idx = np.argmax(cur_scors_exp)
+                  cand_wids.append(idx)
+                  score = np.copy(cur_scors[idx])
+                  cands_scores.append(score)
+                  exp_score = np.copy(cur_scors_exp[idx])
+                  cands_scores_exp.append(exp_score)
+                  acc = exp_score
+                  cur_scors_exp[idx] = -1e9
+              while True:
+                  idx = np.argmax(cur_scors_exp)
+                  exp_score = np.copy(cur_scors_exp[idx])
+                  if exp_score < 0.00:
+                      break
+                  cand_wids.append(idx)
+                  score = np.copy(cur_scors[idx])
+                  cands_scores.append(score)
+                  cands_scores_exp.append(exp_score)
+                  acc = exp_score
+                  cur_scors_exp[idx] = -1e9
+
+              # print([np.exp(s) / np.sum(np.exp(cands_scores)) for s in cands_scores])
+
+              search_cur_scors = np.copy(cands_scores_exp)
+              augmented_widx = []
+              ppdb_cands = {}
+              if len(cand_wids) > k:
+                  cands = set(encoder_input[batch_i])
+                  for cand_wid in cands:
+                      cand_word = data.vocab_complex.describe(cand_wid)
+                      if cand_word in data.ppdb.rules:
+                          for tag in data.ppdb.rules[cand_word]:
+                              for word in data.ppdb.rules[cand_word][tag]:
+                                  wid = data.vocab_simple.encode(word)
+                                  if wid != data.vocab_simple.encode(constant.SYMBOL_UNK):
+                                      ppdb_cands[wid] = data.ppdb.rules[cand_word][tag][word]
+                  if ppdb_cands:
+                      for dummy_i in range(5):
+                        cands_scores[dummy_i] = np.log(np.exp(cands_scores[dummy_i]) * model_config.ppdb_emode_args)
+
+                  for wid in cand_wids:
+                      if wid in ppdb_cands:
+                          idx = cand_wids.index(wid)
+                          search_cur_scors[idx] *= model_config.ppdb_emode_args
+                          cands_scores[idx] = np.log(np.exp(cands_scores[idx]) * model_config.ppdb_emode_args)
+                          augmented_widx.append(wid)
+              cand_wids = np.array(cand_wids)
+              search_cur_scors = np.array(search_cur_scors)
+              cands_scores = np.array(cands_scores)
+              #print('candspair' + str(cand_ids)+ str(cands_scores))
+              nidx = np.argsort(search_cur_scors)[::-1]
+              # print('xxxxxx2' + str(nidx))
+              cand_wids = cand_wids[nidx]
+              cand_wids = cand_wids[:k]
+              # print('xxxxxx3' + str(cand_wids))
+              search_cur_scors = search_cur_scors[nidx]
+              search_cur_scors = search_cur_scors[:k]
+
+              cands_scores = cands_scores[nidx]
+              cands_scores = cands_scores[:k]
+              # print('xxxxxx4' + str(search_cur_scors))
+
+              topk_ids.append(cand_wids)
+              topk_scores.append(cands_scores)
+
+              #print('topk_ids' + str(np.shape(topk_ids)))
+              #print('topk_scores' + str(np.shape(topk_scores)))
+          return np.array(topk_scores, dtype=np.float32), np.array(topk_ids, dtype=np.int32)
+
+      # topk_scores, topk_ids = tf.py_func(our_topk, [flat_curr_scores, encoder_input, k],
+      #                                [tf.float32, tf.int32],
+      #                                stateful=False,
+      #                                name='topk')
+      # topk_ids.set_shape(
+      #      (model_config.batch_size, k))
+      # topk_scores.set_shape(
+      #      (model_config.batch_size, k))
+
+      topk_scores, topk_ids = tf.nn.top_k(flat_curr_scores, k=k)
+      # topk_scores, topk_ids = tf.nn.top_k(flat_curr_scores, k=k)
+      return topk_scores, topk_ids
 
   def grow_finished(finished_seq, finished_scores, finished_flags, curr_seq,
                     curr_scores, curr_finished):
@@ -359,7 +495,10 @@ def beam_search(symbols_to_logits_fn,
     # Flatten out (beam_size, vocab_size) probs in to a list of possibilites
     flat_curr_scores = tf.reshape(curr_scores, [-1, beam_size * vocab_size])
 
-    topk_scores, topk_ids = tf.nn.top_k(flat_curr_scores, k=beam_size * 2)
+    if model_config.ppdb_emode == 'none':
+        topk_scores, topk_ids = tf.nn.top_k(flat_curr_scores, k=beam_size * 2)
+    else:
+        topk_scores, topk_ids = top_k(flat_curr_scores, k=beam_size * 2)
 
     # Recovering the log probs because we will need to send them back
     topk_log_probs = topk_scores * length_penalty

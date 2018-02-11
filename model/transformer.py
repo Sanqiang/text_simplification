@@ -281,10 +281,9 @@ class TransformerGraph(Graph):
                                                        self.model_config.max_simple_sentence,
                                                        self.data.vocab_simple.vocab_size(),
                                                        self.model_config.penalty_alpha,
-                                                       #self.data,
-                                                       #self.model_config,
-                                                       #sentence_complex_input_placeholder,
-                                                       #self.data.vocab_simple.encode(constant.SYMBOL_END)
+                                                       data= self.data,
+                                                       model_config=self.model_config,
+                                                       encoder_input_list = sentence_complex_input_placeholder,
                                                        )
         top_beam_ids = beam_ids[:, 0, 1:]
         top_beam_ids = tf.pad(top_beam_ids,

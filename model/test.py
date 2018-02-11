@@ -313,6 +313,7 @@ if __name__ == '__main__':
 
     ckpt = args.test_ckpt
     # test(SubTestWikiSmallPPDBConfig(), ckpt)
+    test(SubTestWikiEightRefConfigV2Sing(), ckpt)
     test(SubTestWikiEightRefPPDBConfigV2Sing(), ckpt)
     # test(SubTestWikiEightRefPPDBConfig(), ckpt)
     # test(SubTestWikiEightRefConfigBeam4(), ckpt)
