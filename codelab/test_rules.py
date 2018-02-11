@@ -3,7 +3,7 @@ import numpy as np
 from collections import defaultdict
 
 model_config = SubTestWikiEightRefConfigV2Sing()
-output_path = '/zfs1/hdaqing/saz31/text_simplification/Hybrid.txt'
+output_path = '/zfs1/hdaqing/saz31/text_simplification/dress_final_ffn_cl2/result/eightref_test_v2singdfs/joshua_target_389906.txt'
 
 ppdb_mapper = defaultdict(set)
 ppdb_path = model_config.path_ppdb_refine #'/Users/zhaosanqiang916/git/text_simplification_data/ppdb/XU_PPDB'
