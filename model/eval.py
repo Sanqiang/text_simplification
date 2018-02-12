@@ -398,7 +398,7 @@ def eval(model_config=None, ckpt=None):
                          ])
 
     # Output Result
-    f = open((model_config.resultdor + '/step' + str(step) +
+    f = open((model_config.resultdir + '/step' + str(step) +
               '-bleuraw' + str(bleu_raw) +
               '-bleurawoi' + str(bleu_oi_raw) +
               '-bleurawor' + str(bleu_or_raw) +
@@ -411,7 +411,7 @@ def eval(model_config=None, ckpt=None):
              'w', encoding='utf-8')
     f.write(content)
     f.close()
-    f = open((model_config.resultdor + '/step' + str(step) +
+    f = open((model_config.resultdir + '/step' + str(step) +
               '-bleuraw' + str(bleu_raw) +
               '-bleurawoi' + str(bleu_oi_raw) +
               '-bleurawor' + str(bleu_or_raw) +
