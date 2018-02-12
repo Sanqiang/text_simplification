@@ -3,12 +3,19 @@ from util import constant
 
 def decode_to_output(target, sentence_simple, sentence_complex, effective_batch_size,
                      ibleus=None, targets_raw=None, sentence_complex_raw=None,
-                     saris=None, fkgls=None):
+                     saris=None, fkgls=None, ref_raw_lines=None, model_config=None):
     """Generate Decode Output for human read (Aggregate result together)."""
     output = ''
     for batch_i in range(effective_batch_size):
         target_batch = 'output=' + ' '.join(target[batch_i])
         sentence_simple_batch ='gt_simple=' + ' '.join(sentence_simple[batch_i])
+
+        sentence_ref = []
+        if ref_raw_lines:
+            for ref_i in range(model_config.num_refs):
+                sentence_ref.append('gt_ref_' + str(ref_i) + '=' + ref_raw_lines[ref_i][batch_i])
+        sentence_ref = '\n'.join(sentence_ref)
+
         sentence_complex_batch = 'gt_complex='+ ' '.join(sentence_complex[batch_i])
 
         batch_targets_raw = ''
@@ -31,8 +38,12 @@ def decode_to_output(target, sentence_simple, sentence_complex, effective_batch_
         if fkgls is not None:
             batch_fkgl = 'FKGL=' + str(fkgls[batch_i])
 
-        output_batch = '\n'.join([target_batch, sentence_simple_batch, sentence_complex_batch,
-                                  batch_ibleu, batch_sari, batch_fkgl, batch_targets_raw, batch_sentence_complex_raw, ''])
+
+        output_list = [target_batch, sentence_simple_batch, sentence_complex_batch,
+                                  batch_ibleu, batch_sari, batch_fkgl, batch_targets_raw, batch_sentence_complex_raw, '']
+        if sentence_ref:
+            output_list.insert(2, sentence_ref)
+        output_batch = '\n'.join(output_list)
         output = '\n'.join([output, output_batch])
     return output
 
