@@ -3,7 +3,7 @@
 
 #SBATCH --cluster=gpu
 #SBATCH --gres=gpu:1
-#SBATCH --partition=titan
+#SBATCH --partition=gtx1080
 #SBATCH --job-name=dress_final_ffn_rbv3_op_cl2
 #SBATCH --output=dress_final_ffn_rbv3_op_cl2.out
 #SBATCH --nodes=1
