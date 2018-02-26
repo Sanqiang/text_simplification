@@ -275,7 +275,9 @@ def train(model_config=None):
                     eval(SubTestWikiSmallConfig(), ckpt)
                     eval(SubTestWikiSmallPPDBConfig(), ckpt)
                 elif args.mode == 'wiki':
-                    eval(WikiTransValCfg(), ckpt)
+                    # eval(WikiTransValCfg(), ckpt)
+                    eval(SubValWikiEightRefConfig(), ckpt)
+                    eval(SubTestWikiEightRefConfig(), ckpt)
                 elif args.mode == 'wikilegacy':
                     eval(WikiTransLegacyTestCfg(), ckpt)
                 print("==============================After Eval Stat==============================")

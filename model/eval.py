@@ -469,4 +469,12 @@ if __name__ == '__main__':
                 #         config.output_folder = args.output_folder
                 #         config.resultdir = get_path('../' + config.output_folder + '/result/eightref_test_alpha%s' % alpha)
                 #         eval(config, ckpt)
+    elif args.mode == 'wiki':
+        while True:
+            from model.model_config import SubValWikiEightRefConfig, SubTestWikiEightRefConfig, WikiTransBaseCfg
+            model_config = WikiTransBaseCfg()
+            ckpt = get_ckpt(model_config.modeldir, model_config.logdir)
+            if ckpt:
+                eval(SubValWikiEightRefConfig(), ckpt)
+                eval(SubTestWikiEightRefConfig(), ckpt)
 

@@ -331,13 +331,13 @@ class SubTest(WikiDressLargeDefault):
 
 class SubValWikiEightRefConfig(SubTest):
     output_folder = args.output_folder
-    resultdir = get_path('../' + output_folder + '/result/eightref_val')
+    resultdir = get_path('../' + output_folder + '/result/eightref_val', True)
 
     val_dataset_simple_folder = get_path('../text_simplification_data/val/')
     # use the original dress
-    val_dataset_simple_file = 'wiki.full.aner.valid.dst'
-    val_dataset_complex = get_path('../text_simplification_data/val/wiki.full.aner.valid.src')
-    val_mapper = get_path('../text_simplification_data/val/tune.8turkers.tok.map.dress')
+    val_dataset_simple_file = 'tune.8turkers.tok.simp.ner'
+    val_dataset_complex = get_path('../text_simplification_data/val/tune.8turkers.tok.norm.ner')
+    val_mapper = get_path('../text_simplification_data/val/tune.8turkers.tok.map')
     # wiki.full.aner.ori.valid.dst is uppercase whereas tune.8turkers.tok.simp is lowercase
     val_dataset_complex_rawlines_file = get_path(
         '../text_simplification_data/val/tune.8turkers.tok.norm')
@@ -510,6 +510,7 @@ class WikiTransLegacyBaseCfg(WikiDressLargeDefault):
     rule_size = 72445
     max_cand_rules = 15
 
+
 class WikiTransLegacyTrainCfg(WikiTransLegacyBaseCfg):
     beam_search_size = 0
     number_samples = args.number_samples
@@ -559,9 +560,17 @@ class WikiTransBaseCfg(DefaultConfig):
         vocab_complex = get_path('../text_simplification_data/wiki/voc/voc_comp_sub30k.txt')
         vocab_all = get_path('../text_simplification_data/wiki/voc/voc_all_sub30k.txt')
     else:
-        vocab_simple = get_path('../text_simplification_data/wiki/voc/voc_simp.txt')
-        vocab_complex = get_path('../text_simplification_data/wiki/voc/voc_comp.txt')
-        vocab_all = get_path('../text_simplification_data/wiki/voc/voc_all.txt')
+        # vocab_simple = get_path('../text_simplification_data/wiki/voc/voc_simp.txt')
+        # vocab_complex = get_path('../text_simplification_data/wiki/voc/voc_comp.txt')
+        # vocab_all = get_path('../text_simplification_data/wiki/voc/voc_all.txt')
+        vocab_simple = get_path('../text_simplification_data/train/dress/wikilarge/wiki.full.aner.train.dst.vocab.dress')
+        vocab_complex = get_path('../text_simplification_data/train/dress/wikilarge/wiki.full.aner.train.src.vocab.dress')
+    if args.lower_case:
+        vocab_simple = get_path(
+            '../text_simplification_data/train/dress/wikilarge/wiki.full.aner.train.dst.vocab.lower')
+        vocab_complex = get_path(
+            '../text_simplification_data/train/dress/wikilarge/wiki.full.aner.train.src.vocab.lower')
+    min_count = args.min_count
 
     val_dataset_simple_folder = get_path('../text_simplification_data/val/')
     # use the original dress
@@ -583,7 +592,7 @@ class WikiTransBaseCfg(DefaultConfig):
     max_complex_sentence = 85
     max_simple_sentence = 85
 
-    min_count = 50
+
     batch_size = args.batch_size
 
     tokenizer = 'split'

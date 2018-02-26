@@ -307,13 +307,18 @@ def test(model_config=None, ckpt=None):
 
 
 if __name__ == '__main__':
-    from model.model_config import WikiDressLargeDefault, SubTestWikiEightRefConfigV2Sing, SubTestWikiEightRefPPDBConfigV2Sing
+    from model.model_config import WikiDressLargeDefault, SubTestWikiEightRefConfigV2Sing, SubTestWikiEightRefPPDBConfigV2Sing, SubTestWikiEightRefPPDBConfigV2, SubTestWikiEightRefConfigV2
     from model.model_config import SubValWikiEightRefConfig, SubTestWikiEightRefConfig, SubTestWikiEightRefPPDBConfig
     from model.model_config import SubValWikiEightRefConfigBeam4, SubTestWikiEightRefConfigBeam4, SubTestWikiSmallPPDBConfig
 
     ckpt = args.test_ckpt
     # test(SubTestWikiSmallPPDBConfig(), ckpt)
-    test(SubTestWikiEightRefConfigV2Sing(), ckpt)
-    test(SubTestWikiEightRefPPDBConfigV2Sing(), ckpt)
+    # test(SubTestWikiEightRefConfig(), ckpt)
+    # test(SubTestWikiEightRefPPDBConfig(), ckpt)
+
+    test(SubTestWikiEightRefConfigV2(), ckpt)
+    test(SubTestWikiEightRefPPDBConfigV2(), ckpt)
+    # test(SubTestWikiEightRefConfigV2Sing(), ckpt)
+    # test(SubTestWikiEightRefPPDBConfigV2Sing(), ckpt)
     # test(SubTestWikiEightRefPPDBConfig(), ckpt)
     # test(SubTestWikiEightRefConfigBeam4(), ckpt)

@@ -27,6 +27,24 @@ class LM_Data:
             self.data_paths.append((data_path, nsamples))
             print('Add data path %s with count %s' % (data_path, nsamples))
 
+    def get_evaldata_sample_it(self, val_size=2000):
+        f = open(args.evaldata_path, encoding='utf-8')
+        i = 0
+        while True:
+            if i == val_size:
+                yield None
+
+            line = f.readline()
+            words = line.split()
+            words = [Vocab.process_word(word, self.model_config).lower()
+                     for word in words]
+            words = [self.vocab.encode(word) for word in words]
+            words = ([self.vocab.encode(constant.SYMBOL_START)] + words +
+                     [self.vocab.encode(constant.SYMBOL_END)])
+            yield words
+            i += 1
+
+
     def get_data_sample_it(self):
         self.cur_data_path, self.cur_samples = rd.choice(self.data_paths)
         f = open(self.cur_data_path, encoding='utf-8')

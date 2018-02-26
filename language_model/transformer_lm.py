@@ -23,8 +23,7 @@ class TransformerLM:
         hparams.layer_prepostprocess_dropout = args.layer_prepostprocess_dropout
         return hparams
 
-
-    def create_model_multigpu(self, data):
+    def create_model_multigpu(self, data, is_train):
         losses = []
         grads = []
         self.objs = []
@@ -44,12 +43,13 @@ class TransformerLM:
         self.loss = tf.divide(tf.add_n(losses), args.num_gpus)
         self.perplexity = tf.exp(tf.reduce_mean(self.loss))
 
-        avg_grad = self.average_gradients(grads)
-        grads = [g for (g, v) in avg_grad]
-        clipped_grads, _ = tf.clip_by_global_norm(grads, 5.0)
-        self.train_op = optim.apply_gradients(zip(clipped_grads, tf.trainable_variables()),
-                                              global_step=self.global_step)
-        self.increment_global_step = tf.assign_add(self.global_step, 1)
+        if is_train:
+            avg_grad = self.average_gradients(grads)
+            grads = [g for (g, v) in avg_grad]
+            clipped_grads, _ = tf.clip_by_global_norm(grads, 5.0)
+            self.train_op = optim.apply_gradients(zip(clipped_grads, tf.trainable_variables()),
+                                                  global_step=self.global_step)
+            self.increment_global_step = tf.assign_add(self.global_step, 1)
 
         self.saver = tf.train.Saver(write_version=tf.train.SaverDef.V2)
 
@@ -79,6 +79,7 @@ class TransformerLM:
             sentence_inputs_emb = tf.stack(self.embedding_fn(sentence_inputs, embedding), axis=1)
 
         hparams = transformer.transformer_base()
+        hparams = self.setup_hparams(hparams)
         (decoder_input, decoder_self_attention_bias) = self.attention_lm_prepare_decoder(
             sentence_inputs_emb, hparams)
 
