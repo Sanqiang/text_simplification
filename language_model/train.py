@@ -18,26 +18,27 @@ args = get_args()
 
 
 def eval():
-    def get_eval_data(data, objs):
+    def get_eval_data(data, objs, it):
         input_feed = {}
         pad_id = [data.vocab.encode(constant.SYMBOL_PAD)]
         is_end = False
         for obj in objs:
             tmp_sentence = []
             for i in range(args.batch_size):
-                sentence = next(data.get_data_sample_it())
+                sentence = next(it)
                 if sentence is None:
                     is_end = True
-                if len(sentence) < args.max_sent_len:
-                    num_pad = args.max_sent_len - len(sentence)
-                    sentence.extend(num_pad * pad_id)
                 else:
-                    sentence = sentence[:args.max_sent_len]
-                tmp_sentence.append(sentence)
+                    if len(sentence) < args.max_sent_len:
+                        num_pad = args.max_sent_len - len(sentence)
+                        sentence.extend(num_pad * pad_id)
+                    else:
+                        sentence = sentence[:args.max_sent_len]
+                    tmp_sentence.append(sentence)
 
             for step in range(args.max_sent_len):
                 input_feed[obj['sentence_inputs'][step].name] = [tmp_sentence[batch_idx][step]
-                                                                 for batch_idx in range(args.batch_size)]
+                                                                 for batch_idx in range(len(tmp_sentence))]
         return input_feed, is_end
 
     if not exists(args.resultdir):
@@ -61,11 +62,11 @@ def eval():
     config.gpu_options.allow_growth = True
     sess = sv.PrepareSession(config=config)
     perplexitys = []
-
+    it = data.get_evaldata_sample_it()
     while True:
         input_feed, is_end = get_eval_data(
             data,
-            graph.objs)
+            graph.objs, it)
         if is_end:
             break
         fetches = [graph.loss, graph.global_step,
@@ -80,13 +81,13 @@ def eval():
 
 
 def train():
-    def get_train_data(data, objs):
+    def get_train_data(data, objs, it):
         input_feed = {}
         pad_id = [data.vocab.encode(constant.SYMBOL_PAD)]
         for obj in objs:
             tmp_sentence = []
             for i in range(args.batch_size):
-                sentence = next(data.get_data_sample_it())
+                sentence = next(it)
                 if len(sentence) < args.max_sent_len:
                     num_pad = args.max_sent_len - len(sentence)
                     sentence.extend(num_pad * pad_id)
@@ -111,10 +112,11 @@ def train():
     sess = sv.PrepareSession(config=config)
     perplexitys = []
     start_time = datetime.now()
+    it = data.get_data_sample_it()
     while True:
         input_feed = get_train_data(
             data,
-            graph.objs)
+            graph.objs, it)
         fetches = [graph.train_op, graph.loss, graph.global_step,
                    graph.perplexity]
         _, loss, step, perplexity = sess.run(fetches, input_feed)

@@ -49,7 +49,7 @@ def copy_ckpt_to_modeldir(modeldir, logdir):
     files, max_step = find_train_ckptfiles(logdir, False)
     _, cur_max_step = find_train_ckptfiles(modeldir, False)
     if cur_max_step == max_step:
-        raise FileNotFoundError('No new ckpt. cur_max_step:%s, max_step%s.'
+        raise FileNotFoundError('No new ckpt. cur_max_step: %s, max_step: %s.'
                                 % (cur_max_step, max_step))
 
     for file in files:

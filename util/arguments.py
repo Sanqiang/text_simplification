@@ -9,6 +9,8 @@ def get_args():
                         help='Size of Mini-Batch?')
     parser.add_argument('-fw', '--framework', default='transformer',
                         help='Framework we are using?')
+    parser.add_argument('-env', '--environment', default='crc',
+                        help='The environment machine?')
     parser.add_argument('-out', '--output_folder', default='tmp',
                         help='Output folder?')
     parser.add_argument('-warm', '--warm_start', default='',
@@ -52,6 +54,8 @@ def get_args():
                         help='Whether to iterate train data set?')
     parser.add_argument('-rdec', '--rnn_decoder', default=False, type=bool,
                         help='Whether to RNN decoder?')
+    parser.add_argument('-dataset2', '--use_dataset2', default=False, type=bool,
+                        help='Whether to use second dataset with iteractively?')
 
     # For Graph
     parser.add_argument('-dim', '--dimension', default=300, type=int,

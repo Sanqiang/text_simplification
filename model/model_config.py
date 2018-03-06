@@ -5,28 +5,32 @@ from util.arguments import get_args
 args = get_args()
 
 
-def get_path(file_path, zfs=False):
+def get_path(file_path, zfs=False, env='crc'):
     if zfs:
-        return "/zfs1/hdaqing/saz31/text_simplification/tmp/" + file_path
+        if env == 'crc':
+            return "/zfs1/hdaqing/saz31/text_simplification/tmp/" + file_path
+        elif env == 'psc':
+            return '/pylon5/ci5fp6p/hed/text_simplification/tmp/' + file_path
     else:
         return os.path.dirname(os.path.abspath(__file__)) + '/../' + file_path
 
 
 class DefaultConfig():
+    environment = args.environment
     train_mode = args.train_mode
     num_gpus = args.num_gpus
     framework = args.framework
     warm_start = args.warm_start
     use_partial_restore = args.use_partial_restore
     use_gpu = True
-    batch_size = 9
-    dimension = 150
+    batch_size = 1
+    dimension = 50
     max_complex_sentence = 10
     max_simple_sentence = 8
     # min_simple_sentence = 5 #Used for Beam Search
     model_eval_freq = args.model_eval_freq
     it_train = args.it_train
-    model_print_freq = 1
+    model_print_freq = 10
     save_model_secs = 60
     number_samples = args.number_samples
 
@@ -96,19 +100,22 @@ class DefaultConfig():
     pretrained_embedding = None
 
     train_dataset_simple = get_path('data/train_dummy_simple_dataset')
+    train_dataset_simple2 = get_path('data/train_dummy_simple_dataset2')
     train_dataset_simple_ppdb = get_path('data/train_dummy_simple_dataset.rules')
     train_dataset_simple_syntax = get_path('data/train_dummy_simple_dataset.syntax')
+    train_dataset_simple_syntax2 = get_path('data/train_dummy_simple_dataset2.syntax')
     train_dataset_complex = get_path('data/train_dummy_complex_dataset')
+    train_dataset_complex2 = get_path('data/train_dummy_complex_dataset2')
     train_dataset_complex_ppdb = get_path('data/train_dummy_complex_dataset.rules')
     val_dataset_complex_ppdb = get_path('data/eval_dummy_complex_dataset.rules')
     vocab_simple = get_path('data/dummy_simple_vocab')
     vocab_complex = get_path('data/dummy_complex_vocab')
     vocab_all = get_path('data/dummy_vocab')
     vocab_rules = get_path('data/dummy_rules_vocab')
-    if args.lower_case:
-        vocab_simple = vocab_simple + '.lower'
-        vocab_complex = vocab_complex + '.lower'
-        vocab_all = vocab_all + '.lower'
+    # if args.lower_case:
+    #     vocab_simple = vocab_simple + '.lower'
+    #     vocab_complex = vocab_complex + '.lower'
+    #     vocab_all = vocab_all + '.lower'
 
     subword_vocab_size = args.subword_vocab_size
     subword_vocab_simple = vocab_simple + str(subword_vocab_size)
@@ -129,9 +136,9 @@ class DefaultConfig():
     num_refs = 3
 
     output_folder = args.output_folder
-    logdir = get_path('../' + output_folder + '/log/', True)
-    modeldir = get_path('../' + output_folder + '/model/', True)
-    resultdir = get_path('../' + output_folder + '/result/', True)
+    logdir = get_path('../' + output_folder + '/log/', True, environment)
+    modeldir = get_path('../' + output_folder + '/model/', True, environment)
+    resultdir = get_path('../' + output_folder + '/result/', True, environment)
 
     allow_growth = True
     # per_process_gpu_memory_fraction = 1.0
@@ -172,6 +179,9 @@ class DefaultConfig():
     rl_configs = {}
     for cfg in rl_config.split('|'):
         kv = cfg.split(':')
+        if kv[0] == 'dummy':
+            rl_configs['dummy'] = True
+
         if kv[0] == 'sari':
             rl_configs['sari'] = True
         if kv[0] == 'sari_weight':
@@ -187,6 +197,9 @@ class DefaultConfig():
     rnn_decoder = args.rnn_decoder
 
     rule_base = args.rule_base
+
+    use_dataset2 = args.use_dataset2
+
 
 class DefaultTrainConfig(DefaultConfig):
     beam_search_size = 0
@@ -330,8 +343,9 @@ class SubTest(WikiDressLargeDefault):
 
 
 class SubValWikiEightRefConfig(SubTest):
+    environment = args.environment
     output_folder = args.output_folder
-    resultdir = get_path('../' + output_folder + '/result/eightref_val', True)
+    resultdir = get_path('../' + output_folder + '/result/eightref_val', True, environment)
 
     val_dataset_simple_folder = get_path('../text_simplification_data/val/')
     # use the original dress
@@ -360,8 +374,9 @@ class SubValWikiEightRefConfigBeam4(SubValWikiEightRefConfig):
 
 
 class SubTestWikiEightRefConfig(SubTest):
+    environment = args.environment
     output_folder = args.output_folder
-    resultdir = get_path('../' + output_folder + '/result/eightref_test', True)
+    resultdir = get_path('../' + output_folder + '/result/eightref_test', True, environment)
 
     val_dataset_simple_folder = get_path('../text_simplification_data/test/')
     # use the original dress
@@ -541,6 +556,7 @@ class WikiTransLegacyTestCfg(WikiTransLegacyBaseCfg):
         '../text_simplification_data/test/wiki.full.aner.test.src.sorted.rules')
 
 class WikiTransBaseCfg(DefaultConfig):
+    environment = args.environment
     model_print_freq = 50
     save_model_secs = 600
     model_eval_freq = args.model_eval_freq
@@ -553,6 +569,12 @@ class WikiTransBaseCfg(DefaultConfig):
     # train_dataset_complex_syntax = get_path(
     #     '../text_simplification_data/train/dress/wikilarge/wiki.full.aner.train.src.jsyntax')
     train_dataset_complex = get_path('../text_simplification_data/wiki/ner3/ner_comp.txt')
+    train_dataset_simple2 = get_path(
+        '../text_simplification_data/train/dress/wikilarge2/dst_notrans.txt')
+    train_dataset_complex2 = get_path(
+        '../text_simplification_data/train/dress/wikilarge2/src_notrans.txt')
+    train_dataset_complex_ppdb2 = get_path(
+        '../text_simplification_data/train/dress/wikilarge2/src_notrans.sorted.rules.txt')
     # train_dataset_complex_ppdb = get_path(args.train_dataset_complex_ppdb)
     subword_vocab_size = args.subword_vocab_size
     if subword_vocab_size == 30000:

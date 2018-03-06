@@ -35,6 +35,8 @@ class TrainData:
             self.vocab_complex = Vocab(model_config, vocab_all_path)
 
         self.size = self.get_size(data_complex_path)
+        if self.model_config.use_dataset2:
+            self.size2 = self.get_size(self.model_config.train_dataset_complex2)
         # Populate basic complex simple pairs
         if not self.model_config.it_train:
             self.data_simple, _ = self.populate_data(
@@ -63,6 +65,10 @@ class TrainData:
             self.rules = self.populate_rules(
                 self.model_config.train_dataset_complex_ppdb, self.vocab_rule)
             assert len(self.rules) == self.size
+            if self.model_config.use_dataset2:
+                self.rules2 = self.populate_rules(
+                    self.model_config.train_dataset_complex_ppdb2, self.vocab_rule)
+                assert len(self.rules2) == self.size2
 
     def populate_ppdb(self, data_path):
         rules = []
@@ -102,6 +108,10 @@ class TrainData:
     def get_data_sample_it(self, data_simple_path, data_complex_path):
         f_simple = open(data_simple_path, encoding='utf-8')
         f_complex = open(data_complex_path, encoding='utf-8')
+        if self.model_config.use_dataset2:
+            f_simple2 = open(self.model_config.train_dataset_simple2, encoding='utf-8')
+            f_complex2 = open(self.model_config.train_dataset_complex2, encoding='utf-8')
+            j = 0
         i = 0
         while True:
             if i == self.size:
@@ -118,8 +128,24 @@ class TrainData:
                 supplement['mem'] = self.rules[i]
 
             yield i, words_simple, words_complex, cp.deepcopy([1.0] * len(words_simple)), cp.deepcopy([1.0] * len(words_complex)), supplement
-
             i += 1
+
+            if self.model_config.use_dataset2:
+                if j == self.size2:
+                    f_simple2 = open(self.model_config.train_dataset_simple2, encoding='utf-8')
+                    f_complex2 = open(self.model_config.train_dataset_complex2, encoding='utf-8')
+                    j = 0
+                line_complex2 = f_complex2.readline()
+                line_simple2 = f_simple2.readline()
+                words_complex2, _ = self.process_line(line_complex2, self.vocab_complex)
+                words_simple2, _ = self.process_line(line_simple2, self.vocab_simple)
+
+                supplement2 = {}
+                if self.model_config.memory == 'rule':
+                    supplement2['mem'] = self.rules2[j]
+
+                yield j, words_simple2, words_complex2, cp.deepcopy([1.0] * len(words_simple2)), cp.deepcopy([1.0] * len(words_complex2)), supplement2
+                j += 1
 
     def populate_rules(self, rule_path, vocab_rule):
         data = []
