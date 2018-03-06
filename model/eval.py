@@ -1,6 +1,7 @@
 # For fix slurm cannot load PYTHONPATH
 import sys
 sys.path.insert(0, '/ihome/hdaqing/saz31/sanqiang/text_simplification')
+sys.path.insert(0,'/home/hed/text_simp_proj/text_simplification')
 
 
 from data_generator.val_data import ValData
@@ -304,9 +305,12 @@ def eval(model_config=None, ckpt=None):
                     batch_fkgl = get_fkgl(' '.join(target_raw[batch_i]))
                 fkgls.append(batch_fkgl)
 
+            # target_output = decode_to_output(target, sentence_simple, sentence_complex,
+            #                                  effective_batch_size, ibleus, target_raw, sentence_complex_raw,
+            #                                  saris, fkgls)
             target_output = decode_to_output(target, sentence_simple, sentence_complex,
                                              effective_batch_size, ibleus, target_raw, sentence_complex_raw,
-                                             saris, fkgls)
+                                             saris, fkgls, ref_raw_lines, model_config)
             decode_outputs_all.append(target_output)
 
             if is_end:
