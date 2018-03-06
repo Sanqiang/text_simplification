@@ -14,4 +14,4 @@
 module restore
 
 # Run the job
-srun python ../../language_model/train.py -out lm2
+srun python ../../language_model/train.py -ns 5000 -dim 512 -nh 8 -maxlen 300 -nhl 6 -svoc_size 50000 -out lm_sub50k -bsize 15

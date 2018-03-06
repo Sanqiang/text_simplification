@@ -3,7 +3,7 @@
 
 #SBATCH --cluster=gpu
 #SBATCH --gres=gpu:1
-#SBATCH --partition=gtx1080
+#SBATCH --partition=titanx
 #SBATCH --job-name=wiki_base_add
 #SBATCH --output=wiki_base_add.out
 #SBATCH --nodes=1

@@ -578,20 +578,30 @@ class WikiTransBaseCfg(DefaultConfig):
     # train_dataset_complex_ppdb = get_path(args.train_dataset_complex_ppdb)
     subword_vocab_size = args.subword_vocab_size
     if subword_vocab_size == 30000:
-        vocab_simple = get_path('../text_simplification_data/wiki/voc/voc_simp_sub30k.txt')
-        vocab_complex = get_path('../text_simplification_data/wiki/voc/voc_comp_sub30k.txt')
-        vocab_all = get_path('../text_simplification_data/wiki/voc/voc_all_sub30k.txt')
+        subword_vocab_simple = get_path('../text_simplification_data/wiki/voc/voc_simp_sub30k.txt')
+        subword_vocab_complex = get_path('../text_simplification_data/wiki/voc/voc_comp_sub30k.txt')
+        subword_vocab_all = get_path('../text_simplification_data/wiki/voc/voc_all_sub30k.txt')
+        max_complex_sentence = 300
+        max_simple_sentence = 250
+    elif subword_vocab_size == 50000:
+        subword_vocab_simple = get_path('../text_simplification_data/wiki/voc/voc_all_sub50k.txt')
+        subword_vocab_complex = get_path('../text_simplification_data/wiki/voc/voc_all_sub50k.txt')
+        subword_vocab_all = get_path('../text_simplification_data/wiki/voc/voc_all_sub50k.txt')
+        max_complex_sentence = 300
+        max_simple_sentence = 250
     else:
         # vocab_simple = get_path('../text_simplification_data/wiki/voc/voc_simp.txt')
         # vocab_complex = get_path('../text_simplification_data/wiki/voc/voc_comp.txt')
         # vocab_all = get_path('../text_simplification_data/wiki/voc/voc_all.txt')
         vocab_simple = get_path('../text_simplification_data/train/dress/wikilarge/wiki.full.aner.train.dst.vocab.dress')
         vocab_complex = get_path('../text_simplification_data/train/dress/wikilarge/wiki.full.aner.train.src.vocab.dress')
-    if args.lower_case:
-        vocab_simple = get_path(
-            '../text_simplification_data/train/dress/wikilarge/wiki.full.aner.train.dst.vocab.lower')
-        vocab_complex = get_path(
-            '../text_simplification_data/train/dress/wikilarge/wiki.full.aner.train.src.vocab.lower')
+        max_complex_sentence = 85
+        max_simple_sentence = 85
+        if args.lower_case:
+            vocab_simple = get_path(
+                '../text_simplification_data/train/dress/wikilarge/wiki.full.aner.train.dst.vocab.lower')
+            vocab_complex = get_path(
+                '../text_simplification_data/train/dress/wikilarge/wiki.full.aner.train.src.vocab.lower')
     min_count = args.min_count
 
     val_dataset_simple_folder = get_path('../text_simplification_data/val/')
@@ -610,10 +620,6 @@ class WikiTransBaseCfg(DefaultConfig):
     num_refs = 8
 
     dimension = args.dimension
-
-    max_complex_sentence = 85
-    max_simple_sentence = 85
-
 
     batch_size = args.batch_size
 

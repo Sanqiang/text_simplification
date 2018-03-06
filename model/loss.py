@@ -15,7 +15,7 @@ def sequence_loss(logits,
                   average_across_timesteps=True,
                   average_across_batch=True,
                   softmax_loss_function=None,
-                  name=None, data=None, w=None, b=None, decoder_outputs=None, number_samples=-1):
+                  name=None, w=None, b=None, decoder_outputs=None, number_samples=-1):
   """Weighted cross-entropy loss for a sequence of logits.
   Depending on the values of `average_across_timesteps` and
   `average_across_batch`, the return Tensor will have rank 0, 1, or 2 as these
@@ -78,7 +78,7 @@ def sequence_loss(logits,
       crossent = softmax_loss_function(labels=targets, inputs=decoder_outputs, num_sampled=number_samples,
                                        weights=w,
                                        biases=b,
-                                       num_classes=len(data.vocab_simple.i2w))
+                                       num_classes=logits.get_shape()[2].value)
       print('Use Sampled Softmax with number of samples:' + str(number_samples))
     crossent *= array_ops.reshape(weights, [-1])
     if average_across_timesteps and average_across_batch:

@@ -20,7 +20,10 @@ args = get_args()
 def eval():
     def get_eval_data(data, objs, it):
         input_feed = {}
-        pad_id = [data.vocab.encode(constant.SYMBOL_PAD)]
+        if args.subword_vocab_size > 0:
+            pad_id = data.vocab.encode(constant.SYMBOL_PAD)
+        else:
+            pad_id = [data.vocab.encode(constant.SYMBOL_PAD)]
         is_end = False
         for obj in objs:
             tmp_sentence = []
@@ -83,7 +86,10 @@ def eval():
 def train():
     def get_train_data(data, objs, it):
         input_feed = {}
-        pad_id = [data.vocab.encode(constant.SYMBOL_PAD)]
+        if args.subword_vocab_size > 0:
+            pad_id = data.vocab.encode(constant.SYMBOL_PAD)
+        else:
+            pad_id = [data.vocab.encode(constant.SYMBOL_PAD)]
         for obj in objs:
             tmp_sentence = []
             for i in range(args.batch_size):
@@ -133,6 +139,7 @@ def train():
             print_gpu_memory()
             print_cpu_memory()
             eval()
+
 
 if __name__ == '__main__':
     train()

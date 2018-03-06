@@ -3,14 +3,20 @@ import argparse
 
 
 def get_args():
-    parser = argparse.ArgumentParser(description='Model Parameter')
+    parser = argparse.ArgumentParser(description='LM Model Parameter')
 
+    parser.add_argument('-out', '--output_folder', default='tmp',
+                        help='Output folder?')
     parser.add_argument('-ngpus', '--num_gpus', default=1, type=int,
                         help='Number of GPU cards?')
-    parser.add_argument('-bsize', '--batch_size', default=50, type=int,
+    parser.add_argument('-bsize', '--batch_size', default=32, type=int,
                         help='Size of Mini-Batch?')
     parser.add_argument('-dim', '--dimension', default=300, type=int,
                         help='Size of dimension?')
+    parser.add_argument('-svoc_size', '--subword_vocab_size', default=0, type=int,
+                        help='Size of subword?')
+    parser.add_argument('-ns', '--number_samples', default=0, type=int,
+                        help='Size of samples for sampled softmax?')
     parser.add_argument('-maxlen', '--max_sent_len', default=100, type=int,
                         help='Max of sentence length?')
     parser.add_argument('-mc', '--min_count', default=5, type=int,
@@ -44,4 +50,14 @@ def get_args():
                         help='Dropout rate?')
 
     args = parser.parse_args()
+    return postprocess_args(args)
+
+
+def postprocess_args(args):
+    output_folder = args.output_folder
+    args.logdir = args.logdir.replace('lm', output_folder)
+    args.resultdir = args.resultdir.replace('lm', output_folder)
+    args.modeldir = args.modeldir.replace('lm', output_folder)
+    if args.subword_vocab_size > 0:
+        args.vocab_path = get_path('../text_simplification_data/wiki/voc/voc_all_sub50k.txt')
     return args

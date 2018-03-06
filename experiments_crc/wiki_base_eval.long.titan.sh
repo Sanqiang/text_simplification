@@ -16,6 +16,6 @@
 module restore
 
 # Run the job
-srun python ../model/eval.py -ngpus 1 -bsize 100 -fw transformer -out wiki_base -layer_drop 0.2 -op adagrad -lr 0.1 --mode wiki -nhl 6 -nel 6 -ndl 6 -lc True --it_train True -eval_freq 0
+srun python ../model/train.py -ngpus 1 -bsize 32 -fw transformer -out wiki_base -layer_drop 0.2 -op adagrad -lr 0.1 --mode wiki -nhl 6 -nel 6 -ndl 6 -lc True --it_train True -eval_freq 0
 
 

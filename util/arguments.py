@@ -103,5 +103,9 @@ def get_args():
     parser.add_argument('-rbase', '--rule_base', default='v1',
                         help='Which rule base to use?')
 
+    # Useless
+    parser.add_argument('-maxlen', '--max_sent_len', default=100, type=int,
+                        help='Max of sentence length?')
+
     args = parser.parse_args()
     return args

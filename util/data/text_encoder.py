@@ -656,7 +656,7 @@ class SubwordTextEncoder(TextEncoder):
       nowtime = datetime.now()
       span = nowtime - pretime
       pretime = nowtime
-      print('Finished Loop %s using %s' % (i, span))
+      print('Start Loop %s using %s' % (i, span))
       tf.logging.info("Iteration {0}".format(i))
 
       # Collect all substrings of the encoded token that break along current
@@ -706,6 +706,7 @@ class SubwordTextEncoder(TextEncoder):
           [subtoken for _, subtoken in new_subtoken_strings],
           reserved=num_reserved_ids)
       tf.logging.info("vocab_size = %d" % self.vocab_size)
+      print('Finish Loop %s using %s' % (i, span))
 
   def dump(self):
     """Debugging dump of the current subtoken vocabulary."""

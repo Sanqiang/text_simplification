@@ -2,8 +2,7 @@
 Transformer-based LM: https://github.com/tensorflow/tensor2tensor/blob/master/tensor2tensor/models/attention_lm.py
 """
 import tensorflow as tf
-from tensorflow.contrib.seq2seq import sequence_loss
-
+from model.loss import sequence_loss
 from tensor2tensor.layers import common_attention
 from tensor2tensor.layers import common_layers
 from tensor2tensor.models import transformer
@@ -96,7 +95,16 @@ class TransformerLM:
             [tf.to_float(tf.not_equal(d, data.vocab.encode(constant.SYMBOL_PAD)))
              for d in sentence_outputs_list], axis=1)
 
-        loss = sequence_loss(decoder_logits, sentence_outputs, decode_word_weight)
+        if args.number_samples > 0:
+            loss_fn = tf.nn.sampled_softmax_loss
+        else:
+            loss_fn = None
+        loss = sequence_loss(decoder_logits, sentence_outputs, decode_word_weight,
+                             softmax_loss_function=loss_fn,
+                             w=proj_w,
+                             b=proj_b,
+                             decoder_outputs=decoder_outputs,
+                             number_samples=args.number_samples)
         obj = {
             'sentence_inputs':sentence_inputs,
         }

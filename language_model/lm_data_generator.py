@@ -12,7 +12,8 @@ args = get_args()
 
 class LM_Data:
     def __init__(self):
-        self.model_config = SimpleNamespace(min_count=args.min_count, subword_vocab_size=0, lower_case=True)
+        self.model_config = SimpleNamespace(
+            min_count=args.min_count, subword_vocab_size=args.subword_vocab_size, lower_case=True)
         self.vocab = Vocab(self.model_config, args.vocab_path)
 
         files = listdir(args.data_path)
@@ -38,9 +39,13 @@ class LM_Data:
             words = line.split()
             words = [Vocab.process_word(word, self.model_config).lower()
                      for word in words]
-            words = [self.vocab.encode(word) for word in words]
-            words = ([self.vocab.encode(constant.SYMBOL_START)] + words +
-                     [self.vocab.encode(constant.SYMBOL_END)])
+            if args.subword_vocab_size == 0:
+                words = [self.vocab.encode(word) for word in words]
+                words = ([self.vocab.encode(constant.SYMBOL_START)] + words +
+                         [self.vocab.encode(constant.SYMBOL_END)])
+            else:
+                words = [constant.SYMBOL_START] + words + [constant.SYMBOL_END]
+                words = self.vocab.encode(' '.join(words))
             yield words
             i += 1
 
@@ -58,8 +63,12 @@ class LM_Data:
             words = line.split()
             words = [Vocab.process_word(word, self.model_config).lower()
                      for word in words]
-            words = [self.vocab.encode(word) for word in words]
-            words = ([self.vocab.encode(constant.SYMBOL_START)] + words +
-                     [self.vocab.encode(constant.SYMBOL_END)])
+            if args.subword_vocab_size == 0:
+                words = [self.vocab.encode(word) for word in words]
+                words = ([self.vocab.encode(constant.SYMBOL_START)] + words +
+                         [self.vocab.encode(constant.SYMBOL_END)])
+            else:
+                words = [constant.SYMBOL_START] + words + [constant.SYMBOL_END]
+                words = self.vocab.encode(' '.join(words))
             yield words
             i += 1
