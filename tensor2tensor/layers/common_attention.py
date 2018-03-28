@@ -1164,7 +1164,8 @@ def dot_product_attention(q,
                           dropout_rate=0.0,
                           image_shapes=None,
                           name=None,
-                          make_image_summary=True):
+                          make_image_summary=True,
+                          model_config=None):
   """dot-product attention.
 
   Args:
@@ -1195,7 +1196,27 @@ def dot_product_attention(q,
         "/while/" not in tf.contrib.framework.get_name_scope() and
         make_image_summary):
       attention_image_summary(weights, image_shapes)
-    return tf.matmul(weights, v)
+    ctx = tf.matmul(weights, v)
+    sep = {}
+
+    if ('transformer_decoder/decoder/layer_' in tf.get_variable_scope().name and
+                '/encdec_attention/multihead_attention/dot_product_attention' in tf.get_variable_scope().name and
+                model_config is not None and model_config.pointer_mode == 'ptr'):
+        batch_size = q.get_shape()[0].value
+        if batch_size is not None:
+            q_flatten = tf.reshape(
+                q, [batch_size*model_config.num_heads, -1, q.get_shape()[3].value])
+            ctx_flatten = tf.reshape(
+                ctx, [batch_size*model_config.num_heads, -1, ctx.get_shape()[3].value])
+            inp_gen = tf.concat([q_flatten, ctx_flatten], axis=-1)
+            filter_gen = tf.get_variable('filter_gen', shape=(1, 2*ctx.get_shape()[3].value, 1))
+            gen = tf.nn.tanh(tf.nn.conv1d(inp_gen, filter_gen, 1, 'SAME'))
+            gen = tf.reshape(
+                gen, (batch_size, model_config.num_heads, -1, 1))
+            sep['weight'] = weights
+            sep['gen'] = gen
+
+    return ctx, sep
 
 
 def _generate_relative_positions_matrix(length, max_relative_position):
@@ -2227,6 +2248,7 @@ def multihead_attention(query_antecedent,
                         gap_size=0,
                         num_memory_blocks=2,
                         name=None,
+                        model_config=None,
                         **kwargs):
   """Multihead scaled-dot-product attention with input/output transformations.
 
@@ -2321,13 +2343,14 @@ def multihead_attention(query_antecedent,
     key_depth_per_head = total_key_depth // num_heads
     q *= key_depth_per_head**-0.5
 
+    weights = None
     additional_returned_value = None
     if callable(attention_type):  # Generic way to extend multihead_attention
       x = attention_type(q, k, v, **kwargs)
       if isinstance(x, tuple):
         x, additional_returned_value = x  # Unpack
     elif attention_type == "dot_product":
-      x = dot_product_attention(q, k, v, bias, dropout_rate, image_shapes)
+      x, sep = dot_product_attention(q, k, v, bias, dropout_rate, image_shapes, model_config=model_config)
     elif attention_type == "dot_product_relative":
       x = dot_product_attention_relative(q, k, v, bias, max_relative_position,
                                          dropout_rate, image_shapes)
@@ -2348,7 +2371,7 @@ def multihead_attention(query_antecedent,
         x, output_depth, use_bias=False, name="output_transform")
     if additional_returned_value is not None:
       return x, additional_returned_value
-    return x
+    return x, sep
 
 
 def multihead_attention_2d(query_antecedent,

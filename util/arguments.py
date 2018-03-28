@@ -68,6 +68,8 @@ def get_args():
     parser.add_argument('-path_ppdb', '--path_ppdb_refine',
                         default='../text_simplification_data/ppdb/SimplePPDB.enrich',
                         help='The path for PPDB rules?')
+    parser.add_argument('-pmode', '--pointer_mode', default='',
+                        help='The Pointer Network?')
 
     # For Memory
     parser.add_argument('-mem', '--memory', default=None,

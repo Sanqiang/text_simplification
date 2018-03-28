@@ -26,6 +26,17 @@ class Metric:
             cur_greed_target_list = greed_target_list[batch_i]
             cur_gt_simp_list = gt_simp_list[batch_i]
             cur_gt_comp_list = gt_comp_list[batch_i]
+
+            if 'dummy' in self.model_config.rl_configs:
+                def reward_word(sent):
+                    return str(self.data.vocab_simple.encode('am')) not in sent
+
+                cur_sample_target_str = ' '.join([str(o) for o in cur_sample_target_list])
+                cur_greed_target_str = ' '.join([str(o) for o in cur_greed_target_list])
+                reward_sample = 1.0 if reward_word(cur_sample_target_str) else -0.0
+                reward_greed = 0.8 if reward_word(cur_greed_target_str) else -0.2
+                reward = [reward_sample-reward_greed for _ in range(len(cur_sample_target_list))]
+
             if 'sari' in self.model_config.rl_configs:
                 cur_sample_target_str = ' '.join([str(o) for o in cur_sample_target_list])
                 cur_greed_target_str = ' '.join([str(o) for o in cur_greed_target_list])
@@ -34,6 +45,7 @@ class Metric:
                 reward_sample = sari_weight * SARIsent(cur_gt_comp_str, cur_sample_target_str, [cur_gt_simp_str]) + (1-sari_weight) * SARIsent(cur_gt_comp_str, cur_gt_simp_str, [cur_sample_target_str])
                 reward_greed = sari_weight * SARIsent(cur_gt_comp_str, cur_greed_target_str, [cur_gt_simp_str]) + (1-sari_weight) * SARIsent(cur_gt_comp_str, cur_gt_simp_str, [cur_greed_target_str])
                 reward = [r * (reward_sample-reward_greed) for r in reward]
+
             if 'rule' in self.model_config.rl_configs:
                 rule_weight = self.model_config.rl_configs['rule_weight']
                 reward_sample = [1.0 for _ in range(num_steps)]

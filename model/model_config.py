@@ -23,7 +23,7 @@ class DefaultConfig():
     warm_start = args.warm_start
     use_partial_restore = args.use_partial_restore
     use_gpu = True
-    batch_size = 1
+    batch_size = 3
     dimension = 50
     max_complex_sentence = 10
     max_simple_sentence = 8
@@ -118,11 +118,14 @@ class DefaultConfig():
     #     vocab_all = vocab_all + '.lower'
 
     subword_vocab_size = args.subword_vocab_size
-    subword_vocab_simple = vocab_simple + str(subword_vocab_size)
-    subword_vocab_complex = vocab_complex + str(subword_vocab_size)
-    subword_vocab_all = vocab_all + str(subword_vocab_size)
 
     if subword_vocab_size > 0:
+        subword_vocab_simple = get_path('data/dummy_subvocab')
+        subword_vocab_complex = get_path('data/dummy_subvocab')
+        subword_vocab_all = get_path('data/dummy_subvocab')
+        # subword_vocab_simple = vocab_simple + str(subword_vocab_size)
+        # subword_vocab_complex = vocab_complex + str(subword_vocab_size)
+        # subword_vocab_all = vocab_all + str(subword_vocab_size)
         max_complex_sentence = 100
         max_simple_sentence = 90
 
@@ -199,6 +202,7 @@ class DefaultConfig():
     rule_base = args.rule_base
 
     use_dataset2 = args.use_dataset2
+    pointer_mode = args.pointer_mode
 
 
 class DefaultTrainConfig(DefaultConfig):
@@ -207,7 +211,7 @@ class DefaultTrainConfig(DefaultConfig):
 
 class DefaultTestConfig(DefaultConfig):
     beam_search_size = 1
-    batch_size = 2
+    # batch_size = 2
     output_folder = args.output_folder
     resultdir = get_path('../' + output_folder + '/result/test1', True)
 
@@ -581,14 +585,14 @@ class WikiTransBaseCfg(DefaultConfig):
         subword_vocab_simple = get_path('../text_simplification_data/wiki/voc/voc_simp_sub30k.txt')
         subword_vocab_complex = get_path('../text_simplification_data/wiki/voc/voc_comp_sub30k.txt')
         subword_vocab_all = get_path('../text_simplification_data/wiki/voc/voc_all_sub30k.txt')
-        max_complex_sentence = 300
-        max_simple_sentence = 250
+        max_complex_sentence = 250
+        max_simple_sentence = 150
     elif subword_vocab_size == 50000:
         subword_vocab_simple = get_path('../text_simplification_data/wiki/voc/voc_all_sub50k.txt')
         subword_vocab_complex = get_path('../text_simplification_data/wiki/voc/voc_all_sub50k.txt')
         subword_vocab_all = get_path('../text_simplification_data/wiki/voc/voc_all_sub50k.txt')
-        max_complex_sentence = 300
-        max_simple_sentence = 250
+        max_complex_sentence = 250
+        max_simple_sentence = 150
     else:
         # vocab_simple = get_path('../text_simplification_data/wiki/voc/voc_simp.txt')
         # vocab_complex = get_path('../text_simplification_data/wiki/voc/voc_comp.txt')
@@ -632,24 +636,65 @@ class WikiTransTrainCfg(WikiTransBaseCfg):
 
 
 class WikiTransValCfg(WikiTransBaseCfg):
-    batch_size = 64
-    replace_unk_by_emb = True
+    # batch_size = 64
+    # replace_unk_by_emb = True
+    # beam_search_size = 1
+    #
+    # output_folder = args.output_folder
+    # resultdir = get_path('../' + output_folder + '/result/eightref_test')
+    #
+    # val_dataset_simple_folder = get_path('../text_simplification_data/test/')
+    # # use the original dress
+    # val_dataset_simple_file = 'wiki.full.aner.test.dst'
+    # val_dataset_complex = get_path('../text_simplification_data/test/wiki.full.aner.test.src')
+    # val_mapper = get_path('../text_simplification_data/test/test.8turkers.tok.map.dress')
+    # # wiki.full.aner.ori.test.dst is uppercase whereas test.8turkers.tok.simp is lowercase
+    # val_dataset_complex_rawlines_file = get_path(
+    #     '../text_simplification_data/test/test.8turkers.tok.norm')
+    # val_dataset_simple_rawlines_file_references = 'test.8turkers.tok.turk.'
+    # val_dataset_simple_rawlines_file = 'test.8turkers.tok.simp'
+    # num_refs = 8
+    environment = args.environment
+    output_folder = args.output_folder
+    resultdir = get_path('../' + output_folder + '/result/eightref_val', True, environment)
+
+    val_dataset_simple_folder = get_path('../text_simplification_data/val/')
+    # use the original dress
+    val_dataset_simple_file = 'tune.8turkers.tok.simp.ner'
+    val_dataset_complex = get_path('../text_simplification_data/val/tune.8turkers.tok.norm.ner')
+    val_mapper = get_path('../text_simplification_data/val/tune.8turkers.tok.map')
+    # wiki.full.aner.ori.valid.dst is uppercase whereas tune.8turkers.tok.simp is lowercase
+    val_dataset_complex_rawlines_file = get_path(
+        '../text_simplification_data/val/tune.8turkers.tok.norm')
+    val_dataset_simple_rawlines_file_references = 'tune.8turkers.tok.turk.'
+    val_dataset_simple_rawlines_file = 'tune.8turkers.tok.simp'
+    num_refs = 8
     beam_search_size = 1
 
+
+class WikiTransTestCfg(WikiTransBaseCfg):
+    environment = args.environment
     output_folder = args.output_folder
-    resultdir = get_path('../' + output_folder + '/result/eightref_test')
+    resultdir = get_path('../' + output_folder + '/result/eightref_test', True, environment)
 
     val_dataset_simple_folder = get_path('../text_simplification_data/test/')
     # use the original dress
     val_dataset_simple_file = 'wiki.full.aner.test.dst'
     val_dataset_complex = get_path('../text_simplification_data/test/wiki.full.aner.test.src')
     val_mapper = get_path('../text_simplification_data/test/test.8turkers.tok.map.dress')
+    rule_base = args.rule_base
+    if rule_base == 'v3':
+        val_dataset_complex_ppdb = get_path('../text_simplification_data/test/wiki.full.aner.test.src.sorted.rules.v3')
+    else:
+        val_dataset_complex_ppdb = get_path(
+            '../text_simplification_data/test/wiki.full.aner.test.src.sorted.rules')
     # wiki.full.aner.ori.test.dst is uppercase whereas test.8turkers.tok.simp is lowercase
     val_dataset_complex_rawlines_file = get_path(
         '../text_simplification_data/test/test.8turkers.tok.norm')
     val_dataset_simple_rawlines_file_references = 'test.8turkers.tok.turk.'
     val_dataset_simple_rawlines_file = 'test.8turkers.tok.simp'
     num_refs = 8
+    beam_search_size = 1
 
 
 def list_config(config):

@@ -2,8 +2,8 @@
 #SBATCH --cluster=gpu
 #SBATCH --gres=gpu:1
 #SBATCH --partition=titan
-#SBATCH --job-name=lm
-#SBATCH --output=lm.out
+#SBATCH --job-name=lm_sub50k
+#SBATCH --output=lm_sub50k.out
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
 #SBATCH --cpus-per-task=1

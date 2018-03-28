@@ -3,6 +3,7 @@ import random as rd
 
 import numpy as np
 from nltk import word_tokenize
+from copy import deepcopy
 
 from data_generator.vocab import Vocab
 from data_generator.rule import Rule
@@ -39,28 +40,17 @@ class TrainData:
             self.size2 = self.get_size(self.model_config.train_dataset_complex2)
         # Populate basic complex simple pairs
         if not self.model_config.it_train:
-            self.data_simple, _ = self.populate_data(
-                data_simple_path, self.vocab_simple, need_raw=False)
-            self.data_complex, _ = self.populate_data(
-                data_complex_path, self.vocab_complex, need_raw=False)
-            assert len(self.data_complex) == self.size
-            assert len(self.data_simple) == self.size
+            self.data = self.populate_data(data_complex_path, data_simple_path,
+                                           self.vocab_complex, self.vocab_simple, False)
         else:
-            self.data_it = self.get_data_sample_it(data_simple_path, data_complex_path)
+            raise NotImplemented
+            # self.data_it = self.get_data_sample_it(data_simple_path, data_complex_path)
 
         print('Use Train Dataset: \n Simple\t %s. \n Complex\t %s. \n Size\t %d.'
               % (data_simple_path, data_complex_path, self.size))
 
-        if self.model_config.ppdb_mode != 'none':
-            self.ppdb = PPDB(model_config)
-            self.ppdb_simp_rules = self.populate_ppdb(self.model_config.train_dataset_simple_ppdb)
-            self.ppdb_comp_rules = self.populate_ppdb(self.model_config.train_dataset_complex_ppdb)
-            assert len(self.ppdb_simp_rules) == self.size
-            assert len(self.ppdb_comp_rules) == self.size
-
-        self.init_pretrained_embedding()
-
         if self.model_config.memory == 'rule':
+            raise NotImplemented
             self.vocab_rule = Rule(model_config, self.model_config.vocab_rules)
             self.rules = self.populate_rules(
                 self.model_config.train_dataset_complex_ppdb, self.vocab_rule)
@@ -77,7 +67,7 @@ class TrainData:
             rules.append(rule)
         return rules
 
-    def process_line(self, line, vocab, need_raw=False):
+    def process_line(self, line, vocab, max_len, need_raw=False):
         if self.model_config.tokenizer == 'split':
             words = line.split()
         elif self.model_config.tokenizer == 'nltk':
@@ -100,6 +90,17 @@ class TrainData:
             words = ([self.vocab_simple.encode(constant.SYMBOL_START)] + words +
                      [self.vocab_simple.encode(constant.SYMBOL_END)])
 
+        if self.model_config.subword_vocab_size > 0:
+            pad_id = vocab.encode(constant.SYMBOL_PAD)
+        else:
+            pad_id = [vocab.encode(constant.SYMBOL_PAD)]
+
+        if len(words) < max_len:
+            num_pad = max_len - len(words)
+            words.extend(num_pad * pad_id)
+        else:
+            words = words[:max_len]
+
         return words, words_raw
 
     def get_size(self, data_complex_path):
@@ -120,7 +121,7 @@ class TrainData:
                 i = 0
             line_complex = f_complex.readline()
             line_simple = f_simple.readline()
-            words_complex, _ = self.process_line(line_complex, self.vocab_complex)
+            words_complex, _ = self.process_line(line_complex, self.vocab_complex, self.max)
             words_simple, _ = self.process_line(line_simple, self.vocab_simple)
 
             supplement = {}
@@ -159,90 +160,35 @@ class TrainData:
             data.append(tmp)
         return data
 
-    def populate_data(self, data_path, vocab, need_raw=False):
+    def populate_data(self, data_path_comp, data_path_simp, vocab_comp, vocab_simp, need_raw=False):
         # Populate data into memory
         data = []
-        data_raw = []
         # max_len = -1
         # from collections import Counter
         # len_report = Counter()
-        for line in open(data_path, encoding='utf-8'):
-            words, words_raw = self.process_line(line, vocab, need_raw)
+        lines_comp = open(data_path_comp, encoding='utf-8').readlines()
+        lines_simp = open(data_path_simp, encoding='utf-8').readlines()
+        assert  len(lines_comp) == len(lines_simp)
+        for line_id in range(len(lines_comp)):
+            obj = {}
+            line_comp = lines_comp[line_id]
+            line_simp = lines_simp[line_id]
+            words_comp, words_raw_comp = self.process_line(
+                line_comp, vocab_comp, self.model_config.max_complex_sentence, need_raw)
+            words_simp, words_raw_simp = self.process_line(
+                line_simp, vocab_simp, self.model_config.max_simple_sentence, need_raw)
+            obj['words_comp'] = words_comp
+            obj['words_simp'] = words_simp
             if need_raw:
-                data_raw.append(words_raw)
-            data.append(words)
+                obj['words_raw_comp'] = words_raw_comp
+                obj['words_raw_simp'] = words_raw_simp
+            data.append(obj)
             # len_report.update([len(words)])
             # if len(words) > max_len:
             #     max_len = len(words)
         # print('Max length for data %s is %s.' % (data_path, max_len))
         # print('counter:%s' % len_report)
-        return data, data_raw
-
-    def init_pretrained_embedding(self):
-        if self.model_config.subword_vocab_size > 0:
-            # Subword doesn't need pretrained embedding.
-            return
-
-        if self.model_config.pretrained_embedding is None:
-            return
-
-        print('Use Pretrained Embedding\t%s.' % self.model_config.pretrained_embedding)
-
-        if not hasattr(self, 'glove'):
-            self.glove = {}
-            for line in open(self.model_config.pretrained_embedding, encoding='utf-8'):
-                pairs = line.split()
-                word = ' '.join(pairs[:-self.model_config.dimension])
-                if word in self.vocab_simple.w2i or word in self.vocab_complex.w2i:
-                    embedding = pairs[-self.model_config.dimension:]
-                    self.glove[word] = embedding
-
-            # For vocabulary complex
-            pretrained_cnt = 0
-            random_cnt = 0
-            self.pretrained_emb_complex = np.empty(
-                (self.vocab_complex.vocab_size(), self.model_config.dimension), dtype=np.float32)
-            for wid, word in enumerate(self.vocab_complex.i2w):
-                if word in self.glove:
-                    n_vector = np.array(self.glove[word])
-
-                    self.pretrained_emb_complex[wid, :] = n_vector
-                    pretrained_cnt += 1
-                else:
-                    n_vector = np.array([np.random.uniform(-0.08, 0.08)
-                                         for _ in range(self.model_config.dimension)])
-                    self.pretrained_emb_complex[wid, :] = n_vector
-                    random_cnt += 1
-            assert self.vocab_complex.vocab_size() ==  random_cnt + pretrained_cnt
-            print(
-                'For Vocab Complex, %s words initialized with pretrained vector, '
-                'other %s words initialized randomly. Save to %s.' %
-                (pretrained_cnt, random_cnt, self.model_config.pretrained_embedding_complex))
-            # np.save(self.model_config.pretrained_embedding_complex, self.pretrained_emb_complex)
-
-            # For vocabulary simple
-            pretrained_cnt = 0
-            random_cnt = 0
-            self.pretrained_emb_simple = np.empty(
-                (len(self.vocab_simple.i2w), self.model_config.dimension), dtype=np.float32)
-            for wid, word in enumerate(self.vocab_simple.i2w):
-                if word in self.glove:
-                    n_vector = np.array(self.glove[word])
-                    self.pretrained_emb_simple[wid, :] = n_vector
-                    pretrained_cnt += 1
-                else:
-                    n_vector = np.array([np.random.uniform(-0.08, 0.08)
-                                         for _ in range(self.model_config.dimension)])
-                    self.pretrained_emb_simple[wid, :] = n_vector
-                    random_cnt += 1
-            assert len(self.vocab_simple.i2w) == random_cnt + pretrained_cnt
-            print(
-                'For Vocab Simple, %s words initialized with pretrained vector, '
-                'other %s words initialized randomly. Save to %s.' %
-                (pretrained_cnt, random_cnt, self.model_config.pretrained_embedding_simple))
-            # np.save(self.model_config.pretrained_embedding_simple, self.pretrained_emb_simple)
-
-            del self.glove
+        return data
 
     def get_data_sample(self):
         i = rd.sample(range(self.size), 1)[0]
@@ -250,13 +196,5 @@ class TrainData:
         if self.model_config.memory == 'rule':
             supplement['mem'] = self.rules[i]
 
-        if self.model_config.ppdb_mode != 'none':
-            data_simple, data_weight, attn_weight = self.ppdb.simplify(
-                self.data_simple[i], self.data_complex[i],
-                self.ppdb_simp_rules[i], self.ppdb_comp_rules[i],
-                self.vocab_simple, self.vocab_complex)
-            if data_simple:
-                return i, data_simple, cp.deepcopy(self.data_complex[i]), data_weight, attn_weight, supplement
+        return i, self.data[i]
 
-        # print('get data idx:\t' + str(i))
-        return i, cp.deepcopy(self.data_simple[i]), cp.deepcopy(self.data_complex[i]), cp.deepcopy([1.0] * len(self.data_simple[i])), cp.deepcopy([1.0] * len(self.data_complex[i])), supplement

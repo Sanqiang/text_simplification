@@ -22,10 +22,12 @@ from util.mteval_bleu import MtEval_BLEU
 import tensorflow as tf
 from os.path import exists
 from os import makedirs
+from os import remove
 import math
 import numpy as np
 import time
 from util.arguments import get_args
+from copy import deepcopy
 from model.model_config import get_path
 
 
@@ -57,65 +59,71 @@ def get_graph_val_data(objs,
         is_end = False
         for i in range(model_config.batch_size):
             if not is_end:
-                (sentence_simple, sentence_complex, sentence_complex_raw, sentence_complex_raw_lines,
-                 mapper, ref_raw_lines, sup) = next(it)
+                obj_data = next(it)
                 effective_batch_size += 1
-            if sentence_simple is None or is_end:
+            if obj_data is None or is_end:
                 # End of data set
                 if not is_end:
                     effective_batch_size -= 1
                 is_end = True
-                sentence_simple, sentence_complex = [], []
 
-            if sentence_simple:
+            if obj_data is not None:
                 for i_ref in range(model_config.num_refs):
-                    tmp_ref_raw_lines[i_ref].append(ref_raw_lines[i_ref])
+                    tmp_ref_raw_lines[i_ref].append(obj_data['ref_raw_lines'][i_ref])
 
-            # PAD zeros
-            if len(sentence_simple) < model_config.max_simple_sentence:
-                num_pad = model_config.max_simple_sentence - len(sentence_simple)
-                sentence_simple.extend(num_pad * pad_id)
+                tmp_sentence_simple.append(obj_data['sentence_simple'])
+                tmp_sentence_complex.append(obj_data['sentence_complex'])
+                tmp_mapper.append(obj_data['mapper'])
+                tmp_sentence_complex_raw.append(obj_data['sentence_complex_raw'])
+                tmp_sentence_complex_raw_lines.append(obj_data['sentence_complex_raw_lines'])
+
+                if model_config.memory == 'rule':
+                    if 'rule_id_input_placeholder' not in tmp_sups:
+                        tmp_sups['rule_id_input_placeholder'] = []
+                    if 'rule_target_input_placeholder' not in tmp_sups:
+                        tmp_sups['rule_target_input_placeholder'] = []
+
+                    cur_rule_id_input_placeholder = []
+                    cur_rule_target_input_placeholder = []
+                    if sup is not None:
+                        for rule_tuple in sup['mem']:
+                            rule_id = rule_tuple[0]
+                            rule_targets = rule_tuple[1]
+                            for target in rule_targets:
+                                cur_rule_id_input_placeholder.append(rule_id)
+                                cur_rule_target_input_placeholder.append(target)
+
+                    if len(cur_rule_id_input_placeholder) < model_config.max_cand_rules:
+                        num_pad = model_config.max_cand_rules - len(cur_rule_id_input_placeholder)
+                        cur_rule_id_input_placeholder.extend(num_pad * [0])
+                        cur_rule_target_input_placeholder.extend(num_pad * pad_id)
+                    else:
+                        cur_rule_id_input_placeholder = cur_rule_id_input_placeholder[:model_config.max_cand_rules]
+                        cur_rule_target_input_placeholder = cur_rule_target_input_placeholder[:model_config.max_cand_rules]
+
+                    tmp_sups['rule_id_input_placeholder'].append(cur_rule_id_input_placeholder)
+                    tmp_sups['rule_target_input_placeholder'].append(cur_rule_target_input_placeholder)
             else:
-                sentence_simple = sentence_simple[:model_config.max_simple_sentence]
+                tmp_sentence_simple.append(
+                    [data.vocab_simple.encode(constant.SYMBOL_PAD)] * len(tmp_sentence_simple[-1]))
+                tmp_sentence_complex.append(
+                    [data.vocab_complex.encode(constant.SYMBOL_PAD)] * len(tmp_sentence_complex[-1]))
 
-            if len(sentence_complex) < model_config.max_complex_sentence:
-                num_pad = model_config.max_complex_sentence - len(sentence_complex)
-                sentence_complex.extend(num_pad * pad_id)
-            else:
-                sentence_complex = sentence_complex[:model_config.max_complex_sentence]
+        if model_config.pointer_mode == 'ptr':
+            oov_comp_wid = data.vocab_complex.vocab_size()
+            tmp_sentence_complex_ext = deepcopy(tmp_sentence_complex)
+            for batch_idx in range(len(tmp_sentence_complex_ext)):
+                for wid, word_comp in enumerate(tmp_sentence_complex_ext):
+                    if data.vocab_complex.encode(constant.SYMBOL_UNK) == word_comp:
+                        tmp_sentence_complex_ext[batch_idx][wid] = oov_comp_wid
+                        oov_comp_wid += 1
 
-            tmp_sentence_simple.append(sentence_simple)
-            tmp_sentence_complex.append(sentence_complex)
-            tmp_mapper.append(mapper)
-            tmp_sentence_complex_raw.append(sentence_complex_raw)
-            tmp_sentence_complex_raw_lines.append(sentence_complex_raw_lines)
+            input_feed[obj['max_oov'].name] = oov_comp_wid - data.vocab_complex.vocab_size()
 
-            if model_config.memory == 'rule':
-                if 'rule_id_input_placeholder' not in tmp_sups:
-                    tmp_sups['rule_id_input_placeholder'] = []
-                if 'rule_target_input_placeholder' not in tmp_sups:
-                    tmp_sups['rule_target_input_placeholder'] = []
-
-                cur_rule_id_input_placeholder = []
-                cur_rule_target_input_placeholder = []
-                if sup is not None:
-                    for rule_tuple in sup['mem']:
-                        rule_id = rule_tuple[0]
-                        rule_targets = rule_tuple[1]
-                        for target in rule_targets:
-                            cur_rule_id_input_placeholder.append(rule_id)
-                            cur_rule_target_input_placeholder.append(target)
-
-                if len(cur_rule_id_input_placeholder) < model_config.max_cand_rules:
-                    num_pad = model_config.max_cand_rules - len(cur_rule_id_input_placeholder)
-                    cur_rule_id_input_placeholder.extend(num_pad * [0])
-                    cur_rule_target_input_placeholder.extend(num_pad * pad_id)
-                else:
-                    cur_rule_id_input_placeholder = cur_rule_id_input_placeholder[:model_config.max_cand_rules]
-                    cur_rule_target_input_placeholder = cur_rule_target_input_placeholder[:model_config.max_cand_rules]
-
-                tmp_sups['rule_id_input_placeholder'].append(cur_rule_id_input_placeholder)
-                tmp_sups['rule_target_input_placeholder'].append(cur_rule_target_input_placeholder)
+            for step in range(model_config.max_complex_sentence):
+                input_feed[obj['sentence_complex_input_ext_placeholder'][step].name] = [
+                    tmp_sentence_complex[batch_idx][step]
+                    for batch_idx in range(model_config.batch_size)]
 
         for step in range(model_config.max_simple_sentence):
             input_feed[obj['sentence_simple_input_placeholder'][step].name] = [tmp_sentence_simple[batch_idx][step]
@@ -428,6 +436,8 @@ def eval(model_config=None, ckpt=None):
     f.write('\n'.join(decode_outputs_all))
     f.close()
 
+    return sari_joshua
+
 
 def get_ckpt(modeldir, logdir, wait_second=60):
     while True:
@@ -449,7 +459,7 @@ if __name__ == '__main__':
             ckpt = get_ckpt(model_config.modeldir, model_config.logdir)
             if ckpt:
                 eval(DefaultTestConfig(), ckpt)
-                eval(DefaultTestConfig2(), ckpt)
+                # eval(DefaultTestConfig2(), ckpt)
     elif args.mode == 'all' or args.mode == 'dress':
         from model.model_config import WikiDressLargeDefault
         from model.model_config import SubValWikiEightRefConfig, SubTestWikiEightRefConfig
@@ -476,9 +486,15 @@ if __name__ == '__main__':
     elif args.mode == 'wiki':
         while True:
             from model.model_config import SubValWikiEightRefConfig, SubTestWikiEightRefConfig, WikiTransBaseCfg
+            from model.model_config import WikiTransValCfg, WikiTransTestCfg
             model_config = WikiTransBaseCfg()
             ckpt = get_ckpt(model_config.modeldir, model_config.logdir)
             if ckpt:
-                eval(SubValWikiEightRefConfig(), ckpt)
-                eval(SubTestWikiEightRefConfig(), ckpt)
-
+                # eval(SubValWikiEightRefConfig(), ckpt)
+                # eval(SubTestWikiEightRefConfig(), ckpt)
+                eval(WikiTransValCfg(), ckpt)
+                sari_point = eval(WikiTransTestCfg(), ckpt)
+                if sari_point < 0.39:
+                    remove(ckpt + '.index')
+                    remove(ckpt + '.meta')
+                    remove(ckpt + '.data-00000-of-00001')

@@ -2,8 +2,8 @@
 #SBATCH --cluster=gpu
 #SBATCH --gres=gpu:1
 #SBATCH --partition=titan
-#SBATCH --job-name=lm
-#SBATCH --output=lm.out
+#SBATCH --job-name=lm2
+#SBATCH --output=lm2.out
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
 #SBATCH --cpus-per-task=1
@@ -14,4 +14,4 @@
 module restore
 
 # Run the job
-srun python ../../language_model/train.py -out lm2
+srun python ../../language_model/train.py -out lm2 -bsize 15

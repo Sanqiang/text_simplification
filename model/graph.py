@@ -83,32 +83,22 @@ class Graph:
                 sentence_simple_input_placeholder.append(
                     tf.zeros(self.model_config.batch_size, tf.int32, name='simple_input'))
 
-            sentence_simple_input_prior_placeholder = []
-            for step in range(self.model_config.max_simple_sentence):
-                sentence_simple_input_prior_placeholder.append(
-                    tf.ones(self.model_config.batch_size, tf.float32, name='simple_input_prior'))
-
             sentence_complex_input_placeholder = []
             for step in range(self.model_config.max_complex_sentence):
                 sentence_complex_input_placeholder.append(
                     tf.zeros(self.model_config.batch_size, tf.int32, name='complex_input'))
 
-            sentence_idxs = tf.zeros(self.model_config.batch_size, tf.int32, name='complex_input')
+            sentence_complex_input_ext_placeholder = []
+            for step in range(self.model_config.max_complex_sentence):
+                sentence_complex_input_ext_placeholder.append(
+                    tf.zeros(self.model_config.batch_size, tf.int32, name='complex_input_ext'))
+
+            max_oov = tf.placeholder(tf.int32, [], name='max_oov')
+            sentence_idxs = tf.zeros(self.model_config.batch_size, tf.int32, name='sent_idx')
 
             embedding = Embedding(self.data.vocab_complex, self.data.vocab_simple, self.model_config)
             emb_complex = embedding.get_complex_embedding()
             emb_simple = embedding.get_simple_embedding()
-            # if (self.is_train and self.model_config.pretrained_embedding is not None and
-            #             self.model_config.subword_vocab_size <= 0):
-            #     embed_complex_placeholder = tf.placeholder(
-            #         tf.float32, (self.data.vocab_complex.vocab_size(), self.model_config.dimension),
-            #         'complex_emb')
-            #     replace_emb_complex = emb_complex.assign(embed_complex_placeholder)
-            #
-            #     embed_simple_placeholder = tf.placeholder(
-            #         tf.float32, (self.data.vocab_simple.vocab_size(), self.model_config.dimension),
-            #         'simple_emb')
-            #     replace_emb_simple = emb_simple.assign(embed_simple_placeholder)
 
             w = embedding.get_w()
             b = embedding.get_b()
@@ -139,13 +129,9 @@ class Graph:
             output = self.model_fn(sentence_complex_input_placeholder, emb_complex,
                                    sentence_simple_input_placeholder, emb_simple,
                                    w, b, rule_id_input_placeholder, mem_contexts, mem_outputs,
-                                   self.global_step)
+                                   self.global_step,
+                                   sentence_complex_input_ext_placeholder=sentence_complex_input_ext_placeholder, max_oov=max_oov)
 
-            # if not self.is_train and self.model_config.replace_unk_by_emb:
-                # Get output list matrix for replacement by embedding
-                # self.encoder_embs = tf.stack(
-                #     self.embedding_fn(self.sentence_complex_input_placeholder, self.emb_complex),
-                #     axis=1)
             encoder_embs = tf.stack(output.encoder_embed_inputs_list, axis=1)
             # self.encoder_embs = output.encoder_outputs
             if type(output.decoder_outputs_list) == list:
@@ -174,13 +160,14 @@ class Graph:
                 else:
                     loss = tf.reduce_mean(output.decoder_score)
                 obj = {
-                           'sentence_idxs': sentence_idxs,
-                           'sentence_simple_input_placeholder': sentence_simple_input_placeholder,
-                           'sentence_complex_input_placeholder': sentence_complex_input_placeholder,
-                           'sentence_simple_input_prior_placeholder': sentence_simple_input_prior_placeholder,
-                           'decoder_target_list': decoder_target,
-                           'final_outputs':final_outputs,
-                           'encoder_embs':encoder_embs
+                    'sentence_idxs': sentence_idxs,
+                    'sentence_simple_input_placeholder': sentence_simple_input_placeholder,
+                    'sentence_complex_input_placeholder': sentence_complex_input_placeholder,
+                    'decoder_target_list': decoder_target,
+                    'final_outputs':final_outputs,
+                    'encoder_embs':encoder_embs,
+                    'sentence_complex_input_ext_placeholder': sentence_complex_input_ext_placeholder,
+                    'max_oov': max_oov
                        }
                 if self.model_config.memory == 'rule':
                     obj['rule_id_input_placeholder'] = rule_id_input_placeholder
@@ -254,9 +241,6 @@ class Graph:
                      for d in output.gt_target_list]
                 decode_word_weight = tf.stack(decode_word_weight_list, axis=1)
 
-                prior_weight = tf.stack(sentence_simple_input_prior_placeholder, axis=1)
-                decode_word_weight = tf.multiply(prior_weight, decode_word_weight)
-
                 gt_target = tf.stack(output.gt_target_list, axis=1)
 
                 def self_critical_loss():
@@ -266,7 +250,9 @@ class Graph:
                                           tf.stack(output.sample_target_list, axis=-1),
                                           tf.stack(sentence_simple_input_placeholder, axis=-1),
                                           tf.stack(sentence_complex_input_placeholder, axis=-1),
-                                          tf.stack(rule_target_input_placeholder, axis=1)],
+                                          tf.ones((1,1)),
+                                          # tf.stack(rule_target_input_placeholder, axis=1)
+                                          ],
                                          tf.float32, stateful=False, name='update_memory')
                     rewards.set_shape((self.model_config.batch_size, self.model_config.max_simple_sentence))
                     rewards = tf.unstack(rewards, axis=1)
@@ -288,7 +274,6 @@ class Graph:
                                          targets=gt_target,
                                          weights=decode_word_weight,
                                          softmax_loss_function=loss_fn,
-                                         data=self.data,
                                          w=w,
                                          b=b,
                                          decoder_outputs=decoder_outputs,
@@ -296,20 +281,55 @@ class Graph:
                                          )
                     return loss
 
+                def maximize_loglikelihood():
+                    final_word_dist_list = output.final_word_dist_list
+                    losses = []
+                    batch_nums = tf.range(0, limit=self.model_config.batch_size)
+                    for step, final_word_dist in enumerate(final_word_dist_list):
+                        gt_target = output.gt_target_list[step]
+                        indices = tf.stack((batch_nums, gt_target), axis=1)
+                        gold_probs = tf.gather_nd(final_word_dist, indices)  # shape (batch_size). prob of correct words on this step
+                        loss = -tf.log(gold_probs)
+                        losses.append(loss)
+
+                    def _mask_and_avg(values, padding_mask):
+                        """Applies mask to values then returns overall average (a scalar)
+
+                        Args:
+                          values: a list length max_dec_steps containing arrays shape (batch_size).
+                          padding_mask: tensor shape (batch_size, max_dec_steps) containing 1s and 0s.
+
+                        Returns:
+                          a scalar
+                        """
+
+                        dec_lens = tf.reduce_sum(padding_mask, axis=1)  # shape batch_size. float32
+                        values_per_step = [v * padding_mask[:, dec_step] for dec_step, v in enumerate(values)]
+                        values_per_ex = sum(
+                            values_per_step) / dec_lens  # shape (batch_size); normalized value for each batch member
+                        return tf.reduce_mean(values_per_ex)  # overall average
+
+                    return _mask_and_avg(losses, decode_word_weight)
+
+
                 if self.model_config.train_mode == 'dynamic_self-critical' or self.model_config.train_mode == 'static_self-critical':
                     loss = tf.cond(
-                        # tf.greater(self.global_step, 10000),
-                        tf.logical_and(tf.greater(self.global_step, 100000), tf.equal(tf.mod(self.global_step, 2), 0)),
+                        tf.greater(self.global_step, 1000),
+                        # tf.logical_and(tf.greater(self.global_step, 100000), tf.equal(tf.mod(self.global_step, 2), 0)),
                         lambda : self_critical_loss(),
                         lambda : teacherforce_loss())
                 else:
-                    loss = teacherforce_loss()
+                    if self.model_config.pointer_mode == 'ptr':
+                        loss = maximize_loglikelihood()
+                    else:
+                        loss = teacherforce_loss()
 
                 obj = {
                     'sentence_idxs': sentence_idxs,
                     'sentence_simple_input_placeholder': sentence_simple_input_placeholder,
                     'sentence_complex_input_placeholder': sentence_complex_input_placeholder,
-                    'sentence_simple_input_prior_placeholder': sentence_simple_input_prior_placeholder
+                    'sentence_complex_input_ext_placeholder': sentence_complex_input_ext_placeholder,
+                    'max_oov': max_oov
                 }
                 if self.model_config.memory == 'rule':
                     obj['rule_id_input_placeholder'] = rule_id_input_placeholder
@@ -318,7 +338,6 @@ class Graph:
                     obj['mem_outputs'] = mem_outputs
                     obj['mem_counter'] = mem_counter
                 return loss, obj
-
 
     def get_optim(self):
         learning_rate = tf.constant(self.model_config.learning_rate)
@@ -387,7 +406,8 @@ class Graph:
 class ModelOutput:
     def __init__(self, decoder_outputs_list=None, decoder_logit_list=None, decoder_target_list=None,
                  decoder_score=None, gt_target_list=None, encoder_embed_inputs_list=None, encoder_outputs=None,
-                 contexts=None, final_outputs_list=None, sample_target_list=None, sample_logit_list=None):
+                 contexts=None, final_outputs_list=None, sample_target_list=None, sample_logit_list=None,
+                 final_word_dist_list=None):
         self._decoder_outputs_list = decoder_outputs_list
         self._decoder_logit_list = decoder_logit_list
         self._decoder_target_list = decoder_target_list
@@ -399,6 +419,7 @@ class ModelOutput:
         self._final_outputs_list = final_outputs_list
         self._sample_target_list = sample_target_list
         self._sample_logit_list = sample_logit_list
+        self._final_word_dist_list = final_word_dist_list
 
     @property
     def encoder_outputs(self):
@@ -444,3 +465,7 @@ class ModelOutput:
     @property
     def sample_logit_list(self):
         return self._sample_logit_list
+
+    @property
+    def final_word_dist_list(self):
+        return self._final_word_dist_list

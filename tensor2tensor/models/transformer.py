@@ -490,7 +490,7 @@ def transformer_encoder(encoder_input,
                         hparams.num_hidden_layers):
       with tf.variable_scope("layer_%d" % layer):
         with tf.variable_scope("self_attention"):
-          y = common_attention.multihead_attention(
+          y, _ = common_attention.multihead_attention(
               common_layers.layer_preprocess(x, hparams),
               None,
               encoder_self_attention_bias,
@@ -500,7 +500,8 @@ def transformer_encoder(encoder_input,
               hparams.num_heads,
               hparams.attention_dropout,
               attention_type=hparams.self_attention_type,
-              max_relative_position=hparams.max_relative_position)
+              max_relative_position=hparams.max_relative_position
+          )
           x = common_layers.layer_postprocess(x, y, hparams)
         with tf.variable_scope("ffn"):
           y = transformer_ffn_layer(
@@ -520,7 +521,8 @@ def transformer_decoder(decoder_input,
                         hparams,
                         cache=None,
                         name="decoder",
-                        ctxly=None):
+                        ctxly=None,
+                        model_config=None):
   """A stack of transformer layers.
 
   Args:
@@ -540,6 +542,7 @@ def transformer_decoder(decoder_input,
   """
   x = decoder_input
   contexts = None
+  seps = []
   if ctxly is None:
       ctxly = (hparams.num_decoder_layers or hparams.num_hidden_layers) - 1
   print('Use Context layer %s for output' % ctxly)
@@ -550,7 +553,7 @@ def transformer_decoder(decoder_input,
       layer_cache = cache[layer_name] if cache is not None else None
       with tf.variable_scope(layer_name):
         with tf.variable_scope("self_attention"):
-          y = common_attention.multihead_attention(
+          y, _ = common_attention.multihead_attention(
               common_layers.layer_preprocess(x, hparams),
               None,
               decoder_self_attention_bias,
@@ -566,13 +569,15 @@ def transformer_decoder(decoder_input,
         if encoder_output is not None:
           with tf.variable_scope("encdec_attention"):
             # TODO(llion): Add caching.
-            y = common_attention.multihead_attention(
+            y, sep = common_attention.multihead_attention(
                 common_layers.layer_preprocess(
                     x, hparams), encoder_output, encoder_decoder_attention_bias,
                 hparams.attention_key_channels or hparams.hidden_size,
                 hparams.attention_value_channels or hparams.hidden_size,
                 hparams.hidden_size, hparams.num_heads,
-                hparams.attention_dropout)
+                hparams.attention_dropout,
+                model_config=model_config)
+            seps.append(sep)
             if layer == ctxly:
                 contexts = tf.identity(y)
             x = common_layers.layer_postprocess(x, y, hparams)
@@ -584,7 +589,7 @@ def transformer_decoder(decoder_input,
     # if normalization is done in layer_preprocess, then it shuold also be done
     # on the output, since the output can grow very large, being the sum of
     # a whole stack of unnormalized layer outputs.
-    return common_layers.layer_preprocess(x, hparams), contexts
+    return common_layers.layer_preprocess(x, hparams), contexts, seps
 
 
 def transformer_ffn_layer(x,

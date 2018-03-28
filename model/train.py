@@ -1,6 +1,7 @@
 # For fix slurm cannot load PYTHONPATH
 import sys
 sys.path.insert(0,'/ihome/hdaqing/saz31/sanqiang/text_simplification')
+sys.path.insert(0,'/home/hed/text_simp_proj/text_simplification')
 
 
 from data_generator.train_data import TrainData
@@ -18,6 +19,7 @@ import tensorflow.contrib.slim as slim
 from util.arguments import get_args
 from datetime import datetime
 from util.sys_moniter import print_cpu_memory, print_gpu_memory
+from copy import deepcopy
 
 
 args = get_args()
@@ -31,11 +33,6 @@ def get_graph_train_data(
     # Reserved section of vocabuary are same.
     voc = data.vocab_simple
 
-    if model_config.subword_vocab_size > 0:
-        pad_id = voc.encode(constant.SYMBOL_PAD)
-    else:
-        pad_id = [voc.encode(constant.SYMBOL_PAD)]
-
     for obj in objs:
 
         (tmp_sentence_simple, tmp_sentence_complex,
@@ -44,40 +41,13 @@ def get_graph_train_data(
 
         for i in range(model_config.batch_size):
             if not model_config.it_train:
-                idx, sentence_simple, sentence_complex, sentence_simple_weight, attn_weight, sup = data.get_data_sample()
+                idx, obj_data = data.get_data_sample()
             else:
+                raise NotImplemented
                 idx, sentence_simple, sentence_complex, sentence_simple_weight, attn_weight, sup = next(data.data_it)
 
-            # PAD zeros
-            if len(sentence_simple) < model_config.max_simple_sentence:
-                num_pad = model_config.max_simple_sentence - len(sentence_simple)
-                sentence_simple.extend(num_pad * pad_id)
-            else:
-                sentence_simple = sentence_simple[:model_config.max_simple_sentence]
-
-            if len(sentence_complex) < model_config.max_complex_sentence:
-                num_pad = model_config.max_complex_sentence - len(sentence_complex)
-                sentence_complex.extend(num_pad * pad_id)
-            else:
-                sentence_complex = sentence_complex[:model_config.max_complex_sentence]
-
-            tmp_sentence_simple.append(sentence_simple)
-            tmp_sentence_complex.append(sentence_complex)
-
-            if len(sentence_simple_weight) < model_config.max_simple_sentence:
-                num_pad = model_config.max_simple_sentence - len(sentence_simple_weight)
-                sentence_simple_weight.extend(num_pad * pad_id)
-            else:
-                sentence_simple_weight = sentence_simple[:model_config.max_simple_sentence]
-            tmp_sentence_simple_weight.append(sentence_simple_weight)
-
-            if len(attn_weight) < model_config.max_complex_sentence:
-                num_pad = model_config.max_complex_sentence - len(attn_weight)
-                attn_weight.extend(num_pad * pad_id)
-            else:
-                attn_weight = attn_weight[:model_config.max_complex_sentence]
-            tmp_attn_weight.append(attn_weight)
-
+            tmp_sentence_simple.append(obj_data['words_simp'])
+            tmp_sentence_complex.append(obj_data['words_comp'])
             tmp_idxs.append(idx)
 
             if model_config.memory == 'rule':
@@ -106,15 +76,28 @@ def get_graph_train_data(
                 tmp_sups['rule_id_input_placeholder'].append(cur_rule_id_input_placeholder)
                 tmp_sups['rule_target_input_placeholder'].append(cur_rule_target_input_placeholder)
 
+        if model_config.pointer_mode == 'ptr':
+            oov_comp_wid = data.vocab_complex.vocab_size()
+            tmp_sentence_complex_ext = deepcopy(tmp_sentence_complex)
+            for batch_idx in range(len(tmp_sentence_complex_ext)):
+                for wid, word_comp in enumerate(tmp_sentence_complex_ext):
+                    if data.vocab_complex.encode(constant.SYMBOL_UNK) == word_comp:
+                        tmp_sentence_complex_ext[batch_idx][wid] = oov_comp_wid
+                        oov_comp_wid += 1
+
+            input_feed[obj['max_oov'].name] = oov_comp_wid - data.vocab_complex.vocab_size()
+
+            for step in range(model_config.max_complex_sentence):
+                input_feed[obj['sentence_complex_input_ext_placeholder'][step].name] = [
+                    tmp_sentence_complex[batch_idx][step]
+                    for batch_idx in range(model_config.batch_size)]
+
         for step in range(model_config.max_simple_sentence):
             input_feed[obj['sentence_simple_input_placeholder'][step].name] = [tmp_sentence_simple[batch_idx][step]
                                                             for batch_idx in range(model_config.batch_size)]
         for step in range(model_config.max_complex_sentence):
             input_feed[obj['sentence_complex_input_placeholder'][step].name] = [tmp_sentence_complex[batch_idx][step]
                                                              for batch_idx in range(model_config.batch_size)]
-        for step in range(model_config.max_simple_sentence):
-            input_feed[obj['sentence_simple_input_prior_placeholder'][step].name] = [tmp_sentence_simple_weight[batch_idx][step]
-                                                                   for batch_idx in range(model_config.batch_size)]
         input_feed[obj['sentence_idxs'].name] = [tmp_idxs[batch_idx] for batch_idx in range(model_config.batch_size)]
 
         if model_config.memory == 'rule':
@@ -179,15 +162,6 @@ def train(model_config=None):
             ignore_missing_vars=False, reshape_variables=False)
 
     def init_fn(session):
-        # if model_config.pretrained_embedding is not None and model_config.subword_vocab_size <= 0:
-        #     # input_feed = {graph.embed_simple_placeholder: data.pretrained_emb_simple,
-        #     #               graph.embed_complex_placeholder: data.pretrained_emb_complex}
-        #     # session.run([graph.replace_emb_complex, graph.replace_emb_simple], input_feed)
-        #     # print('Replace Pretrained Word Embedding.')
-        #
-        #     del data.pretrained_emb_simple
-        #     del data.pretrained_emb_complex
-
         # Restore ckpt either from warm start or automatically get when changing optimizer
         ckpt_path = None
         if model_config.warm_start:
@@ -254,6 +228,7 @@ def train(model_config=None):
             from model.model_config import SubTestWikiSmallConfig, SubTestWikiSmallPPDBConfig
             from model.model_config import SubTestWikiEightRefConfigV2, SubTestWikiEightRefConfigV2Sing
             from model.model_config import SubTestWikiEightRefPPDBConfigV2, SubTestWikiEightRefPPDBConfigV2Sing
+            from model.model_config import WikiTransValCfg, WikiTransTestCfg
             ckpt = get_ckpt(model_config.modeldir, model_config.logdir)
             print("==============================Before Eval Stat==============================")
             print_cpu_memory()
@@ -276,8 +251,8 @@ def train(model_config=None):
                     eval(SubTestWikiSmallPPDBConfig(), ckpt)
                 elif args.mode == 'wiki':
                     # eval(WikiTransValCfg(), ckpt)
-                    eval(SubValWikiEightRefConfig(), ckpt)
-                    eval(SubTestWikiEightRefConfig(), ckpt)
+                    eval(WikiTransValCfg(), ckpt)
+                    eval(WikiTransTestCfg(), ckpt)
                 elif args.mode == 'wikilegacy':
                     eval(WikiTransLegacyTestCfg(), ckpt)
                 print("==============================After Eval Stat==============================")

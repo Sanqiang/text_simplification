@@ -28,7 +28,7 @@ import tensorflow as tf
 from tensorflow.python.util import nest
 
 # Assuming EOS_ID is 1
-EOS_ID = 4
+EOS_ID = 1
 # Default value for INF
 INF = 1. * 1e7
 
@@ -177,8 +177,7 @@ def beam_search(symbols_to_logits_fn,
                 alpha,
                 states=None,
                 eos_id=EOS_ID,
-                stop_early=True,
-                model_config=None):
+                stop_early=True):
   """Beam search with length penalties.
 
   Requires a function that can take the currently decoded sybmols and return
@@ -344,10 +343,7 @@ def beam_search(symbols_to_logits_fn,
       states = nest.map_structure(
           lambda t: _unmerge_beam_dim(t, batch_size, beam_size), flat_states)
     else:
-      if model_config.pointer_mode == 'ptr':
-          flat_logits, vocab_size = symbols_to_logits_fn(flat_ids)
-      else:
-          flat_logits, vocab_size = symbols_to_logits_fn(flat_ids)
+      flat_logits = symbols_to_logits_fn(flat_ids)
     logits = tf.reshape(flat_logits, [batch_size, beam_size, -1])
 
     # Convert logits to normalized log probs
@@ -361,7 +357,7 @@ def beam_search(symbols_to_logits_fn,
 
     curr_scores = log_probs / length_penalty
     # Flatten out (beam_size, vocab_size) probs in to a list of possibilites
-    flat_curr_scores = tf.reshape(curr_scores, [batch_size, beam_size * vocab_size])
+    flat_curr_scores = tf.reshape(curr_scores, [-1, beam_size * vocab_size])
 
     topk_scores, topk_ids = tf.nn.top_k(flat_curr_scores, k=beam_size * 2)
 

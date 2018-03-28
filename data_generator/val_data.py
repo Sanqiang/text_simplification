@@ -30,13 +30,9 @@ class ValData:
             self.vocab_complex = Vocab(model_config, vocab_all_path)
 
         # Populate basic complex simple pairs
-        self.data_complex, self.data_complex_raw = self.populate_data(
-            self.model_config.val_dataset_complex, self.vocab_complex, need_raw=True)
+        self.data = self.populate_data(self.vocab_complex, self.vocab_simple, True)
         self.data_complex_raw_lines = self.populate_data_rawfile(
             self.model_config.val_dataset_complex_rawlines_file)
-        self.data_simple, _ = self.populate_data(
-            self.model_config.val_dataset_simple_folder + self.model_config.val_dataset_simple_file,
-            self.vocab_simple)
         # Populate simple references
         self.data_references_raw_lines = []
         for i in range(self.model_config.num_refs):
@@ -48,22 +44,16 @@ class ValData:
 
         if self.model_config.replace_ner:
             self.mapper = load_mappers(self.model_config.val_mapper, self.model_config.lower_case)
-            while len(self.mapper) < len(self.data_simple):
+            while len(self.mapper) < len(self.data):
                 self.mapper.append({})
 
-        self.size = len(self.data_simple)
-        assert len(self.data_complex) == self.size
-        assert len(self.data_complex_raw) == self.size
-        assert len(self.data_complex_raw_lines) == self.size
-        assert len(self.mapper) == self.size
+        assert len(self.data_complex_raw_lines) == len(self.data)
+        assert len(self.mapper) == len(self.data)
         for i in range(self.model_config.num_refs):
-            assert len(self.data_references_raw_lines[i]) == self.size
+            assert len(self.data_references_raw_lines[i]) == len(self.data)
         print('Use Val Dataset: \n Simple\t %s. \n Complex\t %s. \n Size\t %d'
               % (self.model_config.val_dataset_simple_folder + self.model_config.val_dataset_simple_file,
-                 self.model_config.val_dataset_complex, self.size))
-
-        if model_config.ppdb_emode != 'none':
-            self.ppdb = PPDB(model_config)
+                 self.model_config.val_dataset_complex, len(self.data)))
 
         if self.model_config.memory == 'rule':
             self.vocab_rule = Rule(model_config, self.model_config.vocab_rules)
@@ -90,59 +80,97 @@ class ValData:
             data.append(line.strip())
         return data
 
-    def populate_data(self, data_path, vocab, need_raw=False):
+    def process_line(self, line, vocab, max_len, need_raw=False):
+        if self.model_config.tokenizer == 'split':
+            words = line.split()
+        elif self.model_config.tokenizer == 'nltk':
+            words = word_tokenize(line)
+        else:
+            raise Exception('Unknown tokenizer.')
+
+        words = [Vocab.process_word(word, self.model_config)
+                 for word in words]
+        if need_raw:
+            words_raw = [constant.SYMBOL_START] + words + [constant.SYMBOL_END]
+        else:
+            words_raw = None
+
+        if self.model_config.subword_vocab_size > 0:
+            words = [constant.SYMBOL_START] + words + [constant.SYMBOL_END]
+            words = vocab.encode(' '.join(words))
+        else:
+            words = [vocab.encode(word) for word in words]
+            words = ([self.vocab_simple.encode(constant.SYMBOL_START)] + words +
+                     [self.vocab_simple.encode(constant.SYMBOL_END)])
+
+        if self.model_config.subword_vocab_size > 0:
+            pad_id = vocab.encode(constant.SYMBOL_PAD)
+        else:
+            pad_id = [vocab.encode(constant.SYMBOL_PAD)]
+
+        if len(words) < max_len:
+            num_pad = max_len - len(words)
+            words.extend(num_pad * pad_id)
+        else:
+            words = words[:max_len]
+
+        return words, words_raw
+
+    def populate_data(self, vocab_comp, vocab_simp, need_raw=False):
         # Populate data into memory
         data = []
-        data_raw = []
         # max_len = -1
         # from collections import Counter
         # len_report = Counter()
-        for line in open(data_path, encoding='utf-8'):
-            if self.model_config.tokenizer == 'split':
-                words = line.split()
-            elif self.model_config.tokenizer == 'nltk':
-                words = word_tokenize(line)
-            else:
-                raise Exception('Unknown tokenizer.')
-            words = [Vocab.process_word(word, self.model_config)
-                     for word in words]
+        lines_comp = open(
+            self.model_config.val_dataset_complex, encoding='utf-8').readlines()
+        lines_simp = open(
+            self.model_config.val_dataset_simple_folder + self.model_config.val_dataset_simple_file,
+            encoding='utf-8').readlines()
+        assert len(lines_comp) == len(lines_simp)
+        for line_id in range(len(lines_comp)):
+            obj = {}
+            line_comp = lines_comp[line_id]
+            line_simp = lines_simp[line_id]
+            words_comp, words_raw_comp = self.process_line(
+                line_comp, vocab_comp, self.model_config.max_complex_sentence, need_raw)
+            words_simp, words_raw_simp = self.process_line(
+                line_simp, vocab_simp, self.model_config.max_simple_sentence, need_raw)
+
+            obj['words_comp'] = words_comp
+            obj['words_simp'] = words_simp
             if need_raw:
-                words_raw = [constant.SYMBOL_START] + words + [constant.SYMBOL_END]
-                data_raw.append(words_raw)
-
-            if self.model_config.subword_vocab_size > 0:
-                words = [constant.SYMBOL_START] + words + [constant.SYMBOL_END]
-                words = vocab.encode(' '.join(words))
-            else:
-                words = [vocab.encode(word) for word in words]
-                words = ([self.vocab_simple.encode(constant.SYMBOL_START)] + words +
-                         [self.vocab_simple.encode(constant.SYMBOL_END)])
-
-            data.append(words)
+                obj['words_raw_comp'] = words_raw_comp
+                obj['words_raw_simp'] = words_raw_simp
+            data.append(obj)
             # len_report.update([len(words)])
             # if len(words) > max_len:
             #     max_len = len(words)
         # print('Max length for data %s is %s.' % (data_path, max_len))
         # print('counter:%s' % len_report)
-        return data, data_raw
+        return data
 
     def get_data_iter(self):
         i = 0
         while True:
-            ref_rawlines_batch = cp.deepcopy([self.data_references_raw_lines[j][i]
-                                         for j in range(self.model_config.num_refs)])
+            ref_rawlines_batch = [self.data_references_raw_lines[j][i]
+                                  for j in range(self.model_config.num_refs)]
             supplement = {}
             if self.model_config.memory == 'rule':
                 supplement['mem'] = self.rules[i]
 
-            yield (cp.deepcopy(self.data_simple[i]),
-                   cp.deepcopy(self.data_complex[i]),
-                   cp.deepcopy(self.data_complex_raw[i]),
-                   cp.deepcopy(self.data_complex_raw_lines[i]),
-                   self.mapper[i],
-                   ref_rawlines_batch,
-                   supplement)
+            obj = {
+                'sentence_simple': self.data[i]['words_simp'],
+                'sentence_complex': self.data[i]['words_comp'],
+                'sentence_complex_raw': self.data[i]['words_raw_comp'],
+                'sentence_complex_raw_lines': self.data_complex_raw_lines[i],
+                'mapper': self.mapper[i],
+                'ref_raw_lines': ref_rawlines_batch,
+                'sup': supplement
+            }
+
+            yield obj
 
             i += 1
-            if i == len(self.data_simple):
-                yield None, None, None, None, None, None, None
+            if i == len(self.data):
+                yield None

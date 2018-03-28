@@ -1,5 +1,7 @@
 """Prepare the vocabulary list file for model training and validation.
-   Note the file is independet with model."""
+   Note the file is independet with model.
+   Deprecated: Move to data_process
+   """
 from collections import Counter
 
 from nltk import word_tokenize
@@ -10,6 +12,7 @@ from model.model_config import WikiDressLargeDefault, DefaultConfig, WikiTransBa
 from util.arguments import get_args
 from util.data.text_encoder import SubwordTextEncoder
 from util.data import text_encoder
+from util import constant
 
 args = get_args()
 
@@ -50,8 +53,22 @@ class VocabPrepare:
         print('Processed vocab with size %d' % len(rule2score))
 
     def prepare_vocab(self):
+        # import re
+        #
+        # def rui_preprocess(text):
+        #     text = text.lower()
+        #     text = re.sub(r'[\r\n\t]', ' ', text)
+        #     text = re.sub(r'[_<>,\(\)\.\'%]', ' \g<0> ', text)
+        #     # tokenize by non-letters
+        #     tokens = filter(lambda w: len(w) > 0, re.split(r'[^a-zA-Z0-9_<>,\(\)\.\'%]', text))
+        #     # replace the digit terms with <digit>
+        #     tokens = [w if not re.match('^\d+$', w) else constant.SYMBOL_NUM for w in tokens]
+        #     text = ' '.join(tokens)
+        #     return text
+
         c = Counter()
         for line in open(self.data_file, encoding='utf-8'):
+            # line = rui_preprocess(line)
             if self.model_config.tokenizer == 'split':
                 words = line.split()
             elif self.model_config.tokenizer == 'nltk':

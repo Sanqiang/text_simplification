@@ -5,7 +5,7 @@ def get_cnt_syl(word):
     return len(dic.inserted(word).split('-'))
 
 
-output_path = '/zfs1/hdaqing/saz31/text_simplification/SBMT-SARI.txt'
+output_path = '/zfs1/hdaqing/saz31/text_simplification/dress_final_ffn_cl0/result/eightref_test_ppdbe_v2/joshua_target_1159549.txt'
 lines = open(output_path).readlines()
 
 cnt_sent = len(lines)
