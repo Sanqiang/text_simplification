@@ -576,7 +576,8 @@ def transformer_decoder(decoder_input,
                 hparams.attention_value_channels or hparams.hidden_size,
                 hparams.hidden_size, hparams.num_heads,
                 hparams.attention_dropout,
-                model_config=model_config)
+                model_config=model_config,
+                decoder_input=decoder_input)
             seps.append(sep)
             if layer == ctxly:
                 contexts = tf.identity(y)

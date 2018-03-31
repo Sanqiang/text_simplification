@@ -173,7 +173,7 @@ def beam_search(symbols_to_logits_fn,
                 initial_ids,
                 beam_size,
                 decode_length,
-                vocab_size,
+                # vocab_size,
                 alpha,
                 states=None,
                 eos_id=EOS_ID,
@@ -535,4 +535,4 @@ def beam_search(symbols_to_logits_fn,
       tf.reduce_any(finished_flags, 1), finished_seq, alive_seq)
   finished_scores = tf.where(
       tf.reduce_any(finished_flags, 1), finished_scores, alive_log_probs)
-  return finished_seq, finished_scores
+  return finished_seq, finished_scores, alive_log_probs

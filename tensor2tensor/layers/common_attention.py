@@ -1165,7 +1165,8 @@ def dot_product_attention(q,
                           image_shapes=None,
                           name=None,
                           make_image_summary=True,
-                          model_config=None):
+                          model_config=None,
+                          decoder_input=None):
   """dot-product attention.
 
   Args:
@@ -1208,9 +1209,14 @@ def dot_product_attention(q,
                 q, [batch_size*model_config.num_heads, -1, q.get_shape()[3].value])
             ctx_flatten = tf.reshape(
                 ctx, [batch_size*model_config.num_heads, -1, ctx.get_shape()[3].value])
-            inp_gen = tf.concat([q_flatten, ctx_flatten], axis=-1)
-            filter_gen = tf.get_variable('filter_gen', shape=(1, 2*ctx.get_shape()[3].value, 1))
-            gen = tf.nn.tanh(tf.nn.conv1d(inp_gen, filter_gen, 1, 'SAME'))
+            decoder_input_flatten = tf.reshape(
+                decoder_input, [batch_size*model_config.num_heads, -1, ctx.get_shape()[3].value])
+            inp_gen = tf.concat([q_flatten, ctx_flatten, decoder_input_flatten], axis=-1)
+            filter_gen = tf.get_variable('filter_gen', shape=(1, 3*ctx.get_shape()[3].value, 1),
+                                         initializer=tf.contrib.layers.xavier_initializer())
+            bias_gen = tf.get_variable('bias_gen', shape=(1, 1, 1),
+                                         initializer=tf.contrib.layers.xavier_initializer())
+            gen = tf.sigmoid(tf.nn.conv1d(inp_gen, filter_gen, 1, 'SAME') + bias_gen)
             gen = tf.reshape(
                 gen, (batch_size, model_config.num_heads, -1, 1))
             sep['weight'] = weights
@@ -2249,6 +2255,7 @@ def multihead_attention(query_antecedent,
                         num_memory_blocks=2,
                         name=None,
                         model_config=None,
+                        decoder_input=None,
                         **kwargs):
   """Multihead scaled-dot-product attention with input/output transformations.
 
@@ -2340,17 +2347,18 @@ def multihead_attention(query_antecedent,
     q = split_heads(q, num_heads)
     k = split_heads(k, num_heads)
     v = split_heads(v, num_heads)
+    if decoder_input is not None:
+        decoder_input = split_heads(decoder_input, num_heads)
     key_depth_per_head = total_key_depth // num_heads
     q *= key_depth_per_head**-0.5
 
-    weights = None
     additional_returned_value = None
     if callable(attention_type):  # Generic way to extend multihead_attention
       x = attention_type(q, k, v, **kwargs)
       if isinstance(x, tuple):
         x, additional_returned_value = x  # Unpack
     elif attention_type == "dot_product":
-      x, sep = dot_product_attention(q, k, v, bias, dropout_rate, image_shapes, model_config=model_config)
+      x, sep = dot_product_attention(q, k, v, bias, dropout_rate, image_shapes, model_config=model_config, decoder_input=decoder_input)
     elif attention_type == "dot_product_relative":
       x = dot_product_attention_relative(q, k, v, bias, max_relative_position,
                                          dropout_rate, image_shapes)

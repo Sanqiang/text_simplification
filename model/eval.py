@@ -1,7 +1,8 @@
 # For fix slurm cannot load PYTHONPATH
 import sys
-sys.path.insert(0, '/ihome/hdaqing/saz31/sanqiang/text_simplification')
-sys.path.insert(0,'/home/hed/text_simp_proj/text_simplification')
+# sys.path.insert(0, '/ihome/hdaqing/saz31/sanqiang/text_simplification')
+# sys.path.insert(0,'/home/hed/text_simp_proj/text_simplification')
+sys.path.insert(0,'/ihome/cs2770_s2018/maz54/ts/text_simplification')
 
 
 from data_generator.val_data import ValData
@@ -48,11 +49,16 @@ def get_graph_val_data(objs,
     output_tmp_sentence_simple, output_tmp_sentence_complex, \
     output_tmp_sentence_complex_raw, output_tmp_sentence_complex_raw_lines, \
     output_tmp_mapper, output_tmp_ref_raw_lines = [], [], [], [], [], []
-    output_effective_batch_size, output_is_end = [], []
+    output_effective_batch_size, output_is_end, output_oov = [], [], []
 
     for obj in objs:
+        batch_oov = {}
+        if model_config.pointer_mode == 'ptr':
+            batch_oov['w2i'] = {}
+            batch_oov['i2w'] = []
+
         (tmp_sentence_simple, tmp_sentence_complex,
-         tmp_sentence_complex_raw, tmp_sentence_complex_raw_lines, tmp_sups) = [], [], [], [], {}
+         tmp_sentence_complex_raw, tmp_sentence_complex_raw_lines, tmp_sups, tmp_sentence_simple_raw) = [], [], [], [], {}, []
         tmp_mapper = []
         tmp_ref_raw_lines = [[] for _ in range(model_config.num_refs)]
         effective_batch_size = 0
@@ -75,7 +81,15 @@ def get_graph_val_data(objs,
                 tmp_sentence_complex.append(obj_data['sentence_complex'])
                 tmp_mapper.append(obj_data['mapper'])
                 tmp_sentence_complex_raw.append(obj_data['sentence_complex_raw'])
+                tmp_sentence_simple_raw.append(obj_data['sentence_simple_raw'])
                 tmp_sentence_complex_raw_lines.append(obj_data['sentence_complex_raw_lines'])
+
+                if model_config.pointer_mode == 'ptr':
+                    oov = obj_data['oov']
+                    for wd in oov['i2w']:
+                        if wd not in batch_oov['w2i']:
+                            batch_oov['w2i'][wd] = len(batch_oov['i2w']) + data.vocab_simple.vocab_size()
+                            batch_oov['i2w'].append(wd)
 
                 if model_config.memory == 'rule':
                     if 'rule_id_input_placeholder' not in tmp_sups:
@@ -105,25 +119,39 @@ def get_graph_val_data(objs,
                     tmp_sups['rule_target_input_placeholder'].append(cur_rule_target_input_placeholder)
             else:
                 tmp_sentence_simple.append(
-                    [data.vocab_simple.encode(constant.SYMBOL_PAD)] * len(tmp_sentence_simple[-1]))
+                    [data.vocab_simple.encode(constant.SYMBOL_PAD)] * model_config.max_simple_sentence)
                 tmp_sentence_complex.append(
-                    [data.vocab_complex.encode(constant.SYMBOL_PAD)] * len(tmp_sentence_complex[-1]))
+                    [data.vocab_complex.encode(constant.SYMBOL_PAD)] * model_config.max_complex_sentence)
+
 
         if model_config.pointer_mode == 'ptr':
-            oov_comp_wid = data.vocab_complex.vocab_size()
             tmp_sentence_complex_ext = deepcopy(tmp_sentence_complex)
             for batch_idx in range(len(tmp_sentence_complex_ext)):
-                for wid, word_comp in enumerate(tmp_sentence_complex_ext):
+                for wid, word_comp in enumerate(tmp_sentence_complex_ext[batch_idx]):
                     if data.vocab_complex.encode(constant.SYMBOL_UNK) == word_comp:
-                        tmp_sentence_complex_ext[batch_idx][wid] = oov_comp_wid
-                        oov_comp_wid += 1
+                        tmp_sentence_complex_ext[
+                            batch_idx][wid] = batch_oov['w2i'][tmp_sentence_complex_raw[batch_idx][wid]]
 
-            input_feed[obj['max_oov'].name] = oov_comp_wid - data.vocab_complex.vocab_size()
+            tmp_sentence_simple_ext = deepcopy(tmp_sentence_simple)
+            for batch_idx in range(len(tmp_sentence_simple_ext)):
+                for wid, word_simp in enumerate(tmp_sentence_simple_ext[batch_idx]):
+                    if data.vocab_simple.encode(constant.SYMBOL_UNK) == word_simp and tmp_sentence_simple_raw[batch_idx][wid] in batch_oov['w2i']:
+                        tmp_sentence_simple_ext[
+                            batch_idx][wid] = batch_oov['w2i'][tmp_sentence_simple_raw[batch_idx][wid]]
+
+            input_feed[obj['max_oov'].name] = len(batch_oov['i2w'])
 
             for step in range(model_config.max_complex_sentence):
                 input_feed[obj['sentence_complex_input_ext_placeholder'][step].name] = [
-                    tmp_sentence_complex[batch_idx][step]
+                    tmp_sentence_complex_ext[batch_idx][step]
                     for batch_idx in range(model_config.batch_size)]
+
+            for step in range(model_config.max_simple_sentence):
+                input_feed[obj['sentence_simple_input_ext_placeholder'][step].name] = [
+                    tmp_sentence_simple_ext[batch_idx][step]
+                    for batch_idx in range(model_config.batch_size)]
+
+        input_feed[obj['max_oov'].name] = len(batch_oov['i2w'])
 
         for step in range(model_config.max_simple_sentence):
             input_feed[obj['sentence_simple_input_placeholder'][step].name] = [tmp_sentence_simple[batch_idx][step]
@@ -149,13 +177,14 @@ def get_graph_val_data(objs,
         output_tmp_ref_raw_lines.append(tmp_ref_raw_lines)
         output_effective_batch_size.append(effective_batch_size)
         output_is_end.append(is_end)
+        output_oov.append(batch_oov)
 
     return (input_feed, output_tmp_sentence_simple,
             output_tmp_sentence_complex, output_tmp_sentence_complex_raw, output_tmp_sentence_complex_raw_lines,
             output_tmp_mapper,
             output_tmp_ref_raw_lines,
             output_effective_batch_size,
-            output_is_end)
+            output_is_end, output_oov)
 
 
 def eval(model_config=None, ckpt=None):
@@ -196,7 +225,7 @@ def eval(model_config=None, ckpt=None):
          output_sentence_complex, output_sentence_complex_raw, output_sentence_complex_raw_lines,
          output_mapper,
          output_ref_raw_lines,
-         out_effective_batch_size, output_is_end) = get_graph_val_data(graph.objs,
+         out_effective_batch_size, output_is_end, output_oov) = get_graph_val_data(graph.objs,
             model_config, it, val_data)
 
         postprocess = PostProcess(model_config, val_data)
@@ -224,6 +253,7 @@ def eval(model_config=None, ckpt=None):
             sentence_complex_raw_lines = output_sentence_complex_raw_lines[i]
             mapper = output_mapper[i]
             ref_raw_lines = output_ref_raw_lines[i]
+            oov = output_oov[i]
 
             target = output_target[i]
             if model_config.replace_unk_by_emb:
@@ -247,7 +277,7 @@ def eval(model_config=None, ckpt=None):
                 for ref_i in range(model_config.num_refs):
                     ref_raw_lines[ref_i] = exclude_list(ref_raw_lines[ref_i], exclude_idxs)
 
-            target = decode(target, val_data.vocab_simple, model_config.subword_vocab_size>0)
+            target = decode(target, val_data.vocab_simple, model_config.subword_vocab_size>0, oov=oov)
             target_raw = target
             if model_config.replace_unk_by_attn:
                 target_raw = postprocess.replace_unk_by_attn(sentence_complex_raw, None, target_raw)
@@ -460,6 +490,15 @@ if __name__ == '__main__':
             if ckpt:
                 eval(DefaultTestConfig(), ckpt)
                 # eval(DefaultTestConfig2(), ckpt)
+    elif args.mode == 'dressnew':
+        from model.model_config import WikiDressLargeNewEvalDefault,WikiDressLargeNewTestDefault, WikiDressLargeNewDefault
+        while True:
+            model_config = WikiDressLargeNewDefault()
+            ckpt = get_ckpt(model_config.modeldir, model_config.logdir)
+
+            if ckpt:
+                eval(WikiDressLargeNewEvalDefault(), ckpt)
+                eval(WikiDressLargeNewTestDefault(), ckpt)
     elif args.mode == 'all' or args.mode == 'dress':
         from model.model_config import WikiDressLargeDefault
         from model.model_config import SubValWikiEightRefConfig, SubTestWikiEightRefConfig
@@ -469,11 +508,11 @@ if __name__ == '__main__':
             ckpt = get_ckpt(model_config.modeldir, model_config.logdir)
 
             if ckpt:
-                # eval(SubValWikiEightRefConfig(), ckpt)
+                eval(SubValWikiEightRefConfig(), ckpt)
                 eval(SubTestWikiEightRefConfig(), ckpt)
 
                 # eval(SubValWikiEightRefConfigBeam4(), ckpt)
-                eval(SubTestWikiEightRefConfigBeam4(), ckpt)
+                # eval(SubTestWikiEightRefConfigBeam4(), ckpt)
 
                 # if model_config.exp_penalty_alpha:
                 #     config = SubTestWikiEightRefConfig()

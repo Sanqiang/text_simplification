@@ -8,7 +8,7 @@ import tensorflow as tf
 import numpy as np
 
 
-class Graph:
+class Graph():
     def __init__(self, data, is_train, model_config):
         self.model_config = model_config
         self.data = data
@@ -88,12 +88,19 @@ class Graph:
                 sentence_complex_input_placeholder.append(
                     tf.zeros(self.model_config.batch_size, tf.int32, name='complex_input'))
 
-            sentence_complex_input_ext_placeholder = []
-            for step in range(self.model_config.max_complex_sentence):
-                sentence_complex_input_ext_placeholder.append(
-                    tf.zeros(self.model_config.batch_size, tf.int32, name='complex_input_ext'))
+            if self.model_config.pointer_mode == 'ptr':
+                sentence_complex_input_ext_placeholder = []
+                for step in range(self.model_config.max_complex_sentence):
+                    sentence_complex_input_ext_placeholder.append(
+                        tf.zeros(self.model_config.batch_size, tf.int32, name='complex_input_ext'))
 
-            max_oov = tf.placeholder(tf.int32, [], name='max_oov')
+                sentence_simple_input_ext_placeholder = []
+                for step in range(self.model_config.max_simple_sentence):
+                    sentence_simple_input_ext_placeholder.append(
+                        tf.zeros(self.model_config.batch_size, tf.int32, name='simple_input_ext'))
+
+                max_oov = tf.placeholder(tf.int32, [], name='max_oov')
+
             sentence_idxs = tf.zeros(self.model_config.batch_size, tf.int32, name='sent_idx')
 
             embedding = Embedding(self.data.vocab_complex, self.data.vocab_simple, self.model_config)
@@ -166,9 +173,11 @@ class Graph:
                     'decoder_target_list': decoder_target,
                     'final_outputs':final_outputs,
                     'encoder_embs':encoder_embs,
-                    'sentence_complex_input_ext_placeholder': sentence_complex_input_ext_placeholder,
-                    'max_oov': max_oov
-                       }
+                }
+                if self.model_config.pointer_mode == 'ptr':
+                    obj['sentence_complex_input_ext_placeholder'] = sentence_complex_input_ext_placeholder
+                    obj['sentence_simple_input_ext_placeholder'] = sentence_simple_input_ext_placeholder
+                    obj['max_oov'] = max_oov
                 if self.model_config.memory == 'rule':
                     obj['rule_id_input_placeholder'] = rule_id_input_placeholder
                     obj['rule_target_input_placeholder'] = rule_target_input_placeholder
@@ -277,8 +286,7 @@ class Graph:
                                          w=w,
                                          b=b,
                                          decoder_outputs=decoder_outputs,
-                                         number_samples=self.model_config.number_samples
-                                         )
+                                         number_samples=self.model_config.number_samples)
                     return loss
 
                 def maximize_loglikelihood():
@@ -286,10 +294,10 @@ class Graph:
                     losses = []
                     batch_nums = tf.range(0, limit=self.model_config.batch_size)
                     for step, final_word_dist in enumerate(final_word_dist_list):
-                        gt_target = output.gt_target_list[step]
+                        gt_target = sentence_simple_input_ext_placeholder[step]
                         indices = tf.stack((batch_nums, gt_target), axis=1)
-                        gold_probs = tf.gather_nd(final_word_dist, indices)  # shape (batch_size). prob of correct words on this step
-                        loss = -tf.log(gold_probs)
+                        gold_probs = tf.gather_nd(final_word_dist, indices)
+                        loss = -tf.log(tf.nn.relu(gold_probs))
                         losses.append(loss)
 
                     def _mask_and_avg(values, padding_mask):
@@ -323,14 +331,19 @@ class Graph:
                         loss = maximize_loglikelihood()
                     else:
                         loss = teacherforce_loss()
+                    self.xxx = output.final_word_dist_list
 
                 obj = {
                     'sentence_idxs': sentence_idxs,
                     'sentence_simple_input_placeholder': sentence_simple_input_placeholder,
                     'sentence_complex_input_placeholder': sentence_complex_input_placeholder,
-                    'sentence_complex_input_ext_placeholder': sentence_complex_input_ext_placeholder,
-                    'max_oov': max_oov
                 }
+
+                if self.model_config.pointer_mode == 'ptr':
+                    obj['sentence_complex_input_ext_placeholder'] = sentence_complex_input_ext_placeholder
+                    obj['sentence_simple_input_ext_placeholder'] = sentence_simple_input_ext_placeholder
+                    obj['max_oov'] = max_oov
+
                 if self.model_config.memory == 'rule':
                     obj['rule_id_input_placeholder'] = rule_id_input_placeholder
                     obj['rule_target_input_placeholder'] = rule_target_input_placeholder

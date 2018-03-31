@@ -8,7 +8,7 @@ args = get_args()
 def get_path(file_path, zfs=False, env='crc'):
     if zfs:
         if env == 'crc':
-            return "/zfs1/hdaqing/saz31/text_simplification/tmp/" + file_path
+            return "/zfs1/hdaqing/saz31/text_simplification_0330/tmp/" + file_path
         elif env == 'psc':
             return '/pylon5/ci5fp6p/hed/text_simplification/tmp/' + file_path
     else:
@@ -211,7 +211,7 @@ class DefaultTrainConfig(DefaultConfig):
 
 class DefaultTestConfig(DefaultConfig):
     beam_search_size = 1
-    # batch_size = 2
+    batch_size = 2
     output_folder = args.output_folder
     resultdir = get_path('../' + output_folder + '/result/test1', True)
 
@@ -316,7 +316,7 @@ class WikiDressLargeDefault(DefaultConfig):
         max_simple_sentence = 300
 
     min_count = args.min_count
-    batch_size = 32
+    batch_size = args.batch_size
 
     tokenizer = 'split'
     if dimension == 300:
@@ -559,6 +559,7 @@ class WikiTransLegacyTestCfg(WikiTransLegacyBaseCfg):
     val_dataset_complex_ppdb = get_path(
         '../text_simplification_data/test/wiki.full.aner.test.src.sorted.rules')
 
+
 class WikiTransBaseCfg(DefaultConfig):
     environment = args.environment
     model_print_freq = 50
@@ -695,6 +696,57 @@ class WikiTransTestCfg(WikiTransBaseCfg):
     val_dataset_simple_rawlines_file = 'test.8turkers.tok.simp'
     num_refs = 8
     beam_search_size = 1
+
+
+class WikiDressLargeNewDefault(WikiDressLargeDefault):
+    train_dataset_complex = get_path('../text_simplification_data/train/dress/wikilargenew/train/src.txt')
+    train_dataset_simple = get_path('../text_simplification_data/train/dress/wikilargenew/train/dst.txt')
+    vocab_simple = get_path(
+            '../text_simplification_data/train/dress/wikilargenew/train/voc_dst.txt')
+    vocab_complex = get_path(
+            '../text_simplification_data/train/dress/wikilargenew/train/voc_src.txt')
+
+    val_dataset_simple_folder = get_path('../text_simplification_data/train/dress/wikilargenew/val/')
+    val_dataset_simple_file = 'dst.txt'
+    val_dataset_complex = get_path('../text_simplification_data/train/dress/wikilargenew/val/src.txt')
+    val_mapper = get_path('../text_simplification_data/train/dress/wikilargenew/val/map.txt')
+
+    val_dataset_complex_rawlines_file = get_path(
+        '../text_simplification_data/train/dress/wikilargenew/val/src.raw.txt')
+    val_dataset_simple_rawlines_file_references = 'ref.'
+    val_dataset_simple_rawlines_file = 'dst.raw.txt'
+    num_refs = 8
+
+    max_complex_sentence = 115
+    max_simple_sentence = 95
+
+
+class WikiDressLargeNewTrainDefault(WikiDressLargeNewDefault):
+    beam_search_size = 0
+
+
+class WikiDressLargeNewEvalDefault(WikiDressLargeNewDefault):
+    environment = args.environment
+    output_folder = args.output_folder
+    resultdir = get_path('../' + output_folder + '/result/eightref_val', True, environment)
+
+
+class WikiDressLargeNewTestDefault(WikiDressLargeNewDefault):
+    environment = args.environment
+    output_folder = args.output_folder
+    resultdir = get_path('../' + output_folder + '/result/eightref_test', True, environment)
+
+    val_dataset_simple_folder = get_path('../text_simplification_data/train/dress/wikilargenew/test/')
+    val_dataset_simple_file = 'dst.txt'
+    val_dataset_complex = get_path('../text_simplification_data/train/dress/wikilargenew/tet/src.txt')
+    val_mapper = get_path('../text_simplification_data/train/dress/wikilargenew/test/map.txt')
+
+    val_dataset_complex_rawlines_file = get_path(
+        '../text_simplification_data/train/dress/wikilargenew/test/src.raw.txt')
+    val_dataset_simple_rawlines_file_references = 'ref.'
+    val_dataset_simple_rawlines_file = 'dst.raw.txt'
+    num_refs = 8
+
 
 
 def list_config(config):

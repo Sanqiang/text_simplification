@@ -41,7 +41,7 @@ class TrainData:
         # Populate basic complex simple pairs
         if not self.model_config.it_train:
             self.data = self.populate_data(data_complex_path, data_simple_path,
-                                           self.vocab_complex, self.vocab_simple, False)
+                                           self.vocab_complex, self.vocab_simple, True)
         else:
             raise NotImplemented
             # self.data_it = self.get_data_sample_it(data_simple_path, data_complex_path)
@@ -182,6 +182,27 @@ class TrainData:
             if need_raw:
                 obj['words_raw_comp'] = words_raw_comp
                 obj['words_raw_simp'] = words_raw_simp
+
+            oov = {}
+            if self.model_config.pointer_mode == 'ptr':
+                oov['w2i'] = {}
+                oov['i2w'] = []
+
+                for idx, wid in enumerate(words_comp):
+                    if wid == vocab_comp.encode(constant.SYMBOL_UNK):
+                        word_raw = words_raw_comp[idx]
+                        if word_raw not in oov['w2i']:
+                            oov['w2i'][word_raw] = len(oov['i2w'])
+                            oov['i2w'].append(word_raw)
+
+                # for idx, wid in enumerate(words_simp):
+                #     if wid == vocab_simp.encode(constant.SYMBOL_UNK):
+                #         word_raw = words_raw_simp[idx]
+                #         if word_raw not in oov['w2i']:
+                #             oov['w2i'][word_raw] = len(oov['i2w'])
+                #             oov['i2w'].append(word_raw)
+            obj['oov'] = oov
+
             data.append(obj)
             # len_report.update([len(words)])
             # if len(words) > max_len:

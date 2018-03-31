@@ -48,7 +48,7 @@ def decode_to_output(target, sentence_simple, sentence_complex, effective_batch_
     return output
 
 
-def decode(target, voc, use_subword=False):
+def decode(target, voc, use_subword=False, oov=None):
     target = list(target)
     batch_size = len(target)
     decode_results = []
@@ -56,7 +56,16 @@ def decode(target, voc, use_subword=False):
         if use_subword:
             decode_result = voc.describe(target[i]).split(' ')
         else:
-            decode_result = list(map(voc.describe, target[i]))
+            if oov is not None and oov:
+                decode_result = []
+                for wid in target[i]:
+                    wd = voc.describe(wid)
+                    if wd is None:
+                        wd = oov['i2w'][wid-voc.vocab_size()]
+                    decode_result.append(wd)
+            else:
+                decode_result = list(map(voc.describe, target[i]))
+
         # decode_result = truncate_sent(decode_result)
         decode_results.append(decode_result)
     return decode_results
@@ -74,8 +83,11 @@ def truncate_sent(decode_result):
     if constant.SYMBOL_END in decode_result:
         eos = decode_result.index(constant.SYMBOL_END)
         decode_result = decode_result[:eos]
-    if len(decode_result) > 0 and decode_result[0] == constant.SYMBOL_START:
-        decode_result = decode_result[1:]
+    s_i = 0
+    if len(decode_result) > 0 and decode_result[s_i] == constant.SYMBOL_START:
+        while s_i+1 < len(decode_result) and decode_result[s_i+1] == constant.SYMBOL_START:
+            s_i += 1
+        decode_result = decode_result[s_i+1:]
     return decode_result
 
 

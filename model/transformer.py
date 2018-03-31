@@ -64,7 +64,8 @@ class TransformerGraph(Graph):
                     decoder_target_list = [tf.argmax(o, output_type=tf.int32, axis=-1)
                                            for o in decoder_logit_list]
                     if self.model_config.pointer_mode == 'ptr':
-                        final_word_dist_list = self.word_distribution(decoder_logit_list, seps, sentence_complex_input_ext_placeholder, max_oov)
+                        final_word_dist_list = self.word_distribution(
+                            decoder_logit_list, seps, sentence_complex_input_ext_placeholder, max_oov, final_output_list, decoder_embed_inputs_list)
                 elif self.is_train and (train_mode == 'static_seq' or train_mode == 'static_self-critical'):
                     decoder_target_list = []
                     decoder_logit_list =[]
@@ -78,13 +79,24 @@ class TransformerGraph(Graph):
                     for step in range(self.model_config.max_simple_sentence):
                         if step > 0:
                             tf.get_variable_scope().reuse_variables()
-                        final_output_list, decoder_output_list, contexts, weightses = self.decode_step(
+                        final_output_list, decoder_output_list, contexts, seps = self.decode_step(
                             decoder_embed_inputs_list, encoder_outputs, encoder_attn_bias,
                             rule_id_input_placeholder, mem_contexts, mem_outputs, global_step)
                         last_logit_list = self.output_to_logit(final_output_list[-1], w, b)
+                        for sep_i, sep in enumerate(seps):
+                            seps[sep_i]['gen'] = tf.expand_dims(seps[sep_i]['gen'][:, :, -1, :], axis=2)
+                            seps[sep_i]['weight'] = tf.expand_dims(seps[sep_i]['weight'][:, :, -1, :], axis=2)
+                        last_logit_list = self.word_distribution([last_logit_list], seps, sentence_complex_input_ext_placeholder,
+                                               max_oov, [final_output_list[-1]], decoder_embed_inputs_list)[0]
                         last_target_list = tf.argmax(last_logit_list, output_type=tf.int32, axis=-1)
                         decoder_logit_list.append(last_logit_list)
                         decoder_target_list.append(last_target_list)
+
+                        unk_target_list = tf.constant(self.data.vocab_simple.encode(constant.SYMBOL_UNK), tf.int32,
+                                                      last_target_list.get_shape())
+                        last_target_list = tf.where(tf.greater_equal(last_target_list, self.data.vocab_simple.vocab_size()),
+                                                    unk_target_list, last_target_list)
+
                         decoder_embed_inputs_list.append(self.embedding_fn(last_target_list, emb_simple))
                         if train_mode == 'static_self-critical':
                             last_sample_list = tf.multinomial(last_logit_list, 1)
@@ -94,6 +106,8 @@ class TransformerGraph(Graph):
                                  tf.squeeze(last_sample_list)],
                                 axis=-1)
                             sample_logit_list.append(tf.gather_nd(tf.nn.softmax(last_logit_list), indices))
+
+                        self.decoder_logit_listx = decoder_logit_list
 
                 elif self.is_train and (train_mode == 'dynamic_seq' or train_mode == 'dynamic_self-critical'):
                     decoder_target_tensor = tf.TensorArray(tf.int64, size=self.model_config.max_simple_sentence,
@@ -223,7 +237,7 @@ class TransformerGraph(Graph):
                                                         sentence_complex_input_placeholder, emb_simple, w, b,
                                                         rule_id_input_placeholder, mem_contexts, mem_outputs, global_step,
                                                         sentence_complex_input_ext_placeholder=sentence_complex_input_ext_placeholder,
-                                                        max_oov=max_oov)
+                                                        max_oov=max_oov, decoder_embed_inputs_list=None)
 
             gt_target_list = sentence_simple_input_placeholder
             output = ModelOutput(
@@ -235,13 +249,13 @@ class TransformerGraph(Graph):
                 gt_target_list=gt_target_list,
                 encoder_embed_inputs_list=tf.unstack(encoder_embed_inputs, axis=1),
                 decoder_target_list=decoder_target_list,
-                final_word_dist_list = final_word_dist_list if self.model_config.pointer_mode == 'ptr' else None,
+                final_word_dist_list = final_word_dist_list if self.model_config.pointer_mode == 'ptr' and self.is_train else None,
                 sample_logit_list=sample_logit_list if train_mode == 'dynamic_self-critical' or train_mode == 'static_self-critical' else None,
                 sample_target_list=sample_target_list if train_mode == 'dynamic_self-critical' or train_mode == 'static_self-critical' else None
             )
             return output
 
-    def word_distribution(self, decoder_logit_list, seps, sentence_complex_input_ext_placeholder, max_oov):
+    def word_distribution(self, decoder_logit_list, seps, sentence_complex_input_ext_placeholder, max_oov, final_output_list, decoder_embed_inputs_list):
         attn_dists = []
         for sep in seps:
             attn_dists.append(tf.reduce_mean(sep['weight'] * sep['gen'], axis=1))
@@ -261,8 +275,14 @@ class TransformerGraph(Graph):
         attn_dists_projected = [tf.scatter_nd(indices, copy_dist, shape) for copy_dist in
                                 attn_dists]
 
-        final_dists = [vocab_dist + copy_dist for (vocab_dist, copy_dist) in
-                       zip(vocab_dists_extended, attn_dists_projected)]
+        vocab_mat = tf.get_variable('vocab_mat', shape=[2*final_output_list[-1].get_shape()[-1].value, 1], dtype=tf.float32,
+                                    initializer=tf.contrib.layers.xavier_initializer())
+        # vocab_bias = tf.get_variable('vocab_bias', shape=[1, 1], dtype=tf.float32,
+        #                             initializerializer=tf.contrib.layers.xavier_initializer())
+        vocab_weights = [tf.sigmoid(tf.matmul(tf.concat([output, emb], axis=1), vocab_mat))
+                         for (output, emb) in zip(final_output_list, decoder_embed_inputs_list)]
+        final_dists = [vocab_dist * vocab_weight + (1-vocab_weight) * copy_dist for (vocab_dist, copy_dist, vocab_weight) in
+                       zip(vocab_dists_extended, attn_dists_projected, vocab_weights)]
 
         return final_dists
 
@@ -286,7 +306,7 @@ class TransformerGraph(Graph):
     def transformer_beam_search(self, encoder_outputs, encoder_attn_bias, encoder_embed_inputs_list,
                                 sentence_complex_input_placeholder, emb_simple, w, b,
                                 rule_id_input_placeholder, mem_contexts, mem_outputs, global_step,
-                                sentence_complex_input_ext_placeholder=None, max_oov=None):
+                                sentence_complex_input_ext_placeholder=None, max_oov=None, decoder_embed_inputs_list=None):
         # Use Beam Search in evaluation stage
         # Update [a, b, c] to [a, a, a, b, b, b, c, c, c] if beam_search_size == 3
         encoder_beam_outputs = tf.concat(
@@ -299,11 +319,13 @@ class TransformerGraph(Graph):
                      [self.model_config.beam_search_size, 1, 1, 1])
              for o in range(self.model_config.batch_size)], axis=0)
 
-        if sentence_complex_input_ext_placeholder is not None:
-            sentence_complex_input_ext_placeholder = sentence_complex_input_ext_placeholder
-
         def symbol_to_logits_fn(ids):
-            embs = tf.nn.embedding_lookup(emb_simple, ids[:, 1:])
+            cur_ids = ids[:, 1:]
+            unk_ids = tf.fill(tf.shape(cur_ids), self.data.vocab_simple.encode(constant.SYMBOL_UNK))
+            cur_ids = tf.where(tf.greater_equal(cur_ids, self.data.vocab_simple.vocab_size()),
+                               unk_ids, cur_ids)
+
+            embs = tf.nn.embedding_lookup(emb_simple, cur_ids[:, 1:])
             embs = tf.pad(embs, [[0, 0], [1, 0], [0, 0]])
             final_outputs, _, _, seps = self.decode_inputs_to_outputs(embs, encoder_beam_outputs, encoder_attn_beam_bias,
                                                                 rule_id_input_placeholder, mem_contexts, mem_outputs,
@@ -313,15 +335,17 @@ class TransformerGraph(Graph):
                 for sep_i, sep in enumerate(seps):
                     seps[sep_i]['gen'] = tf.expand_dims(seps[sep_i]['gen'][:, :, -1, :], axis=2)
                     seps[sep_i]['weight'] = tf.expand_dims(seps[sep_i]['weight'][:, :, -1, :], axis=2)
-                return self.word_distribution([decoder_logit_list], seps, sentence_complex_input_ext_placeholder, max_oov)[0], max_oov+self.data.vocab_simple.vocab_size()
+                ext_decoder_logit_list = self.word_distribution(
+                    [decoder_logit_list], seps, sentence_complex_input_ext_placeholder, max_oov, [final_outputs[:, -1, :]], [embs[:, -1, :]])[0]
+                return ext_decoder_logit_list, max_oov+self.data.vocab_simple.vocab_size()
             else:
                 return decoder_logit_list, max_oov+self.data.vocab_simple.vocab_size()
 
-        beam_ids, beam_score = beam_search.beam_search(symbol_to_logits_fn,
+        beam_ids, beam_score, alive_log_probs = beam_search.beam_search(symbol_to_logits_fn,
                                                        tf.zeros([self.model_config.batch_size], tf.int32),
                                                        self.model_config.beam_search_size,
                                                        self.model_config.max_simple_sentence,
-                                                       self.data.vocab_simple.vocab_size(),
+                                                       # self.data.vocab_simple.vocab_size(),
                                                        self.model_config.penalty_alpha,
                                                        model_config=self.model_config,
                                                        )
@@ -334,7 +358,11 @@ class TransformerGraph(Graph):
         decoder_score = -beam_score[:, 0] / tf.to_float(tf.shape(top_beam_ids)[1])
 
         # Get outputs based on target ids
-        decode_input_embs = tf.stack(self.embedding_fn(decoder_target_list, emb_simple), axis=1)
+        unk_target_list = tf.fill(tf.shape(decoder_target_list), self.data.vocab_simple.encode(constant.SYMBOL_UNK))
+        decoder_target_list_inp = tf.where(tf.greater_equal(decoder_target_list, self.data.vocab_simple.vocab_size()),
+                                           unk_target_list, decoder_target_list)
+        decoder_target_list_inp = tf.unstack(decoder_target_list_inp, axis=0)
+        decode_input_embs = tf.stack(self.embedding_fn(decoder_target_list_inp, emb_simple), axis=1)
         tf.get_variable_scope().reuse_variables()
         final_outputs, decoder_outputs, _, _ = self.decode_inputs_to_outputs(decode_input_embs, encoder_outputs, encoder_attn_bias,
                                                                           rule_id_input_placeholder, mem_contexts,
@@ -391,9 +419,11 @@ class TransformerGraph(Graph):
             elif 'cgate' in self.model_config.memory_config:
                 temp_output = tf.concat((decoder_output, mem_output), axis=-1)
                 w1 = tf.get_variable('w1',
-                                     shape=(1, self.model_config.dimension * 2, self.model_config.dimension))
+                                     shape=(1, self.model_config.dimension * 2, self.model_config.dimension),
+                                     initializer=tf.contrib.layers.xavier_initializer())
                 w2 = tf.get_variable('w2',
-                                     shape=(1, self.model_config.dimension * 2, self.model_config.dimension))
+                                     shape=(1, self.model_config.dimension * 2, self.model_config.dimension),
+                                     initializer=tf.contrib.layers.xavier_initializer())
                 gate1 = tf.tanh(tf.nn.conv1d(temp_output, w1, 1, 'SAME'))
                 gate2 = tf.tanh(tf.nn.conv1d(temp_output, w2, 1, 'SAME'))
                 mem_output = gate1 * mem_output + gate2 * decoder_output

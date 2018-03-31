@@ -142,6 +142,27 @@ class ValData:
             if need_raw:
                 obj['words_raw_comp'] = words_raw_comp
                 obj['words_raw_simp'] = words_raw_simp
+
+            oov = {}
+            if self.model_config.pointer_mode == 'ptr':
+                oov['w2i'] = {}
+                oov['i2w'] = []
+
+                for idx, wid in enumerate(words_comp):
+                    if wid == vocab_comp.encode(constant.SYMBOL_UNK):
+                        word_raw = words_raw_comp[idx]
+                        if word_raw not in oov['w2i']:
+                            oov['w2i'][word_raw] = len(oov['i2w'])
+                            oov['i2w'].append(word_raw)
+
+                # for idx, wid in enumerate(words_simp):
+                #     if wid == vocab_simp.encode(constant.SYMBOL_UNK):
+                #         word_raw = words_raw_simp[idx]
+                #         if word_raw not in oov['w2i']:
+                #             oov['w2i'][word_raw] = len(oov['i2w'])
+                #             oov['i2w'].append(word_raw)
+            obj['oov'] = oov
+
             data.append(obj)
             # len_report.update([len(words)])
             # if len(words) > max_len:
@@ -163,10 +184,12 @@ class ValData:
                 'sentence_simple': self.data[i]['words_simp'],
                 'sentence_complex': self.data[i]['words_comp'],
                 'sentence_complex_raw': self.data[i]['words_raw_comp'],
+                'sentence_simple_raw': self.data[i]['words_raw_simp'],
                 'sentence_complex_raw_lines': self.data_complex_raw_lines[i],
                 'mapper': self.mapper[i],
                 'ref_raw_lines': ref_rawlines_batch,
-                'sup': supplement
+                'sup': supplement,
+                'oov': self.data[i]['oov']
             }
 
             yield obj

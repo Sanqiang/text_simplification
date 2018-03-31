@@ -1,13 +1,15 @@
 # For fix slurm cannot load PYTHONPATH
 import sys
-sys.path.insert(0,'/ihome/hdaqing/saz31/sanqiang/text_simplification')
-sys.path.insert(0,'/home/hed/text_simp_proj/text_simplification')
+# sys.path.insert(0,'/ihome/hdaqing/saz31/sanqiang/text_simplification')
+# sys.path.insert(0,'/home/hed/text_simp_proj/text_simplification')
+sys.path.insert(0,'/ihome/cs2770_s2018/maz54/ts/text_simplification')
 
 
 from data_generator.train_data import TrainData
 from model.transformer import TransformerGraph
 from model.model_config import DefaultConfig, DefaultTrainConfig, WikiDressLargeTrainConfig, WikiDressSmallTrainConfig, list_config
 from model.model_config import WikiTransTrainCfg, WikiTransValCfg, WikiTransLegacyTestCfg, WikiTransLegacyTrainCfg
+from model.model_config import WikiDressLargeNewTrainDefault
 from data_generator.vocab import Vocab
 from util import session
 from util import constant
@@ -31,13 +33,17 @@ def get_graph_train_data(
         model_config):
     input_feed = {}
     # Reserved section of vocabuary are same.
-    voc = data.vocab_simple
 
     for obj in objs:
 
         (tmp_sentence_simple, tmp_sentence_complex,
          tmp_sentence_simple_weight, tmp_attn_weight,
-         tmp_idxs, tmp_sups) = [], [], [], [], [], {}
+         tmp_idxs, tmp_sups, tmp_sentence_simple_raw, tmp_sentence_complex_raw) = [], [], [], [], [], {}, [], []
+
+        if model_config.pointer_mode == 'ptr':
+            batch_oov = {}
+            batch_oov['w2i'] = {}
+            batch_oov['i2w'] = []
 
         for i in range(model_config.batch_size):
             if not model_config.it_train:
@@ -49,6 +55,10 @@ def get_graph_train_data(
             tmp_sentence_simple.append(obj_data['words_simp'])
             tmp_sentence_complex.append(obj_data['words_comp'])
             tmp_idxs.append(idx)
+
+            if model_config.pointer_mode == 'ptr':
+                tmp_sentence_simple_raw.append(obj_data['words_raw_simp'])
+                tmp_sentence_complex_raw.append(obj_data['words_raw_comp'])
 
             if model_config.memory == 'rule':
                 if 'rule_id_input_placeholder' not in tmp_sups:
@@ -76,20 +86,38 @@ def get_graph_train_data(
                 tmp_sups['rule_id_input_placeholder'].append(cur_rule_id_input_placeholder)
                 tmp_sups['rule_target_input_placeholder'].append(cur_rule_target_input_placeholder)
 
+            if model_config.pointer_mode == 'ptr':
+                oov = obj_data['oov']
+                for wd in oov['i2w']:
+                    if wd not in batch_oov['w2i']:
+                        batch_oov['w2i'][wd] = len(batch_oov['i2w']) + data.vocab_simple.vocab_size()
+                        batch_oov['i2w'].append(wd)
+
         if model_config.pointer_mode == 'ptr':
-            oov_comp_wid = data.vocab_complex.vocab_size()
             tmp_sentence_complex_ext = deepcopy(tmp_sentence_complex)
             for batch_idx in range(len(tmp_sentence_complex_ext)):
-                for wid, word_comp in enumerate(tmp_sentence_complex_ext):
+                for wid, word_comp in enumerate(tmp_sentence_complex_ext[batch_idx]):
                     if data.vocab_complex.encode(constant.SYMBOL_UNK) == word_comp:
-                        tmp_sentence_complex_ext[batch_idx][wid] = oov_comp_wid
-                        oov_comp_wid += 1
+                        tmp_sentence_complex_ext[
+                            batch_idx][wid] = batch_oov['w2i'][tmp_sentence_complex_raw[batch_idx][wid]]
 
-            input_feed[obj['max_oov'].name] = oov_comp_wid - data.vocab_complex.vocab_size()
+            tmp_sentence_simple_ext = deepcopy(tmp_sentence_simple)
+            for batch_idx in range(len(tmp_sentence_simple_ext)):
+                for wid, word_simp in enumerate(tmp_sentence_simple_ext[batch_idx]):
+                    if data.vocab_simple.encode(constant.SYMBOL_UNK) == word_simp and tmp_sentence_simple_raw[batch_idx][wid] in batch_oov['w2i']:
+                        tmp_sentence_simple_ext[
+                            batch_idx][wid] = batch_oov['w2i'][tmp_sentence_simple_raw[batch_idx][wid]]
+
+            input_feed[obj['max_oov'].name] = len(batch_oov['i2w'])
 
             for step in range(model_config.max_complex_sentence):
                 input_feed[obj['sentence_complex_input_ext_placeholder'][step].name] = [
-                    tmp_sentence_complex[batch_idx][step]
+                    tmp_sentence_complex_ext[batch_idx][step]
+                    for batch_idx in range(model_config.batch_size)]
+
+            for step in range(model_config.max_simple_sentence):
+                input_feed[obj['sentence_simple_input_ext_placeholder'][step].name] = [
+                    tmp_sentence_simple_ext[batch_idx][step]
                     for batch_idx in range(model_config.batch_size)]
 
         for step in range(model_config.max_simple_sentence):
@@ -196,8 +224,8 @@ def train(model_config=None):
             model_config)
 
         fetches = [graph.train_op, graph.loss, graph.global_step,
-                   graph.perplexity, graph.ops]
-        _, loss, step, perplexity, _ = sess.run(fetches, input_feed)
+                   graph.perplexity, graph.ops, graph.xxx]
+        _, loss, step, perplexity, _, xxx = sess.run(fetches, input_feed)
         perplexitys.append(perplexity)
 
         if step % model_config.model_print_freq == 0:
@@ -265,6 +293,8 @@ if __name__ == '__main__':
         config = DefaultTrainConfig()
     elif args.mode == 'dress':
         config = WikiDressLargeTrainConfig()
+    elif args.mode == 'dressnew':
+        config = WikiDressLargeNewTrainDefault()
     elif args.mode == 'dress2':
         config = WikiDressSmallTrainConfig()
     elif args.mode == 'wiki':
