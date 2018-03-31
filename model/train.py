@@ -224,8 +224,8 @@ def train(model_config=None):
             model_config)
 
         fetches = [graph.train_op, graph.loss, graph.global_step,
-                   graph.perplexity, graph.ops, graph.xxx]
-        _, loss, step, perplexity, _, xxx = sess.run(fetches, input_feed)
+                   graph.perplexity, graph.ops]
+        _, loss, step, perplexity, _ = sess.run(fetches, input_feed)
         perplexitys.append(perplexity)
 
         if step % model_config.model_print_freq == 0:

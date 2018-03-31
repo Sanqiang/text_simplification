@@ -88,6 +88,7 @@ class Graph():
                 sentence_complex_input_placeholder.append(
                     tf.zeros(self.model_config.batch_size, tf.int32, name='complex_input'))
 
+            sentence_complex_input_ext_placeholder, sentence_simple_input_ext_placeholder, max_oov = None, None, None
             if self.model_config.pointer_mode == 'ptr':
                 sentence_complex_input_ext_placeholder = []
                 for step in range(self.model_config.max_complex_sentence):
@@ -331,7 +332,6 @@ class Graph():
                         loss = maximize_loglikelihood()
                     else:
                         loss = teacherforce_loss()
-                    self.xxx = output.final_word_dist_list
 
                 obj = {
                     'sentence_idxs': sentence_idxs,

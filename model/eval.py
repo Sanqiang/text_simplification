@@ -151,7 +151,7 @@ def get_graph_val_data(objs,
                     tmp_sentence_simple_ext[batch_idx][step]
                     for batch_idx in range(model_config.batch_size)]
 
-        input_feed[obj['max_oov'].name] = len(batch_oov['i2w'])
+            input_feed[obj['max_oov'].name] = len(batch_oov['i2w'])
 
         for step in range(model_config.max_simple_sentence):
             input_feed[obj['sentence_simple_input_placeholder'][step].name] = [tmp_sentence_simple[batch_idx][step]

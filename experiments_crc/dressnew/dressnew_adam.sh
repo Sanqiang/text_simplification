@@ -17,5 +17,5 @@
 module restore
 
 # Run the job
-srun python ../../model/train.py -ngpus 1 -bsize 100 -fw transformer -out dn_adam -layer_drop 0.0 -op adam -lr 0.0001 --mode dressnew -nhl 4 -nel 4 -ndl 4 -lc True --pointer_mode ptr  --min_count 4
+srun python ../../model/train.py -ngpus 1 -bsize 100 -fw transformer -out dn_adam -layer_drop 0.0 -op adam -lr 0.0001 --mode dressnew -nhl 4 -nel 4 -ndl 4 -lc True --pointer_mode ptr --min_count 4 -eval_freq 0
 

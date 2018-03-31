@@ -726,19 +726,21 @@ class WikiDressLargeNewTrainDefault(WikiDressLargeNewDefault):
 
 
 class WikiDressLargeNewEvalDefault(WikiDressLargeNewDefault):
+    beam_search_size = 1
     environment = args.environment
     output_folder = args.output_folder
     resultdir = get_path('../' + output_folder + '/result/eightref_val', True, environment)
 
 
 class WikiDressLargeNewTestDefault(WikiDressLargeNewDefault):
+    beam_search_size = 1
     environment = args.environment
     output_folder = args.output_folder
     resultdir = get_path('../' + output_folder + '/result/eightref_test', True, environment)
 
     val_dataset_simple_folder = get_path('../text_simplification_data/train/dress/wikilargenew/test/')
     val_dataset_simple_file = 'dst.txt'
-    val_dataset_complex = get_path('../text_simplification_data/train/dress/wikilargenew/tet/src.txt')
+    val_dataset_complex = get_path('../text_simplification_data/train/dress/wikilargenew/test/src.txt')
     val_mapper = get_path('../text_simplification_data/train/dress/wikilargenew/test/map.txt')
 
     val_dataset_complex_rawlines_file = get_path(

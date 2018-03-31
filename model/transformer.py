@@ -339,7 +339,7 @@ class TransformerGraph(Graph):
                     [decoder_logit_list], seps, sentence_complex_input_ext_placeholder, max_oov, [final_outputs[:, -1, :]], [embs[:, -1, :]])[0]
                 return ext_decoder_logit_list, max_oov+self.data.vocab_simple.vocab_size()
             else:
-                return decoder_logit_list, max_oov+self.data.vocab_simple.vocab_size()
+                return decoder_logit_list, self.data.vocab_simple.vocab_size()
 
         beam_ids, beam_score, alive_log_probs = beam_search.beam_search(symbol_to_logits_fn,
                                                        tf.zeros([self.model_config.batch_size], tf.int32),
@@ -378,6 +378,7 @@ class TransformerGraph(Graph):
         return output
 
     def output_to_logit(self, prev_out, w, b):
+        # prev_logit = tf.add(tf.matmul(prev_out, tf.transpose(w)), b))
         prev_logit = tf.nn.softmax(tf.add(tf.matmul(prev_out, tf.transpose(w)), b))
         return prev_logit
 

@@ -5,27 +5,24 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="664865aa-46f3-4e35-a681-41d75bf51175" name="Default" comment="">
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/.idea/inspectionProfiles/Project_Default.xml" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/codelab/test_len.py" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/experiments_crc/dressnew/dressnew_adagrad.sh" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/experiments_crc/dressnew/dressnew_adam.sh" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/experiments_crc/dressnew/dressnew_adagrad_base.sh" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/experiments_crc/dressnew/dressnew_adagrad_base_eval.sh" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/experiments_crc/dressnew/dressnew_adagrad_eval.sh" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/experiments_crc/dressnew/dressnew_adagrad_mc5.sh" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/experiments_crc/dressnew/dressnew_adagrad_mc5_eval.sh" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/experiments_crc/dressnew/dressnew_adam_base.sh" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/experiments_crc/dressnew/dressnew_adam_base_eval.sh" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/experiments_crc/dressnew/dressnew_adam_eval.sh" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/experiments_crc/dressnew/dressnew_adam_mc5.sh" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/experiments_crc/dressnew/dressnew_adam_mc5_eval.sh" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/data/dummy_complex_vocab" afterPath="$PROJECT_DIR$/data/dummy_complex_vocab" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/data/dummy_simple_vocab" afterPath="$PROJECT_DIR$/data/dummy_simple_vocab" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/data/dummy_vocab" afterPath="$PROJECT_DIR$/data/dummy_vocab" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/data_generator/train_data.py" afterPath="$PROJECT_DIR$/data_generator/train_data.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/data_generator/val_data.py" afterPath="$PROJECT_DIR$/data_generator/val_data.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/data_process/data_preprocess.py" afterPath="$PROJECT_DIR$/data_process/data_preprocess.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/model/embedding.py" afterPath="$PROJECT_DIR$/model/embedding.py" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/experiments_crc/dressnew/dressnew_adagrad.sh" afterPath="$PROJECT_DIR$/experiments_crc/dressnew/dressnew_adagrad.sh" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/experiments_crc/dressnew/dressnew_adam.sh" afterPath="$PROJECT_DIR$/experiments_crc/dressnew/dressnew_adam.sh" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/model/eval.py" afterPath="$PROJECT_DIR$/model/eval.py" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/model/graph.py" afterPath="$PROJECT_DIR$/model/graph.py" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/model/model_config.py" afterPath="$PROJECT_DIR$/model/model_config.py" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/model/train.py" afterPath="$PROJECT_DIR$/model/train.py" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/model/transformer.py" afterPath="$PROJECT_DIR$/model/transformer.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/tensor2tensor/layers/common_attention.py" afterPath="$PROJECT_DIR$/tensor2tensor/layers/common_attention.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/tensor2tensor/models/transformer.py" afterPath="$PROJECT_DIR$/tensor2tensor/models/transformer.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/tensor2tensor/utils/beam_search.py" afterPath="$PROJECT_DIR$/tensor2tensor/utils/beam_search.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/util/decode.py" afterPath="$PROJECT_DIR$/util/decode.py" />
     </list>
     <ignored path="text_simplification.iws" />
     <ignored path=".idea/workspace.xml" />
@@ -67,7 +64,7 @@
     <SUITE FILE_PATH="coverage/text_simplification$eval_real_s2s.coverage" NAME="eval_real_s2s Coverage Results" MODIFIED="1508059479170" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/model" />
     <SUITE FILE_PATH="coverage/text_simplification$ppdb.coverage" NAME="ppdb Coverage Results" MODIFIED="1510085672986" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/model" />
     <SUITE FILE_PATH="coverage/text_simplification$train.coverage" NAME="train Coverage Results" MODIFIED="1519787884385" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/language_model" />
-    <SUITE FILE_PATH="coverage/text_simplification$train_dummy.coverage" NAME="train_dummy Coverage Results" MODIFIED="1522471645011" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/model" />
+    <SUITE FILE_PATH="coverage/text_simplification$train_dummy.coverage" NAME="train_dummy Coverage Results" MODIFIED="1522522718983" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/model" />
     <SUITE FILE_PATH="coverage/text_simplification$loss.coverage" NAME="loss Coverage Results" MODIFIED="1520320251955" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/model" />
     <SUITE FILE_PATH="coverage/text_simplification$graph.coverage" NAME="graph Coverage Results" MODIFIED="1505192113901" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/model" />
     <SUITE FILE_PATH="coverage/text_simplification$preprocess.coverage" NAME="preprocess Coverage Results" MODIFIED="1522457381151" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/data_process" />
@@ -93,31 +90,11 @@
   </component>
   <component name="FileEditorManager">
     <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
-      <file leaf-file-name="dressnew_adam.sh" pinned="false" current-in-tab="true">
-        <entry file="file://$PROJECT_DIR$/experiments_crc/dressnew/dressnew_adam.sh">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="210">
-              <caret line="14" column="0" lean-forward="true" selection-start-line="14" selection-start-column="0" selection-end-line="14" selection-end-column="0" />
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="dressnew_adagrad.sh" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/experiments_crc/dressnew/dressnew_adagrad.sh">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="240">
-              <caret line="16" column="14" lean-forward="true" selection-start-line="16" selection-start-column="14" selection-end-line="16" selection-end-column="14" />
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
       <file leaf-file-name="graph.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/model/graph.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="1030">
-              <caret line="401" column="0" lean-forward="false" selection-start-line="401" selection-start-column="0" selection-end-line="401" selection-end-column="0" />
+            <state relative-caret-position="156">
+              <caret line="113" column="0" lean-forward="false" selection-start-line="113" selection-start-column="0" selection-end-line="113" selection-end-column="0" />
               <folding>
                 <element signature="e#305#992#0" expanded="false" />
                 <element signature="e#404#447#0" expanded="false" />
@@ -125,42 +102,94 @@
                 <element signature="e#2204#2361#0" expanded="false" />
                 <element signature="e#2544#3236#0" expanded="false" />
                 <element signature="e#2723#3121#0" expanded="false" />
-                <element signature="e#17528#18379#0" expanded="false" />
+                <element signature="e#17646#18497#0" expanded="false" />
               </folding>
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="transformer.py" pinned="false" current-in-tab="false">
+      <file leaf-file-name="transformer.py" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/model/transformer.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="0">
-              <caret line="265" column="50" lean-forward="false" selection-start-line="265" selection-start-column="50" selection-end-line="265" selection-end-column="50" />
+            <state relative-caret-position="315">
+              <caret line="381" column="25" lean-forward="true" selection-start-line="381" selection-start-column="25" selection-end-line="381" selection-end-column="25" />
               <folding>
                 <element signature="e#0#23#0" expanded="true" />
-                <element signature="e#2133#2682#0" expanded="false" />
                 <element signature="e#7047#16754#0" expanded="false" />
               </folding>
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="decode.py" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/util/decode.py">
+      <file leaf-file-name="model_config.py" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/model/model_config.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="891">
-              <caret line="87" column="39" lean-forward="false" selection-start-line="87" selection-start-column="39" selection-end-line="87" selection-end-column="39" />
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="common_attention.py" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/tensor2tensor/layers/common_attention.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="204">
-              <caret line="1218" column="0" lean-forward="false" selection-start-line="1218" selection-start-column="0" selection-end-line="1218" selection-end-column="0" />
-              <folding />
+            <state relative-caret-position="152">
+              <caret line="204" column="16" lean-forward="false" selection-start-line="204" selection-start-column="4" selection-end-line="204" selection-end-column="16" />
+              <folding>
+                <element signature="e#0#9#0" expanded="true" />
+                <element signature="e#1451#1475#0" expanded="false" />
+                <element signature="e#1548#1578#0" expanded="false" />
+                <element signature="e#1834#1858#0" expanded="false" />
+                <element signature="e#2429#2477#0" expanded="false" />
+                <element signature="e#2905#2978#0" expanded="false" />
+                <element signature="e#4358#4379#0" expanded="false" />
+                <element signature="e#4613#5071#0" expanded="false" />
+                <element signature="e#4800#4863#0" expanded="false" />
+                <element signature="e#6670#6838#0" expanded="false" />
+                <element signature="e#6897#7011#0" expanded="false" />
+                <element signature="e#7061#7097#0" expanded="false" />
+                <element signature="e#7260#7720#0" expanded="false" />
+                <element signature="e#7990#8140#0" expanded="false" />
+                <element signature="e#8188#8332#0" expanded="false" />
+                <element signature="e#9294#9640#0" expanded="false" />
+                <element signature="e#9677#10038#0" expanded="false" />
+                <element signature="e#10057#10384#0" expanded="false" />
+                <element signature="e#10521#10745#0" expanded="false" />
+                <element signature="e#10764#11000#0" expanded="false" />
+                <element signature="e#11492#11509#0" expanded="false" />
+                <element signature="e#12077#12091#0" expanded="false" />
+                <element signature="e#13383#13443#0" expanded="false" />
+                <element signature="e#13567#14028#0" expanded="false" />
+                <element signature="e#14173#14244#0" expanded="false" />
+                <element signature="e#14289#14459#0" expanded="false" />
+                <element signature="e#15448#15613#0" expanded="false" />
+                <element signature="e#15683#15818#0" expanded="false" />
+                <element signature="e#16574#16695#0" expanded="false" />
+                <element signature="e#17062#17132#0" expanded="false" />
+                <element signature="e#17352#17786#0" expanded="false" />
+                <element signature="e#17666#17786#0" expanded="false" />
+                <element signature="e#17859#18302#0" expanded="false" />
+                <element signature="e#18177#18302#0" expanded="false" />
+                <element signature="e#18373#18539#0" expanded="false" />
+                <element signature="e#18616#19056#0" expanded="false" />
+                <element signature="e#18936#19056#0" expanded="false" />
+                <element signature="e#19137#19586#0" expanded="false" />
+                <element signature="e#19461#19586#0" expanded="false" />
+                <element signature="e#19658#19794#0" expanded="false" />
+                <element signature="e#19853#21016#0" expanded="false" />
+                <element signature="e#21079#21099#0" expanded="false" />
+                <element signature="e#22133#22296#0" expanded="false" />
+                <element signature="e#22299#22519#1" expanded="false" />
+                <element signature="e#22578#23198#0" expanded="false" />
+                <element signature="e#23260#23321#0" expanded="false" />
+                <element signature="e#23382#24527#0" expanded="false" />
+                <element signature="e#24573#28508#0" expanded="false" />
+                <element signature="e#24794#24833#0" expanded="false" />
+                <element signature="e#25842#26199#0" expanded="false" />
+                <element signature="e#26246#26601#0" expanded="false" />
+                <element signature="e#26620#27496#0" expanded="false" />
+                <element signature="e#26620#26698#0" expanded="false" />
+                <element signature="e#27222#27496#0" expanded="false" />
+                <element signature="e#28558#28619#0" expanded="false" />
+                <element signature="e#28667#30509#0" expanded="false" />
+                <element signature="e#28667#28684#0" expanded="false" />
+                <element signature="e#30558#31776#0" expanded="false" />
+                <element signature="e#31265#31386#0" expanded="false" />
+                <element signature="e#34172#34449#0" expanded="false" />
+                <element signature="e#34180#34294#0" expanded="false" />
+                <element signature="e#34342#34431#0" expanded="false" />
+              </folding>
             </state>
           </provider>
         </entry>
@@ -176,13 +205,6 @@
   </component>
   <component name="FindInProjectRecents">
     <findStrings>
-      <find>model_config.batch_size</find>
-      <find>max_oov</find>
-      <find>encoder_embs</find>
-      <find>beam_</find>
-      <find>final_outputs</find>
-      <find>drop</find>
-      <find>decoder_target_list</find>
       <find>gt_target_list</find>
       <find>output_to_logit</find>
       <find>dis</find>
@@ -206,6 +228,13 @@
       <find>transformer_beam_search</find>
       <find>liki</find>
       <find>word_distribution</find>
+      <find>beam_search_size</find>
+      <find>eval_freq</find>
+      <find>xxx</find>
+      <find>pointer_mode</find>
+      <find>vocab</find>
+      <find>pointer</find>
+      <find>softmax</find>
     </findStrings>
     <replaceStrings>
       <replace>val_dataset_simple_rawlines_file</replace>
@@ -217,17 +246,6 @@
   <component name="IdeDocumentHistory">
     <option name="CHANGED_PATHS">
       <list>
-        <option value="$PROJECT_DIR$/experiments_crc/wiki_base_add.long.titanx.sh" />
-        <option value="$PROJECT_DIR$/model/loss.py" />
-        <option value="$PROJECT_DIR$/experiments_crc/wiki_base_addsub.long.titanx.sh" />
-        <option value="$PROJECT_DIR$/language_model/lm_arguments.py" />
-        <option value="$PROJECT_DIR$/language_model/transformer_lm.py" />
-        <option value="$PROJECT_DIR$/language_model/lm_data_generator.py" />
-        <option value="$PROJECT_DIR$/language_model/train.py" />
-        <option value="$PROJECT_DIR$/language_model/experiments/lm_sub.sh" />
-        <option value="$PROJECT_DIR$/language_model/experiments/lm.sh" />
-        <option value="$PROJECT_DIR$/experiments_crc/ACL/dress_final_ffn_rbasev3.long.gtx1080.sh" />
-        <option value="$PROJECT_DIR$/experiments_crc/wiki_base_eval.long.titan.sh" />
         <option value="$PROJECT_DIR$/experiments_crc/wiki_base_addsub_eval.long.titan.sh" />
         <option value="$PROJECT_DIR$/experiments_crc/wiki_base.long.titanx.sh" />
         <option value="$PROJECT_DIR$/codelab/subword_generator.py" />
@@ -257,16 +275,27 @@
         <option value="$PROJECT_DIR$/data_process/data_preprocess.py" />
         <option value="$PROJECT_DIR$/codelab/test_len.py" />
         <option value="$PROJECT_DIR$/data_generator/train_data.py" />
-        <option value="$PROJECT_DIR$/model/model_config.py" />
-        <option value="$PROJECT_DIR$/model/train.py" />
-        <option value="$PROJECT_DIR$/model/eval.py" />
         <option value="$PROJECT_DIR$/experiments_crc/dressnew_adam.sh" />
         <option value="$PROJECT_DIR$/model/embedding.py" />
-        <option value="$PROJECT_DIR$/experiments_crc/dressnew/dressnew_adagrad.sh" />
-        <option value="$PROJECT_DIR$/experiments_crc/dressnew/dressnew_adam.sh" />
         <option value="$PROJECT_DIR$/tensor2tensor/layers/common_attention.py" />
         <option value="$PROJECT_DIR$/util/decode.py" />
+        <option value="$PROJECT_DIR$/model/model_config.py" />
+        <option value="$PROJECT_DIR$/experiments_crc/dressnew/dressnew_adagrad_eval.sh" />
+        <option value="$PROJECT_DIR$/experiments_crc/dressnew/dressnew_adam_eval.sh" />
+        <option value="$PROJECT_DIR$/experiments_crc/dressnew/dressnew_adam.sh" />
+        <option value="$PROJECT_DIR$/experiments_crc/dressnew/dressnew_adagrad.sh" />
+        <option value="$PROJECT_DIR$/model/train.py" />
         <option value="$PROJECT_DIR$/model/graph.py" />
+        <option value="$PROJECT_DIR$/experiments_crc/dressnew/dressnew_base.sh" />
+        <option value="$PROJECT_DIR$/experiments_crc/dressnew/dressnew_adam_base.sh" />
+        <option value="$PROJECT_DIR$/model/eval.py" />
+        <option value="$PROJECT_DIR$/experiments_crc/dressnew/dressnew_adam_mc5.sh" />
+        <option value="$PROJECT_DIR$/experiments_crc/dressnew/dressnew_adagrad_mc5.sh" />
+        <option value="$PROJECT_DIR$/experiments_crc/dressnew/dressnew_adam_base_mc5.sh" />
+        <option value="$PROJECT_DIR$/experiments_crc/dressnew/dressnew_adagrad_mc5_eval.sh" />
+        <option value="$PROJECT_DIR$/experiments_crc/dressnew/dressnew_adagrad_base_eval.sh" />
+        <option value="$PROJECT_DIR$/experiments_crc/dressnew/dressnew_adam_base_eval.sh" />
+        <option value="$PROJECT_DIR$/experiments_crc/dressnew/dressnew_adam_mc5_eval.sh" />
         <option value="$PROJECT_DIR$/model/transformer.py" />
       </list>
     </option>
@@ -309,29 +338,12 @@
             <path>
               <item name="text_simplification" type="b2602c69:ProjectViewProjectNode" />
               <item name="text_simplification" type="462c0819:PsiDirectoryNode" />
-              <item name="experiments_crc" type="462c0819:PsiDirectoryNode" />
-            </path>
-            <path>
-              <item name="text_simplification" type="b2602c69:ProjectViewProjectNode" />
-              <item name="text_simplification" type="462c0819:PsiDirectoryNode" />
-              <item name="experiments_crc" type="462c0819:PsiDirectoryNode" />
-              <item name="dressnew" type="462c0819:PsiDirectoryNode" />
-            </path>
-            <path>
-              <item name="text_simplification" type="b2602c69:ProjectViewProjectNode" />
-              <item name="text_simplification" type="462c0819:PsiDirectoryNode" />
               <item name="model" type="462c0819:PsiDirectoryNode" />
             </path>
             <path>
               <item name="text_simplification" type="b2602c69:ProjectViewProjectNode" />
               <item name="text_simplification" type="462c0819:PsiDirectoryNode" />
-              <item name="tensor2tensor" type="462c0819:PsiDirectoryNode" />
-            </path>
-            <path>
-              <item name="text_simplification" type="b2602c69:ProjectViewProjectNode" />
-              <item name="text_simplification" type="462c0819:PsiDirectoryNode" />
-              <item name="tensor2tensor" type="462c0819:PsiDirectoryNode" />
-              <item name="models" type="462c0819:PsiDirectoryNode" />
+              <item name="util" type="462c0819:PsiDirectoryNode" />
             </path>
           </expand>
           <select />
@@ -739,7 +751,7 @@
       <module name="text_simplification" />
       <EXTENSION ID="PythonCoverageRunConfigurationExtension" enabled="false" sample_coverage="true" runner="coverage.py" />
       <option name="SCRIPT_NAME" value="$PROJECT_DIR$/model/train.py" />
-      <option name="PARAMETERS" value="-mode dummy -out xx3 --layer_prepostprocess_dropout 0.1 -lr 0.001 -op adam  -eval_freq 1000 --pointer_mode ptr" />
+      <option name="PARAMETERS" value="-mode dummy -out xx1 --layer_prepostprocess_dropout 0.1 -lr 0.00001 -op adam  -eval_freq 1000 --pointer_mode ptr" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="false" />
     </configuration>
@@ -1068,8 +1080,8 @@
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/model/transformer.py</url>
-          <line>279</line>
-          <option name="timeStamp" value="562" />
+          <line>283</line>
+          <option name="timeStamp" value="565" />
         </line-breakpoint>
       </breakpoints>
       <breakpoints-dialog>
@@ -1082,7 +1094,7 @@
           </properties>
         </breakpoint>
       </default-breakpoints>
-      <option name="time" value="563" />
+      <option name="time" value="566" />
     </breakpoint-manager>
     <watches-manager>
       <configuration name="PythonConfigurationType">
@@ -1092,114 +1104,6 @@
     </watches-manager>
   </component>
   <component name="editorHistoryManager">
-    <entry file="file://$PROJECT_DIR$/data/valid_dummy_simple_dataset.2">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="45">
-          <caret line="3" column="16" lean-forward="true" selection-start-line="0" selection-start-column="0" selection-end-line="3" selection-end-column="16" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/data/valid_dummy_simple_dataset.raw.0">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="45">
-          <caret line="3" column="16" lean-forward="false" selection-start-line="3" selection-start-column="16" selection-end-line="3" selection-end-column="16" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/data/valid_dummy_simple_dataset.raw.1">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="45">
-          <caret line="3" column="16" lean-forward="false" selection-start-line="3" selection-start-column="16" selection-end-line="3" selection-end-column="16" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/data/valid_dummy_simple_dataset.raw.2">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="45">
-          <caret line="3" column="16" lean-forward="false" selection-start-line="3" selection-start-column="16" selection-end-line="3" selection-end-column="16" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/data/dummy_vocab">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="75">
-          <caret line="5" column="5" lean-forward="false" selection-start-line="5" selection-start-column="5" selection-end-line="5" selection-end-column="5" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/data/dummy_simple_vocab">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="90">
-          <caret line="6" column="0" lean-forward="true" selection-start-line="6" selection-start-column="0" selection-end-line="6" selection-end-column="0" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/data/dummy_complex_vocab">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="90">
-          <caret line="6" column="0" lean-forward="true" selection-start-line="6" selection-start-column="0" selection-end-line="6" selection-end-column="0" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/data_generator/val_data.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="151">
-          <caret line="93" column="21" lean-forward="false" selection-start-line="93" selection-start-column="12" selection-end-line="93" selection-end-column="21" />
-          <folding>
-            <element signature="e#0#38#0" expanded="true" />
-            <element signature="e#2767#3005#0" expanded="false" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$APPLICATION_HOME_DIR$/helpers/pydev/pydevd.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="310">
-          <caret line="1598" column="0" lean-forward="false" selection-start-line="1598" selection-start-column="0" selection-end-line="1598" selection-end-column="0" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$USER_HOME$/Library/Caches/PyCharm2017.2/python_stubs/1041840223/builtins.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="163">
-          <caret line="5674" column="6" lean-forward="false" selection-start-line="5674" selection-start-column="6" selection-end-line="5674" selection-end-column="6" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$USER_HOME$/anaconda/envs/dl_py35/lib/python3.5/site-packages/tensorflow/python/ops/variable_scope.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="163">
-          <caret line="1277" column="4" lean-forward="false" selection-start-line="1277" selection-start-column="4" selection-end-line="1277" selection-end-column="4" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$USER_HOME$/anaconda/envs/dl_py35/lib/python3.5/site-packages/tensorflow/python/framework/constant_op.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-556">
-          <caret line="134" column="37" lean-forward="false" selection-start-line="134" selection-start-column="32" selection-end-line="134" selection-end-column="37" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$USER_HOME$/anaconda/envs/dl_py35/lib/python3.5/site-packages/tensorflow/python/ops/embedding_ops.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="163">
-          <caret line="261" column="4" lean-forward="false" selection-start-line="261" selection-start-column="4" selection-end-line="261" selection-end-column="4" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/util/checkpoint.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="102">
-          <caret line="50" column="20" lean-forward="true" selection-start-line="50" selection-start-column="20" selection-end-line="52" selection-end-column="40" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/tensor2tensor/utils/beam_search.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="441">
@@ -1258,28 +1162,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/model/train.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="30">
-          <caret line="2" column="51" lean-forward="false" selection-start-line="2" selection-start-column="51" selection-end-line="3" selection-end-column="55" />
-          <folding>
-            <element signature="e#2372#3833#0" expanded="false" />
-            <element signature="e#6587#7082#0" expanded="false" />
-            <element signature="e#11317#13600#0" expanded="false" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/model/eval.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="90">
-          <caret line="6" column="0" lean-forward="true" selection-start-line="6" selection-start-column="0" selection-end-line="6" selection-end-column="0" />
-          <folding>
-            <element signature="e#3706#5311#0" expanded="false" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/data_generator/train_data.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="105">
@@ -1306,91 +1188,11 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/experiments_crc/wiki_base_sub.long.titanx.sh">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="270">
-          <caret line="18" column="145" lean-forward="true" selection-start-line="18" selection-start-column="126" selection-end-line="18" selection-end-column="145" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$USER_HOME$/anaconda/envs/dl_py35/lib/python3.5/site-packages/tensorflow/python/training/adam.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="169">
           <caret line="39" column="6" lean-forward="false" selection-start-line="39" selection-start-column="6" selection-end-line="39" selection-end-column="6" />
           <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/model/model_config.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="152">
-          <caret line="36" column="13" lean-forward="false" selection-start-line="36" selection-start-column="4" selection-end-line="36" selection-end-column="13" />
-          <folding>
-            <element signature="e#0#9#0" expanded="true" />
-            <element signature="e#1451#1475#0" expanded="false" />
-            <element signature="e#1548#1578#0" expanded="false" />
-            <element signature="e#1834#1858#0" expanded="false" />
-            <element signature="e#2429#2477#0" expanded="false" />
-            <element signature="e#2905#2978#0" expanded="false" />
-            <element signature="e#4358#4379#0" expanded="false" />
-            <element signature="e#4613#5071#0" expanded="false" />
-            <element signature="e#4800#4863#0" expanded="false" />
-            <element signature="e#6670#6838#0" expanded="false" />
-            <element signature="e#6897#7011#0" expanded="false" />
-            <element signature="e#7061#7097#0" expanded="false" />
-            <element signature="e#7260#7720#0" expanded="false" />
-            <element signature="e#7990#8140#0" expanded="false" />
-            <element signature="e#8188#8332#0" expanded="false" />
-            <element signature="e#9294#9640#0" expanded="false" />
-            <element signature="e#9677#10038#0" expanded="false" />
-            <element signature="e#10057#10384#0" expanded="false" />
-            <element signature="e#10521#10745#0" expanded="false" />
-            <element signature="e#10764#11000#0" expanded="false" />
-            <element signature="e#11492#11509#0" expanded="false" />
-            <element signature="e#12077#12091#0" expanded="false" />
-            <element signature="e#13383#13443#0" expanded="false" />
-            <element signature="e#13567#14028#0" expanded="false" />
-            <element signature="e#14173#14244#0" expanded="false" />
-            <element signature="e#14289#14459#0" expanded="false" />
-            <element signature="e#15448#15613#0" expanded="false" />
-            <element signature="e#15683#15818#0" expanded="false" />
-            <element signature="e#16574#16695#0" expanded="false" />
-            <element signature="e#17062#17132#0" expanded="false" />
-            <element signature="e#17352#17786#0" expanded="false" />
-            <element signature="e#17666#17786#0" expanded="false" />
-            <element signature="e#17859#18302#0" expanded="false" />
-            <element signature="e#18177#18302#0" expanded="false" />
-            <element signature="e#18373#18539#0" expanded="false" />
-            <element signature="e#18616#19056#0" expanded="false" />
-            <element signature="e#18936#19056#0" expanded="false" />
-            <element signature="e#19137#19586#0" expanded="false" />
-            <element signature="e#19461#19586#0" expanded="false" />
-            <element signature="e#19658#19794#0" expanded="false" />
-            <element signature="e#19853#21016#0" expanded="false" />
-            <element signature="e#21079#21099#0" expanded="false" />
-            <element signature="e#21159#22068#0" expanded="false" />
-            <element signature="e#22133#22296#0" expanded="false" />
-            <element signature="e#22299#22519#1" expanded="false" />
-            <element signature="e#22578#23198#0" expanded="false" />
-            <element signature="e#23260#23321#0" expanded="false" />
-            <element signature="e#23382#24527#0" expanded="false" />
-            <element signature="e#24573#28508#0" expanded="false" />
-            <element signature="e#24794#24833#0" expanded="false" />
-            <element signature="e#25842#26199#0" expanded="false" />
-            <element signature="e#26246#26601#0" expanded="false" />
-            <element signature="e#26620#27496#0" expanded="false" />
-            <element signature="e#26620#26698#0" expanded="false" />
-            <element signature="e#27222#27496#0" expanded="false" />
-            <element signature="e#28558#28619#0" expanded="false" />
-            <element signature="e#28667#30509#0" expanded="false" />
-            <element signature="e#28667#28684#0" expanded="false" />
-            <element signature="e#30558#31776#0" expanded="false" />
-            <element signature="e#31265#31386#0" expanded="false" />
-            <element signature="e#34121#34398#0" expanded="false" />
-            <element signature="e#34129#34243#0" expanded="false" />
-            <element signature="e#34291#34380#0" expanded="false" />
-          </folding>
         </state>
       </provider>
     </entry>
@@ -1524,14 +1326,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/tensor2tensor/models/transformer.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="115">
-          <caret line="571" column="50" lean-forward="true" selection-start-line="571" selection-start-column="50" selection-end-line="571" selection-end-column="50" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/util/decode.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="891">
@@ -1540,18 +1334,255 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/util/arguments.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="152">
+          <caret line="44" column="30" lean-forward="false" selection-start-line="44" selection-start-column="29" selection-end-line="44" selection-end-column="30" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/experiments_crc/wiki_base_sub.long.titanx.sh">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="270">
+          <caret line="18" column="220" lean-forward="false" selection-start-line="18" selection-start-column="211" selection-end-line="18" selection-end-column="220" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/experiments_crc/dressnew/dressnew_adam.sh">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="285">
+          <caret line="19" column="209" lean-forward="false" selection-start-line="19" selection-start-column="209" selection-end-line="19" selection-end-column="209" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/model/train.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="154">
+          <caret line="226" column="46" lean-forward="false" selection-start-line="226" selection-start-column="46" selection-end-line="226" selection-end-column="46" />
+          <folding>
+            <element signature="e#2372#3833#0" expanded="false" />
+            <element signature="e#6587#7082#0" expanded="false" />
+            <element signature="e#11301#13584#0" expanded="false" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/experiments_crc/dressnew/dressnew_adagrad.sh">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="285">
+          <caret line="19" column="84" lean-forward="false" selection-start-line="19" selection-start-column="74" selection-end-line="19" selection-end-column="84" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/experiments_crc/dressnew/dressnew_adam_base.sh">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="285">
+          <caret line="19" column="166" lean-forward="false" selection-start-line="19" selection-start-column="166" selection-end-line="19" selection-end-column="166" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/experiments_crc/dressnew/dressnew_adagrad_base.sh">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="285">
+          <caret line="19" column="87" lean-forward="false" selection-start-line="19" selection-start-column="87" selection-end-line="19" selection-end-column="87" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/model/eval.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="327">
+          <caret line="153" column="12" lean-forward="false" selection-start-line="153" selection-start-column="12" selection-end-line="153" selection-end-column="12" />
+          <folding>
+            <element signature="e#3706#5311#0" expanded="false" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/tensor2tensor/layers/common_attention.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="204">
-          <caret line="1218" column="0" lean-forward="false" selection-start-line="1218" selection-start-column="0" selection-end-line="1218" selection-end-column="0" />
+        <state relative-caret-position="186">
+          <caret line="2381" column="0" lean-forward="false" selection-start-line="2381" selection-start-column="0" selection-end-line="2381" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/tensor2tensor/models/transformer.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="201">
+          <caret line="553" column="0" lean-forward="false" selection-start-line="553" selection-start-column="0" selection-end-line="553" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/experiments_crc/dressnew/dressnew_adagrad_mc5.sh">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="285">
+          <caret line="19" column="112" lean-forward="false" selection-start-line="19" selection-start-column="112" selection-end-line="19" selection-end-column="112" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/experiments_crc/dressnew/dressnew_adam_base_mc5.sh">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="285">
+          <caret line="19" column="88" lean-forward="false" selection-start-line="19" selection-start-column="88" selection-end-line="19" selection-end-column="88" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/experiments_crc/dressnew/dressnew_adam_mc5.sh">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="285">
+          <caret line="19" column="85" lean-forward="false" selection-start-line="19" selection-start-column="85" selection-end-line="19" selection-end-column="85" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/experiments_crc/dressnew/dressnew_adagrad_mc5_eval.sh">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="75">
+          <caret line="5" column="25" lean-forward="true" selection-start-line="5" selection-start-column="25" selection-end-line="5" selection-end-column="25" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/experiments_crc/dressnew/dressnew_adagrad_base_eval.sh">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="75">
+          <caret line="5" column="25" lean-forward="true" selection-start-line="5" selection-start-column="25" selection-end-line="5" selection-end-column="25" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/experiments_crc/dressnew/dressnew_adam_base_eval.sh">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="75">
+          <caret line="5" column="25" lean-forward="true" selection-start-line="5" selection-start-column="25" selection-end-line="5" selection-end-column="25" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/experiments_crc/dressnew/dressnew_adam_mc5_eval.sh">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="75">
+          <caret line="5" column="25" lean-forward="true" selection-start-line="5" selection-start-column="25" selection-end-line="5" selection-end-column="25" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/experiments_crc/dressnew/dressnew_adam_eval.sh">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="285">
+          <caret line="19" column="28" lean-forward="false" selection-start-line="19" selection-start-column="28" selection-end-line="19" selection-end-column="28" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/experiments_crc/dressnew/dressnew_adagrad_eval.sh">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="285">
+          <caret line="19" column="184" lean-forward="true" selection-start-line="19" selection-start-column="184" selection-end-line="19" selection-end-column="184" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/data/dummy_simple_vocab">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="0">
+          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/model/model_config.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="152">
+          <caret line="204" column="16" lean-forward="false" selection-start-line="204" selection-start-column="4" selection-end-line="204" selection-end-column="16" />
+          <folding>
+            <element signature="e#0#9#0" expanded="true" />
+            <element signature="e#1451#1475#0" expanded="false" />
+            <element signature="e#1548#1578#0" expanded="false" />
+            <element signature="e#1834#1858#0" expanded="false" />
+            <element signature="e#2429#2477#0" expanded="false" />
+            <element signature="e#2905#2978#0" expanded="false" />
+            <element signature="e#4358#4379#0" expanded="false" />
+            <element signature="e#4613#5071#0" expanded="false" />
+            <element signature="e#4800#4863#0" expanded="false" />
+            <element signature="e#6670#6838#0" expanded="false" />
+            <element signature="e#6897#7011#0" expanded="false" />
+            <element signature="e#7061#7097#0" expanded="false" />
+            <element signature="e#7260#7720#0" expanded="false" />
+            <element signature="e#7990#8140#0" expanded="false" />
+            <element signature="e#8188#8332#0" expanded="false" />
+            <element signature="e#9294#9640#0" expanded="false" />
+            <element signature="e#9677#10038#0" expanded="false" />
+            <element signature="e#10057#10384#0" expanded="false" />
+            <element signature="e#10521#10745#0" expanded="false" />
+            <element signature="e#10764#11000#0" expanded="false" />
+            <element signature="e#11492#11509#0" expanded="false" />
+            <element signature="e#12077#12091#0" expanded="false" />
+            <element signature="e#13383#13443#0" expanded="false" />
+            <element signature="e#13567#14028#0" expanded="false" />
+            <element signature="e#14173#14244#0" expanded="false" />
+            <element signature="e#14289#14459#0" expanded="false" />
+            <element signature="e#15448#15613#0" expanded="false" />
+            <element signature="e#15683#15818#0" expanded="false" />
+            <element signature="e#16574#16695#0" expanded="false" />
+            <element signature="e#17062#17132#0" expanded="false" />
+            <element signature="e#17352#17786#0" expanded="false" />
+            <element signature="e#17666#17786#0" expanded="false" />
+            <element signature="e#17859#18302#0" expanded="false" />
+            <element signature="e#18177#18302#0" expanded="false" />
+            <element signature="e#18373#18539#0" expanded="false" />
+            <element signature="e#18616#19056#0" expanded="false" />
+            <element signature="e#18936#19056#0" expanded="false" />
+            <element signature="e#19137#19586#0" expanded="false" />
+            <element signature="e#19461#19586#0" expanded="false" />
+            <element signature="e#19658#19794#0" expanded="false" />
+            <element signature="e#19853#21016#0" expanded="false" />
+            <element signature="e#21079#21099#0" expanded="false" />
+            <element signature="e#22133#22296#0" expanded="false" />
+            <element signature="e#22299#22519#1" expanded="false" />
+            <element signature="e#22578#23198#0" expanded="false" />
+            <element signature="e#23260#23321#0" expanded="false" />
+            <element signature="e#23382#24527#0" expanded="false" />
+            <element signature="e#24573#28508#0" expanded="false" />
+            <element signature="e#24794#24833#0" expanded="false" />
+            <element signature="e#25842#26199#0" expanded="false" />
+            <element signature="e#26246#26601#0" expanded="false" />
+            <element signature="e#26620#27496#0" expanded="false" />
+            <element signature="e#26620#26698#0" expanded="false" />
+            <element signature="e#27222#27496#0" expanded="false" />
+            <element signature="e#28558#28619#0" expanded="false" />
+            <element signature="e#28667#30509#0" expanded="false" />
+            <element signature="e#28667#28684#0" expanded="false" />
+            <element signature="e#30558#31776#0" expanded="false" />
+            <element signature="e#31265#31386#0" expanded="false" />
+            <element signature="e#34172#34449#0" expanded="false" />
+            <element signature="e#34180#34294#0" expanded="false" />
+            <element signature="e#34342#34431#0" expanded="false" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/data/dummy_complex_vocab">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="0">
+          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
           <folding />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/model/graph.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="1030">
-          <caret line="401" column="0" lean-forward="false" selection-start-line="401" selection-start-column="0" selection-end-line="401" selection-end-column="0" />
+        <state relative-caret-position="156">
+          <caret line="113" column="0" lean-forward="false" selection-start-line="113" selection-start-column="0" selection-end-line="113" selection-end-column="0" />
           <folding>
             <element signature="e#305#992#0" expanded="false" />
             <element signature="e#404#447#0" expanded="false" />
@@ -1559,36 +1590,19 @@
             <element signature="e#2204#2361#0" expanded="false" />
             <element signature="e#2544#3236#0" expanded="false" />
             <element signature="e#2723#3121#0" expanded="false" />
-            <element signature="e#17528#18379#0" expanded="false" />
+            <element signature="e#17646#18497#0" expanded="false" />
           </folding>
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/model/transformer.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="0">
-          <caret line="265" column="50" lean-forward="false" selection-start-line="265" selection-start-column="50" selection-end-line="265" selection-end-column="50" />
+        <state relative-caret-position="315">
+          <caret line="381" column="25" lean-forward="true" selection-start-line="381" selection-start-column="25" selection-end-line="381" selection-end-column="25" />
           <folding>
             <element signature="e#0#23#0" expanded="true" />
-            <element signature="e#2133#2682#0" expanded="false" />
             <element signature="e#7047#16754#0" expanded="false" />
           </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/experiments_crc/dressnew/dressnew_adagrad.sh">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="240">
-          <caret line="16" column="14" lean-forward="true" selection-start-line="16" selection-start-column="14" selection-end-line="16" selection-end-column="14" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/experiments_crc/dressnew/dressnew_adam.sh">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="210">
-          <caret line="14" column="0" lean-forward="true" selection-start-line="14" selection-start-column="0" selection-end-line="14" selection-end-column="0" />
-          <folding />
         </state>
       </provider>
     </entry>
