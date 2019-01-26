@@ -1,0 +1,18 @@
+=============For Train=============
+
+1. Java: nlp.PreprocessUtils to get NER and tokenized data
+2. Generate the PPDB (because the tokenizer is lightweight supports PPDB) pppdb_features.py
+3. Generate the struct features: struc_features.py
+4. Generate 2nd tokenizer and do some post filter valid_output.py
+5. TF Example Generator tf_example_provider.py
+5.a Vocab generator (not used since we use bert subvok)
+
+For rule
+5.b Rule generator: ppdb_rule_generator.py
+
+
+=============For Valid/Test=============
+
+1. Java: nlp.PreprocessUtils to get NER and tokenized data
+2.a generate style features: eval_tune_features_provider.py
+2.b PPDB: pppdb_features_test.py

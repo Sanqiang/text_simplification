@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="src" path="src"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.launching.macosx.MacOSXType/Java SE 8 [1.8.0_111]"/>
+	<classpathentry kind="lib" path="/Users/zhaosanqiang916/git/stanford-parser-full-2017-06-09/ejml-0.23-src.zip"/>
+	<classpathentry kind="lib" path="/Users/zhaosanqiang916/git/stanford-parser-full-2017-06-09/ejml-0.23.jar"/>
+	<classpathentry kind="lib" path="/Users/zhaosanqiang916/git/stanford-parser-full-2017-06-09/slf4j-api-1.7.12-sources.jar"/>
+	<classpathentry kind="lib" path="/Users/zhaosanqiang916/git/stanford-parser-full-2017-06-09/slf4j-api.jar"/>
+	<classpathentry kind="lib" path="/Users/zhaosanqiang916/git/stanford-parser-full-2017-06-09/stanford-parser-3.8.0-javadoc.jar"/>
+	<classpathentry kind="lib" path="/Users/zhaosanqiang916/git/stanford-parser-full-2017-06-09/stanford-parser-3.8.0-models.jar"/>
+	<classpathentry kind="lib" path="/Users/zhaosanqiang916/git/stanford-parser-full-2017-06-09/stanford-parser-3.8.0-sources.jar"/>
+	<classpathentry kind="lib" path="/Users/zhaosanqiang916/git/stanford-parser-full-2017-06-09/stanford-parser.jar"/>
+	<classpathentry kind="lib" path="/Users/zhaosanqiang916/git/stanford-ner-2017-06-09/stanford-ner-3.8.0.jar"/>
+	<classpathentry kind="lib" path="/Users/zhaosanqiang916/git/stanford-ner-2017-06-09/stanford-ner.jar"/>
+	<classpathentry kind="lib" path="/Users/zhaosanqiang916/git/stanford-ner-2017-06-09/stanford-english-corenlp-2017-06-09-models.jar"/>
+	<classpathentry kind="lib" path="/Users/zhaosanqiang916/git/stanford-ner-2017-06-09/stanford-ner-3.8.0-javadoc.jar"/>
+	<classpathentry kind="lib" path="/Users/zhaosanqiang916/git/stanford-ner-2017-06-09/stanford-ner-3.8.0-sources.jar"/>
+	<classpathentry kind="lib" path="/Users/zhaosanqiang916/git/selenium-java-3.8.1/selenium-server-standalone-3.8.1.jar"/>
+	<classpathentry kind="lib" path="/Users/zhaosanqiang916/git/java/parser/jar/jar_files/asm-6.0.jar"/>
+	<classpathentry kind="lib" path="/Users/zhaosanqiang916/git/java/parser/jar/jar_files/bootstrap-2017.12.1.jar"/>
+	<classpathentry kind="lib" path="/Users/zhaosanqiang916/git/java/parser/jar/jar_files/config-api-1.2.0.jar"/>
+	<classpathentry kind="lib" path="/Users/zhaosanqiang916/git/java/parser/jar/jar_files/config-api-runtime-1.2.0.jar"/>
+	<classpathentry kind="lib" path="/Users/zhaosanqiang916/git/java/parser/jar/jar_files/container-2017.12.1.jar"/>
+	<classpathentry kind="lib" path="/Users/zhaosanqiang916/git/java/parser/jar/jar_files/jandex-2.0.4.Final.jar"/>
+	<classpathentry kind="lib" path="/Users/zhaosanqiang916/git/java/parser/jar/jar_files/javax.json-1.0.4.jar"/>
+	<classpathentry kind="lib" path="/Users/zhaosanqiang916/git/java/parser/jar/jar_files/jboss-logging-3.3.1.Final.jar"/>
+	<classpathentry kind="lib" path="/Users/zhaosanqiang916/git/java/parser/jar/jar_files/jboss-modules-1.6.1.Final.jar"/>
+	<classpathentry kind="lib" path="/Users/zhaosanqiang916/git/java/parser/jar/jar_files/jsonp-2017.12.1.jar"/>
+	<classpathentry kind="lib" path="/Users/zhaosanqiang916/git/java/parser/jar/jar_files/logging-2017.12.1.jar"/>
+	<classpathentry kind="lib" path="/Users/zhaosanqiang916/git/java/parser/jar/jar_files/meta-spi-2017.12.1.jar"/>
+	<classpathentry kind="lib" path="/Users/zhaosanqiang916/git/java/parser/jar/jar_files/shrinkwrap-api-1.2.6.jar"/>
+	<classpathentry kind="lib" path="/Users/zhaosanqiang916/git/java/parser/jar/jar_files/shrinkwrap-descriptors-api-base-2.0.0.jar"/>
+	<classpathentry kind="lib" path="/Users/zhaosanqiang916/git/java/parser/jar/jar_files/shrinkwrap-descriptors-api-javaee-2.0.0.jar"/>
+	<classpathentry kind="lib" path="/Users/zhaosanqiang916/git/java/parser/jar/jar_files/shrinkwrap-descriptors-api-jboss-2.0.0.jar"/>
+	<classpathentry kind="lib" path="/Users/zhaosanqiang916/git/java/parser/jar/jar_files/shrinkwrap-descriptors-impl-base-2.0.0.jar"/>
+	<classpathentry kind="lib" path="/Users/zhaosanqiang916/git/java/parser/jar/jar_files/shrinkwrap-descriptors-impl-javaee-2.0.0.jar"/>
+	<classpathentry kind="lib" path="/Users/zhaosanqiang916/git/java/parser/jar/jar_files/shrinkwrap-descriptors-impl-jboss-2.0.0.jar"/>
+	<classpathentry kind="lib" path="/Users/zhaosanqiang916/git/java/parser/jar/jar_files/shrinkwrap-descriptors-spi-2.0.0.jar"/>
+	<classpathentry kind="lib" path="/Users/zhaosanqiang916/git/java/parser/jar/jar_files/shrinkwrap-impl-base-1.2.6.jar"/>
+	<classpathentry kind="lib" path="/Users/zhaosanqiang916/git/java/parser/jar/jar_files/shrinkwrap-spi-1.2.6.jar"/>
+	<classpathentry kind="lib" path="/Users/zhaosanqiang916/git/java/parser/jar/jar_files/snakeyaml-1.17.jar"/>
+	<classpathentry kind="lib" path="/Users/zhaosanqiang916/git/java/parser/jar/jar_files/spi-2017.12.1.jar"/>
+	<classpathentry kind="lib" path="/Users/zhaosanqiang916/git/java/parser/jar/java-json.jar"/>
+	<classpathentry kind="lib" path="/Users/zhaosanqiang916/git/java/parser/jar/google-guava.jar"/>
+	<classpathentry kind="output" path="bin"/>
+</classpath>

@@ -1,0 +1,4 @@
+FW=>i	NP=>i	VBP=>am	VBG=>sanqiang	VP=>sanqiang	VP=>am sanqiang	.=>.	S=>i am sanqiang .
+FW=>i	NP=>i	VBP=>am	NN=>zhao	NP=>zhao	VP=>am zhao	.=>.	S=>i am zhao .
+FW=>i	NP=>i	VBP=>am	JJ=>sanqiang2	ADJP=>sanqiang2	VP=>am sanqiang2	.=>.	S=>i am sanqiang2 .
+FW=>i	NP=>i	VBP=>am	JJ=>zhao2	ADJP=>zhao2	VP=>am zhao2	.=>.	S=>i am zhao2 .

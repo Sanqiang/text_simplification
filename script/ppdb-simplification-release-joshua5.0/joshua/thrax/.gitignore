@@ -1,0 +1,6 @@
+bin/
+test-output/
+doc/
+AwsCredentials.properties
+
+.DS_Store
