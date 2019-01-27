@@ -1,7 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="0e3542db-cfd3-441d-958b-9a754ce38bcc" name="Default" comment="" />
+    <list default="true" id="0e3542db-cfd3-441d-958b-9a754ce38bcc" name="Default" comment="">
+      <change afterPath="$PROJECT_DIR$/readme.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+    </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -83,11 +86,23 @@
           </provider>
         </entry>
       </file>
-      <file pinned="false" current-in-tab="true">
+      <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/experiment/naacl2019/aws_bash/ls.sh">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="360">
-              <caret line="24" column="458" selection-start-line="24" selection-end-line="25" />
+            <state relative-caret-position="375">
+              <caret line="25" column="27" selection-start-line="25" selection-end-line="26" />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/readme.md">
+          <provider selected="true" editor-type-id="split-provider[text-editor;markdown-preview-editor]">
+            <state split_layout="SPLIT">
+              <first_editor relative-caret-position="195">
+                <caret line="13" column="66" selection-start-line="13" selection-start-column="66" selection-end-line="13" selection-end-column="66" />
+              </first_editor>
+              <second_editor />
             </state>
           </provider>
         </entry>
@@ -103,7 +118,6 @@
   </component>
   <component name="FindInProjectRecents">
     <findStrings>
-      <find>init</find>
       <find>gpu</find>
       <find>get_path</find>
       <find>loss</find>
@@ -133,6 +147,7 @@
       <find>npad_mode</find>
       <find>decoder(</find>
       <find>decode_inputs_to_outputs</find>
+      <find>layer_d</find>
     </findStrings>
     <replaceStrings>
       <replace>pass</replace>
@@ -140,10 +155,12 @@
       <replace>PATH_TRAIN</replace>
     </replaceStrings>
   </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
   <component name="IdeDocumentHistory">
     <option name="CHANGED_PATHS">
       <list>
-        <option value="$PROJECT_DIR$/experiment/naacl2019/bert/bertal_dmass.sh" />
         <option value="$PROJECT_DIR$/model/bert/utils.py" />
         <option value="$PROJECT_DIR$/util/checkpoint.py" />
         <option value="$PROJECT_DIR$/data_generator/rule.py" />
@@ -194,6 +211,7 @@
         <option value="$PROJECT_DIR$/model/model_config.py" />
         <option value="$PROJECT_DIR$/model/transformer.py" />
         <option value="$PROJECT_DIR$/experiment/naacl2019/aws_bash/ls.sh" />
+        <option value="$PROJECT_DIR$/readme.md" />
       </list>
     </option>
   </component>
@@ -202,6 +220,7 @@
     <option name="width" value="1625" />
     <option name="height" value="1027" />
   </component>
+  <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
   <component name="ProjectView">
     <navigator proportions="" version="1">
       <foldersAlwaysOnTop value="true" />
@@ -218,41 +237,7 @@
             <path>
               <item name="text_simplification" type="b2602c69:ProjectViewProjectNode" />
               <item name="text_simplification" type="462c0819:PsiDirectoryNode" />
-              <item name="data_generator" type="462c0819:PsiDirectoryNode" />
-            </path>
-            <path>
-              <item name="text_simplification" type="b2602c69:ProjectViewProjectNode" />
-              <item name="text_simplification" type="462c0819:PsiDirectoryNode" />
-              <item name="experiment" type="462c0819:PsiDirectoryNode" />
-            </path>
-            <path>
-              <item name="text_simplification" type="b2602c69:ProjectViewProjectNode" />
-              <item name="text_simplification" type="462c0819:PsiDirectoryNode" />
-              <item name="experiment" type="462c0819:PsiDirectoryNode" />
-              <item name="naacl2019" type="462c0819:PsiDirectoryNode" />
-            </path>
-            <path>
-              <item name="text_simplification" type="b2602c69:ProjectViewProjectNode" />
-              <item name="text_simplification" type="462c0819:PsiDirectoryNode" />
-              <item name="experiment" type="462c0819:PsiDirectoryNode" />
-              <item name="naacl2019" type="462c0819:PsiDirectoryNode" />
-              <item name="aws_bash" type="462c0819:PsiDirectoryNode" />
-            </path>
-            <path>
-              <item name="text_simplification" type="b2602c69:ProjectViewProjectNode" />
-              <item name="text_simplification" type="462c0819:PsiDirectoryNode" />
-              <item name="model" type="462c0819:PsiDirectoryNode" />
-            </path>
-            <path>
-              <item name="text_simplification" type="b2602c69:ProjectViewProjectNode" />
-              <item name="text_simplification" type="462c0819:PsiDirectoryNode" />
-              <item name="tensor2tensor" type="462c0819:PsiDirectoryNode" />
-            </path>
-            <path>
-              <item name="text_simplification" type="b2602c69:ProjectViewProjectNode" />
-              <item name="text_simplification" type="462c0819:PsiDirectoryNode" />
-              <item name="tensor2tensor" type="462c0819:PsiDirectoryNode" />
-              <item name="models" type="462c0819:PsiDirectoryNode" />
+              <item name="util" type="462c0819:PsiDirectoryNode" />
             </path>
           </expand>
           <select />
@@ -442,29 +427,29 @@
       <workItem from="1545697940790" duration="151388000" />
       <workItem from="1548019982432" duration="17971000" />
       <workItem from="1548213091347" duration="257000" />
-      <workItem from="1548213385218" duration="56062000" />
+      <workItem from="1548213385218" duration="58492000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="284646000" />
+    <option name="totallyTimeSpent" value="287076000" />
   </component>
   <component name="ToolWindowManager">
     <frame x="0" y="23" width="1625" height="1027" extended-state="0" />
     <editor active="true" />
     <layout>
-      <window_info content_ui="combo" id="Project" order="0" sideWeight="0.48867315" visible="true" weight="0.24005054" />
+      <window_info active="true" content_ui="combo" id="Project" order="0" sideWeight="0.48867315" visible="true" weight="0.17372078" />
       <window_info id="Structure" order="1" sideWeight="0.5165094" side_tool="true" weight="0.1890625" />
       <window_info id="Favorites" order="2" sideWeight="0.51132685" side_tool="true" weight="0.16182049" />
       <window_info anchor="bottom" id="Message" order="0" />
       <window_info anchor="bottom" id="Find" order="1" weight="0.32834226" />
       <window_info anchor="bottom" id="Run" order="2" weight="0.3828877" />
-      <window_info active="true" anchor="bottom" id="Debug" order="3" visible="true" weight="0.342246" />
+      <window_info anchor="bottom" id="Debug" order="3" weight="0.342246" />
       <window_info anchor="bottom" id="Cvs" order="4" weight="0.25" />
       <window_info anchor="bottom" id="Inspection" order="5" weight="0.4" />
       <window_info anchor="bottom" id="TODO" order="6" />
       <window_info anchor="bottom" id="Docker" order="7" show_stripe_button="false" />
-      <window_info anchor="bottom" id="Version Control" order="8" show_stripe_button="false" />
+      <window_info anchor="bottom" id="Version Control" order="8" />
       <window_info anchor="bottom" id="Database Changes" order="9" show_stripe_button="false" />
       <window_info anchor="bottom" id="Terminal" order="10" />
       <window_info anchor="bottom" id="Event Log" order="11" side_tool="true" />
@@ -659,13 +644,6 @@
     </expressions>
   </component>
   <component name="editorHistoryManager">
-    <entry file="file://$PROJECT_DIR$/experiment/naacl2019/bert_comb/bertal_eval.sh">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="315">
-          <caret line="21" column="139" selection-start-line="21" selection-start-column="139" selection-end-line="21" selection-end-column="139" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/model/postprocess.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="285">
@@ -896,13 +874,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/util/arguments.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="380">
-          <caret line="121" column="37" selection-start-line="121" selection-start-column="26" selection-end-line="121" selection-end-column="37" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/trans_data_processor/pppdb_features.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="-180">
@@ -1028,10 +999,27 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/util/arguments.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="286">
+          <caret line="30" column="33" selection-start-line="30" selection-start-column="26" selection-end-line="30" selection-end-column="33" />
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/experiment/naacl2019/aws_bash/ls.sh">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="360">
-          <caret line="24" column="458" selection-start-line="24" selection-end-line="25" />
+        <state relative-caret-position="375">
+          <caret line="25" column="27" selection-start-line="25" selection-end-line="26" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/readme.md">
+      <provider selected="true" editor-type-id="split-provider[text-editor;markdown-preview-editor]">
+        <state split_layout="SPLIT">
+          <first_editor relative-caret-position="195">
+            <caret line="13" column="66" selection-start-line="13" selection-start-column="66" selection-end-line="13" selection-end-column="66" />
+          </first_editor>
+          <second_editor />
         </state>
       </provider>
     </entry>
