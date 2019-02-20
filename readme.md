@@ -1,6 +1,9 @@
 # Integrating Transformer and Paraphrase Rules for Sentence Simplification
 Paper Link: http://www.aclweb.org/anthology/D18-1355
 
+## Decode Result
+https://github.com/Sanqiang/text_simplification/blob/EMNLP2018/decode_dmassdcss.txt
+https://github.com/Sanqiang/text_simplification/blob/EMNLP2018/report_dmassdcss.txt
 
 ## Note that some improvement from original EMNLP paper: 
 - we modified the code to allow supporting subword and the model performs well.
